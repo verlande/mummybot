@@ -10,9 +10,6 @@ namespace mummybot.Services
     {
         private readonly DiscordSocketClient _discord;
         private readonly CommandService _commands;
-        
-
-        private bool Ready = false;
 
         public StartupService(DiscordSocketClient discord, CommandService commands)
         {
@@ -28,9 +25,6 @@ namespace mummybot.Services
             await _discord.StartAsync();
             await _discord.SetStatusAsync(UserStatus.Online);
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly());
-
-            if (_discord.ConnectionState == ConnectionState.Connected)
-                Ready = true;
         }
     }
 }

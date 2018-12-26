@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -10,7 +11,7 @@ namespace mummybot.Services
     {
         private readonly DiscordSocketClient _discord;
         private readonly CommandService _commands;
-        private readonly IServiceProvider _provider;
+        private IServiceProvider _provider;
         
         public CommandHandlerService(
             DiscordSocketClient discord,
@@ -24,6 +25,14 @@ namespace mummybot.Services
             _discord.MessageReceived += OnMessageReceived;
         }
 
+        public async Task InitializeAsync(IServiceProvider provider)
+        {
+            _provider = provider;
+            await _commands.AddModulesAsync(Assembly.GetEntryAssembly());
+        }
+
+        public static int MessagesIntercepted;
+        public static int BotReplies;
         private async Task OnMessageReceived(SocketMessage s)
         {
             var config = new ConfigService();
@@ -31,12 +40,16 @@ namespace mummybot.Services
             
             if (!(s is SocketUserMessage message)) return;
             if (message.Source != MessageSource.User) return;
+            if (message.Source == MessageSource.User) MessagesIntercepted++;
 
             var argPos = 0;
             var context = new SocketCommandContext(_discord, message);
 
             if (!(message.HasMentionPrefix(_discord.CurrentUser, ref argPos) ||
                   message.HasStringPrefix(prefix, ref argPos))) return;
+            else
+                BotReplies++;
+            
 
             var result = await _commands.ExecuteAsync(context, argPos, _provider);
 

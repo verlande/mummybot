@@ -1,25 +1,26 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Discord;
-using Discord.WebSocket;
 using Discord.Commands;
+using Discord.WebSocket;
 using mummybot.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace mummybot
 {
-    public static class Program
+    public class Program
     {
-        public static void Main(string[] args) =>
-            StartAsync().GetAwaiter().GetResult();
-        
+        public static void Main(string[] args)
+            => StartAsync().GetAwaiter().GetResult();
+
         private static async Task StartAsync()
         {
             var services = new ServiceCollection()
                 .AddSingleton(new DiscordSocketClient(new DiscordSocketConfig
                 {
                     LogLevel = LogSeverity.Debug,
-                    MessageCacheSize = 500
+                    MessageCacheSize = 500,
+                    TotalShards = 1
                 }))
                 .AddSingleton(new CommandService(new CommandServiceConfig
                 {
@@ -27,17 +28,28 @@ namespace mummybot
                     LogLevel = LogSeverity.Debug,
                     CaseSensitiveCommands = false
                 }))
-                .AddSingleton<DebugLoggingService>()
+                .AddDbContext<mummybotDbContext>(options =>
+                    {
+                        options.UseNpgsql(new ConfigService().Config["dbstring"]
+                            );
+                    }, ServiceLifetime.Transient)
+                .AddSingleton<GuildService>()
+                .AddSingleton<UserService>()
+                .AddSingleton<TagService>()
                 .AddSingleton<CommandHandlerService>()
-                .AddSingleton<Random>()
+                .AddSingleton<DebugLoggingService>()
                 .AddSingleton<StartupService>();
 
             var provider = services.BuildServiceProvider();
-
-            await provider.GetRequiredService<StartupService>().Start();
             provider.GetRequiredService<DebugLoggingService>();
-            provider.GetRequiredService<CommandHandlerService>();
+            
+            await provider.GetRequiredService<StartupService>().Start();
+            
+            provider.GetRequiredService<GuildService>();
+            provider.GetRequiredService<UserService>();
             provider.GetRequiredService<CommandService>();
+            provider.GetRequiredService<CommandHandlerService>();
+            
             await Task.Delay(-1);
         }
     }
