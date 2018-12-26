@@ -16,9 +16,10 @@ namespace mummybot.Modules
     public class General : ModuleBase
     {
         private readonly DiscordSocketClient _discord;
+        private readonly CommandService _commands;
 
-        public General(DiscordSocketClient discord)
-            => _discord = discord;
+        public General(CommandService commands)
+            => _commands = commands;
         
         [Command("Botinfo"), Summary("Displays bot information")]
         public async Task BotInfo()
@@ -41,6 +42,7 @@ namespace mummybot.Modules
                               $"- Guilds Served: {Context.Client.Guilds.Count}\n" +
                               $"- Channels: {Context.Client.Guilds.Sum(g => g.Channels.Count)}\n" +
                               $"- Users: {Context.Client.Guilds.Sum(g => g.Users.Count)}\n" +
+                              $"- Commands: {_commands.Commands.Count()}\n" +
                               $"- Commands Served: {CommandHandlerService.BotReplies}\n" +
                               $"- Messages Intercepted: {CommandHandlerService.MessagesIntercepted}"
             };
@@ -53,6 +55,15 @@ namespace mummybot.Modules
         public async Task Uptime()
         {
             await ReplyAsync($"``{DateTime.Now - Process.GetCurrentProcess().StartTime:g}``");
+        }
+
+        [Command("Isadmin"), Summary("Check is a user is an admin")]
+        [RequireContext(ContextType.Guild)]
+        public async Task IsAdmin(SocketGuildUser user)
+        {
+            if (user.GuildPermissions.Administrator)
+                await ReplyAsync($"{user.Username}#{user.Discriminator} is an admin");
+            else await ReplyAsync($"{user.Username}#{user.Discriminator} is not an admin");
         }
 
         [Command("Guildinfo")]

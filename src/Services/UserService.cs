@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord.WebSocket;
@@ -64,8 +65,23 @@ namespace mummybot.Services
 
         }
 
-        private async Task UserJoin(SocketGuildUser user)
-            => await _discord.GetGuild(user.Guild.Id).DefaultChannel
-                .SendMessageAsync($"**{user.Username}#{user.Discriminator} has joined {user.Guild.Name}!**");
+        private async Task UserJoin(SocketGuildUser guildUser)
+        {
+            await _discord.GetGuild(guildUser.Guild.Id).DefaultChannel
+                .SendMessageAsync($"**{guildUser.Username}#{guildUser.Discriminator} has joined {guildUser.Guild.Name}!**");
+            
+            var user = new Users
+            {
+                UserId = guildUser.Id,
+                Username = $"{guildUser.Username}#{guildUser.Discriminator}",
+                Nickname = guildUser.Nickname,
+                GuildName = guildUser.Guild.Name,
+                GuildId = guildUser.Guild.Id,
+                Avatar = guildUser.GetAvatarUrl(),
+                Joined = guildUser.JoinedAt.Value.UtcDateTime
+            };
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+        }
     }
 }
