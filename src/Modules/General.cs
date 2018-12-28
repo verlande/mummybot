@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,6 +10,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using mummybot.Services;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
 namespace mummybot.Modules
 {
@@ -62,8 +64,8 @@ namespace mummybot.Modules
         public async Task IsAdmin(SocketGuildUser user)
         {
             if (user.GuildPermissions.Administrator)
-                await ReplyAsync($"{user.Username}#{user.Discriminator} is an admin");
-            else await ReplyAsync($"{user.Username}#{user.Discriminator} is not an admin");
+                await ReplyAsync($"{Utils.FullUserName(user)} is an admin");
+            else await ReplyAsync($"{Utils.FullUserName(user)} is not an admin");
         }
 
         [Command("Guildinfo")]
@@ -99,7 +101,7 @@ namespace mummybot.Modules
             {
                 field.IsInline = true;
                 field.Name = "Owner";
-                field.Value = $"<@{guild.OwnerId}>";
+                field.Value = $"{guild.Owner.Mention}";
             });
             eb.AddField(field =>
             {
@@ -217,5 +219,89 @@ namespace mummybot.Modules
 
             await ReplyAsync(string.Empty, embed: eb.WithTitle("New Members").Build());
         }
+
+        [Command("Xkcd")]
+        public async Task Xkcd(string num = null)
+        {
+            const string xkcdUrl = "https://xkcd.com";
+            using (var http = new HttpClient())
+            {
+                string res;
+                if (num == null)
+                    res = await http.GetStringAsync($"{xkcdUrl}/info.0.json").ConfigureAwait(false);
+                else
+                    res = await http.GetStringAsync($"{xkcdUrl}/{num}/info.0.json").ConfigureAwait(false);
+
+                var comic = JsonConvert.DeserializeObject<Xkcd>(res);
+
+                var eb = new EmbedBuilder();
+
+                void Action(EmbedAuthorBuilder eab) => eab.WithName(comic.Title)
+                    .WithUrl($"{xkcdUrl}/{comic.Num}")
+                    .WithIconUrl("http://xkcd.com/s/919f27.ico");
+
+                eb.WithAuthor(Action)
+                    .WithColor(Utils.GetRandomColor())
+                    .WithImageUrl(comic.ImageLink)
+                    .AddField(
+                        efb => efb.WithName("Comic number").WithValue(comic.Num.ToString()).WithIsInline(true))
+                    .AddField(efb =>
+                        efb.WithName("Date").WithValue($"{comic.Day}/{comic.Month}/{comic.Year}").WithIsInline(true))
+                    .AddField(efb => efb.WithName("Title").WithValue(comic.Title).WithIsInline(false));
+
+                await ReplyAsync(String.Empty, embed: eb.Build());
+            }
+        }
+
+        [Command("bible")]
+        public async Task Bible(string passage = null, string chapverse = null)
+        {
+            const string bibleUrl = "https://labs.bible.org/api/?passage=";
+            const string bibleIcon = "https://www.iconsdb.com/icons/download/gray/holy-bible-64.jpg"; //"http://www.iconsplace.com/icons/preview/black/holy-bible-256.png";
+            const string bibleGate = "https://www.biblegateway.com/passage/?search=";
+
+            using (var http = new HttpClient())
+            {
+                string res;
+                if (passage != null)
+                    res = await http.GetStringAsync($"{bibleUrl}{passage} {chapverse}&type=json").ConfigureAwait(false);
+                else
+                    res = await http.GetStringAsync($"{bibleUrl}random&type=json").ConfigureAwait(false);
+
+                var verse = JsonConvert.DeserializeObject<Bible[]>(res);
+
+                var eb = new EmbedBuilder();
+                eb.WithAuthor(eab =>
+                        eab.WithName($"{verse[0].Bookname} {verse[0].Chapter}:{verse[0].Verse}")
+                            .WithUrl($"{bibleGate}{verse[0].Bookname}+{verse[0].Chapter}:{verse[0].Verse}&version=NIV")
+                            .WithIconUrl(bibleIcon))
+                    .WithColor(Utils.GetRandomColor())
+                    .AddField(
+                        efb => efb.WithName("Verse").WithValue(verse[0].Text).WithIsInline(false)).Build();
+
+                await ReplyAsync(string.Empty, embed: eb.Build());
+            }
+        }
+    }
+
+    public class Xkcd
+    {
+        public int Num { get; set; }
+        public string Month { get; set; }
+        public string Year { get; set; }
+        public string Day { get; set; }
+        [JsonProperty("safe_title")]
+        public string Title { get; set; }
+        [JsonProperty("img")]
+        public string ImageLink { get; set; }
+        public string Alt { get; set; }
+    }
+
+    public class Bible
+    {
+        public string Bookname { get; set; }
+        public string Chapter { get; set; }
+        public string Verse { get; set; }
+        public string Text { get; set; }
     }
 }
