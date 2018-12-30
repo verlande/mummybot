@@ -12,7 +12,7 @@ namespace mummybot.Modules
     [Name("Tags"), Group("tag"), Alias("t")]
     public class TagModule : ModuleBase
     {
-        private TagService Tags { get; set; }
+        public TagService Tags { get; set; }
         private readonly CommandService _commands;
 
         public TagModule(CommandService commands)
@@ -24,7 +24,8 @@ namespace mummybot.Modules
             var tag = Tags.GetTag(Database, name, Context.Guild);
             if (tag != null)
             {
-                await ReplyAsync(tag.GetContent(name));
+                //await ReplyAsync(tag.GetContent(name));
+                await ReplyAsync(String.Empty, embed: tag.GetEmbed());
                 tag.LastUsedBy(Context.User);
                 tag.AddUse();
             }
