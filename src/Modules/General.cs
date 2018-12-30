@@ -60,7 +60,6 @@ namespace mummybot.Modules
         }
 
         [Command("Isadmin"), Summary("Check is a user is an admin")]
-        [RequireContext(ContextType.Guild)]
         public async Task IsAdmin(SocketGuildUser user)
         {
             if (user.GuildPermissions.Administrator)

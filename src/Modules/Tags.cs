@@ -4,17 +4,18 @@ using System;
 using System.Linq;
 using Discord;
 using Discord.WebSocket;
+using mummybot.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace mummybot.Modules
 {
     [Name("Tags"), Group("tag"), Alias("t")]
-    [RequireContext(ContextType.Guild)]
-    public class Tags : ModuleBase
+    public class TagModule : ModuleBase
     {
+        private TagService Tags { get; set; }
         private readonly CommandService _commands;
 
-        public Tags(CommandService commands)
+        public TagModule(CommandService commands)
             => _commands = commands;
 
         [Command, Summary("Fetches a tag")]

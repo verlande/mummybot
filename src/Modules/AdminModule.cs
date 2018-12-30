@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 namespace mummybot.Modules
 {
     [Name("Admin"), Group("Admin"), Alias("A")]
-    [RequireUserPermission(GuildPermission.Administrator), RequireContext(ContextType.Guild)]
+    [RequireUserPermission(GuildPermission.Administrator)]
     public class AdminModule : ModuleBase
     {
         [Command("Tagban"), Summary("Ban/Unban a user from creating tags in your guild")]
