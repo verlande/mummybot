@@ -24,8 +24,7 @@ namespace mummybot.Modules
             var tag = Tags.GetTag(Database, name, Context.Guild);
             if (tag != null)
             {
-                //await ReplyAsync(tag.GetContent(name));
-                await ReplyAsync(String.Empty, embed: tag.GetEmbed());
+                await ReplyAsync(tag.GetContent(name));
                 tag.LastUsedBy(Context.User);
                 tag.AddUse();
             }

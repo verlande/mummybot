@@ -1,5 +1,4 @@
 using Discord.Commands;
-using mummybot.Services;
 
 namespace mummybot.Modules
 {
