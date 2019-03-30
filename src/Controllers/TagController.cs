@@ -2,7 +2,6 @@
 using Discord.WebSocket;
 using Discord;
 using mummybot.Models;
-using mummybot.Services;
 
 namespace mummybot.Controllers
 {
@@ -22,9 +21,7 @@ namespace mummybot.Controllers
         public string DeleteTag()
         {
             if (_tag == null)
-            {
                 return $"``{_tag.Name}`` does not exist";
-            }
 
             var reply = $"``{_tag.Name}`` deleted";
             _context.Tags.Remove(_tag);
@@ -43,13 +40,13 @@ namespace mummybot.Controllers
         public bool Exists()
             => _tag != null;
 
-        public TagController RemovePrefix()
-        {
-            if (_tag == null) return new TagController(null, null, null);
-            _tag.IsCommand = true;
-            TagService.TagsList.Add(_tag);
-            return new TagController(_context, _discord, _tag);
-        }
+        //public TagController RemovePrefix()
+        //{
+        //    if (_tag == null) return new TagController(null, null, null);
+        //    _tag.IsCommand = true;
+        //    TagService.TagsList.Add(_tag);
+        //    return new TagController(_context, _discord, _tag);
+        //}
 
         public TagController LastUsedBy(SocketUser user)
         {

@@ -28,7 +28,7 @@ namespace mummybot.Services
             _discord.MessageReceived += Invoke;
         }
 
-        public async Task InitializeAsync(IServiceProvider service)
+        public void Initialize(IServiceProvider service)
         {
             _services = service;
             PopulateList();

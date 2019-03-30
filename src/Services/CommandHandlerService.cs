@@ -1,9 +1,9 @@
-using System;
-using System.Reflection;
-using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using System;
+using System.Reflection;
+using System.Threading.Tasks;
 
 namespace mummybot.Services
 {
@@ -31,24 +31,19 @@ namespace mummybot.Services
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly());
         }
 
-        public static int MessagesIntercepted;
-        public static int BotReplies;
         private async Task OnMessageReceived(SocketMessage s)
         {
             var config = new ConfigService();
             var prefix = config.Config["prefix"];
-            
+
             if (!(s is SocketUserMessage message)) return;
             if (message.Source != MessageSource.User) return;
-            if (message.Source == MessageSource.User) MessagesIntercepted++;
 
             var argPos = 0;
             var context = new SocketCommandContext(_discord, message);
 
             if (!(message.HasMentionPrefix(_discord.CurrentUser, ref argPos) ||
                   message.HasStringPrefix(prefix, ref argPos))) return;
-            else
-                BotReplies++;
             
 
             var result = await _commands.ExecuteAsync(context, argPos, _provider);

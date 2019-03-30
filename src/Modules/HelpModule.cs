@@ -25,6 +25,7 @@ namespace mummybot.Modules
             var embed = new EmbedBuilder
             {
                 Title = "mummybot Help",
+                Description = $"{_commands.Commands.Count()} total commands",
                 Color = Color.Magenta,
                 Footer = new EmbedFooterBuilder()
                 .WithText("All commands are case insensitive")

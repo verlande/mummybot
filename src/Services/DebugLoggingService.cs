@@ -30,7 +30,7 @@ namespace mummybot.Services
             var debugText =
                 $"{DateTime.UtcNow:O} [{msg.Severity}] {msg.Source} : {msg.Exception?.ToString() ?? msg.Message}";
 
-            await File.AppendAllTextAsync(LogFile, debugText + "\n");
+            await File.AppendAllTextAsync(LogFile, debugText + "\n").ConfigureAwait(false);
 
             switch (msg.Severity)
             {
@@ -50,7 +50,7 @@ namespace mummybot.Services
                     break;
             }
 
-            await Console.Out.WriteLineAsync(debugText);
+            await Console.Out.WriteLineAsync(debugText).ConfigureAwait(false);
         }
     }
 }

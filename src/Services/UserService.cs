@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Discord;
 using Discord.WebSocket;
 using mummybot.Models;
 using Microsoft.EntityFrameworkCore;
@@ -19,69 +20,184 @@ namespace mummybot.Services
             _discord.GuildMembersDownloaded += DownloadUsers;
             _discord.GuildMemberUpdated += UserUpdated;
             _discord.UserJoined += UserJoin;
+            _discord.UserLeft += UserLeft;
+            _discord.GuildUpdated += GuildUpdated;
+            _discord.GuildMemberUpdated += Audits;
         }
 
-        private async Task DownloadUsers(SocketGuild guild)
+        public Task Audits(SocketGuildUser before, SocketGuildUser after)
         {
-            var usersdb = _context.Users.AsNoTracking();
+            var _ = Task.Run(async () =>
+            {
+                var addAudit = new UserAudits();
+                addAudit.UserId = after.Id;
+
+                if (!before.Nickname.Equals(after.Nickname))
+                    addAudit.Nickname = after.Nickname;
+                //    user.Nickname = after.Nickname;
+                else if (!before.Username.Equals(after.Username))
+                    addAudit.Username = after.Username;
+                //    user.Username = after.Username;
+
+                await _context.UserAudits.AddAsync(addAudit);
+                await _context.SaveChangesAsync();
+            });
+            return Task.CompletedTask;
+        }
+
+        public async Task DownloadUsers(SocketGuild guild)
+        {
+            var usersContext = _context.Users.AsQueryable();
+            var userIdList = await usersContext.Where(x => x.GuildId.Equals(guild.Id)).Select(x => x.UserId).ToListAsync();
+
             foreach (var users in guild.Users)
             {
-                if (usersdb.Any(u => u.UserId.Equals(users.Id))) return;
-                
-                var user = new Users
+                if (await usersContext.AnyAsync(u => u.UserId.Equals(users.Id) && u.GuildId.Equals(users.Guild.Id))) return;
+                if (!userIdList.Contains(users.Id))
+                {
+                   var user = await _context.Users.SingleAsync(u => u.UserId.Equals(users.Id) && u.GuildId.Equals(guild.Id));
+                    _context.Remove(user);
+                }
+
+                await _context.Users.AddAsync(new Users
                 {
                     UserId = users.Id,
-                    Username = $"{users.Username}#{users.Discriminator}",
+                    Username = Utils.FullUserName(users),
                     Nickname = users.Nickname,
                     GuildName = users.Guild.Name,
                     GuildId = users.Guild.Id,
                     Avatar = users.GetAvatarUrl(),
                     Joined = users.JoinedAt.Value.UtcDateTime
-                };
-                _context.Users.Add(user);
+                });
             }
-
             await _context.SaveChangesAsync();
         }
 
-        private async Task UserUpdated(SocketGuildUser before, SocketGuildUser after)
+        private Task UserUpdated(SocketGuildUser before, SocketGuildUser after)
         {
-            var res = await _context.Users.SingleAsync(u => u.UserId.Equals(after.Id));
-            if (res != null || !after.IsBot || !before.Status.Equals(after.Status))
+            //if (before.IsBot || after.IsBot) return;
+            //Console.WriteLine(after.Nickname);
+            //var user = await _context.Users.SingleAsync(u => u.UserId.Equals(after.Id) && u.GuildId.Equals(after.Guild.Id));
+
+            //if (!before.Nickname.Equals(after.Nickname))
+            //    user.Nickname = after.Nickname;
+            //else if (!before.Username.Equals(after.Username))
+            //    user.Username = after.Username;
+            //else if (!before.Equals(after.GetAvatarUrl()))
+            //    user.Avatar = after.GetAvatarUrl();
+
+            var _ = Task.Run(async () =>
             {
-                if (!res.Nickname.Equals(after.Nickname))
-                {
-                    res.Nickname = after.Nickname;
-                    _context.Users.Attach(res);       
-                }
-                else if (!res.Username.Equals(after.Username))
-                {
-                    res.Username = after.Username;
-                    _context.Users.Attach(res);
-                }
-            }
+                var user = await _context.Users.SingleAsync(u => u.UserId.Equals(after.Id) && u.GuildId.Equals(after.Guild.Id));
 
-            await _context.SaveChangesAsync();
+                if (!before.Nickname.Equals(after.Nickname))
+                    user.Nickname = after.Nickname;
+                else if (!before.Username.Equals(after.Username))
+                    user.Username = after.Username;
+                else if (!before.Equals(after.GetAvatarUrl()))
+                    user.Avatar = after.GetAvatarUrl();
 
+                await _context.SaveChangesAsync();
+            });
+            return Task.CompletedTask;
         }
 
-        private async Task UserJoin(SocketGuildUser guildUser)
+        private Task UserJoin(IGuildUser guildUser)
         {
-            await _discord.GetGuild(guildUser.Guild.Id).DefaultChannel
-                .SendMessageAsync($"**{guildUser.Username}#{guildUser.Discriminator} has joined {guildUser.Guild.Name}!**");
-            
-            var user = new Users
+            var _ = Task.Run(async () =>
             {
-                UserId = guildUser.Id,
-                Username = $"{guildUser.Username}#{guildUser.Discriminator}",
-                Nickname = guildUser.Nickname,
-                GuildName = guildUser.Guild.Name,
-                GuildId = guildUser.Guild.Id,
-                Avatar = guildUser.GetAvatarUrl(),
-                Joined = guildUser.JoinedAt.Value.UtcDateTime
-            };
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
+                try
+                {
+                    await AddUser(guildUser);
+
+                    var conf = await _context.Guilds.SingleAsync(g => g.GuildId.Equals(guildUser.GuildId));
+                    var channel = (await guildUser.Guild.GetTextChannelsAsync().ConfigureAwait(false)).SingleOrDefault(c => c.Id.Equals(conf.GreetChl));
+
+                    if (!string.IsNullOrWhiteSpace(conf.Greeting) && channel != null)//&& conf.GreetChl != null)
+                    {
+                        var greeting = conf.Greeting;
+                        if (greeting.Contains("%user%")) greeting = greeting.Replace("%user%", guildUser.Mention);
+                        await channel.SendMessageAsync(greeting).ConfigureAwait(false);
+                    }
+                }
+                catch (Exception ex) { Console.WriteLine(ex); }
+            });
+
+            return Task.CompletedTask;
+        }
+
+        private Task UserLeft(IGuildUser guildUser)
+        {
+            var _ = Task.Run(async () =>
+            {
+                try
+                {
+                    var conf = await _context.Guilds.SingleAsync(g => g.GuildId.Equals(guildUser.Guild.Id));
+                    var channel = (await guildUser.Guild.GetTextChannelsAsync().ConfigureAwait(false)).SingleOrDefault(c => c.Id.Equals(conf.GreetChl));
+
+                    if (!string.IsNullOrWhiteSpace(conf.Goodbye) && channel != null)
+                    {
+                        var goodbye = conf.Goodbye;
+                        if (goodbye.Contains("%user%")) goodbye = goodbye.Replace("%user%", guildUser.Mention);
+                        await channel.SendMessageAsync(goodbye).ConfigureAwait(false);
+                    }
+                    await RemoveUser(guildUser);
+                }
+                catch (Exception ex) { Console.WriteLine(ex); }
+            });
+
+            return Task.CompletedTask;
+        }
+
+        private async Task GuildUpdated(SocketGuild before, SocketGuild after)
+        {
+            if (before.Name.Equals(after.Name) || before.OwnerId.Equals(after.OwnerId)) return;
+            Console.WriteLine($"{before.Name}\t{after.Name}");
+
+            var ownerId = await _context.Guilds.SingleAsync(g => g.OwnerId.Equals(after.OwnerId));
+            if (ownerId == null)
+            {
+                ownerId.OwnerId = after.OwnerId;
+                ownerId.GuildName = after.Name;
+                _context.Update(ownerId);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        private async Task<bool> UserExists(ulong userId, ulong guildId)
+            => await _context.Users.AnyAsync(u => u.UserId.Equals(userId) && u.GuildId.Equals(guildId));
+
+        private async Task AddUser(IGuildUser user)
+        {
+            if (await UserExists(user.Id, user.GuildId)) return;
+            else
+            {
+                try
+                {
+                    await _context.Users.AddAsync(new Users
+                    {
+                        UserId = user.Id,
+                        Username = Utils.FullUserName((SocketUser)user),
+                        Nickname = user.Nickname,
+                        GuildName = user.Guild.Name,
+                        GuildId = user.Guild.Id,
+                        Avatar = user.GetAvatarUrl(),
+                        Joined = user.JoinedAt.Value.UtcDateTime
+                    });
+                    await _context.SaveChangesAsync();
+                }
+                catch (Exception ex) { Console.WriteLine(ex); }
+            }
+        }
+
+        private async Task RemoveUser(IGuildUser user)
+        {
+            if (await UserExists(user.Id, user.Guild.Id)) return;
+            else
+            {
+                _context.Remove(await _context.Users.SingleAsync(u => u.UserId.Equals(user.Id) && u.GuildId.Equals(user.Guild.Id)));
+                await _context.SaveChangesAsync();
+            }
         }
     }
 }
