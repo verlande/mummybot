@@ -6,4 +6,4 @@ services:
 build-master:
   stage: build
   script:
-    - docker build --pull -t mummy603/mummybot
+    - docker build --pull -t mummy603/mummybot .
