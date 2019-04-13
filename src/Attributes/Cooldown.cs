@@ -3,9 +3,6 @@ using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
-using System.Linq;
-using Microsoft.EntityFrameworkCore;
-using mummybot.Models;
 
 namespace mummybot.Attributes
 {
@@ -35,6 +32,7 @@ namespace mummybot.Attributes
 
         public override Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
         {
+            if (context.User.Id.Equals(context.Client.GetApplicationInfoAsync().Result.Owner.Id)) return Task.FromResult(PreconditionResult.FromSuccess());
             if (!AdminsAreLimited && context.User is IGuildUser user && user.GuildPermissions.Administrator)
             {
                 return Task.FromResult(PreconditionResult.FromSuccess());

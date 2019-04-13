@@ -10,7 +10,7 @@ namespace mummybot
 {
     public sealed class Program
     {
-        public static void Main(string[] args)
+        private static void Main(string[] args)
             => StartAsync().GetAwaiter().GetResult();
 
         private static async Task StartAsync()
@@ -41,6 +41,7 @@ namespace mummybot
                 .AddSingleton<TagService>()
                 .AddSingleton<CommandHandlerService>()
                 .AddSingleton<DebugLoggingService>()
+                .AddSingleton<ConfigService>()
                 .AddSingleton<StartupService>();
 
             var provider = services.BuildServiceProvider();
@@ -48,6 +49,7 @@ namespace mummybot
 
             await provider.GetRequiredService<StartupService>().StartAsync();
 
+            provider.GetRequiredService<ConfigService>();
             provider.GetRequiredService<MessageService>();
             provider.GetRequiredService<GuildService>();
             provider.GetRequiredService<UserService>();

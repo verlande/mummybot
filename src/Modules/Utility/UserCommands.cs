@@ -28,7 +28,7 @@ namespace mummybot.Modules.Utility
                 .Build());
         }
 
-        [Command("Finddups"), Summary("Find users with matching nicknames")]
+        [Command("Finddups"), Summary("Find users with matching nicknames"), Alias("fd")]
         public async Task Finddups()
         {
 
@@ -44,9 +44,11 @@ namespace mummybot.Modules.Utility
             await Context.Channel.SendConfirmAsync(sb.ToString(), "Duplicate nicknames");
         }
 
-        [Command("Lastnicks"), Summary("Lists 10 nickname changes of a user")]
-        public async Task LastNicks(SocketGuildUser user)
+        [Command("Pastnicks"), Summary("Show past nicknames limited to 10"), Alias("pn")]
+        public async Task LastNicks(SocketGuildUser arg)
         {
+            var user = arg ?? Context.User;
+
             var result = Database.UsersAudit.Where(u => u.UserId.Equals(user.Id)
                 && u.GuildId.Equals(Context.Guild.Id)).OrderByDescending(u => u.Id).Take(10);
 
@@ -55,12 +57,29 @@ namespace mummybot.Modules.Utility
             else
             {
                 var sb = new StringBuilder();
-                await result.ForEachAsync(n => sb.AppendLine(n.Nickname));
-                await Context.Channel.SendAuthorAsync(user, sb.ToString(), "User ID: " + user.Id.ToString());
+                await result.ForEachAsync(n => sb.AppendLine(Format.Bold(n.Nickname) + $" - ``{n.ChangedOn}``"));
+                await Context.Channel.SendAuthorAsync((IGuildUser)user, sb.ToString(), $"User ID: {user.Id.ToString()}");
             }
         }
 
-        [Command("Newusers"), Summary("Lists 5 newest users")]
+        [Command("Usernames"), Summary("Show past usernames limited to 10"), Alias("un")]
+        public async Task Usernames(SocketGuildUser arg)
+        {
+            var user = arg ?? Context.User;
+
+            var result = Database.UsersAudit.Where(u => u.UserId.Equals(user.Id)).Take(10);
+
+            if (!result.Any())
+                await Context.Channel.SendErrorAsync(string.Empty, $"No username history for {Utils.FullUserName(user)}");
+            else
+            {
+                var sb = new StringBuilder();
+                await result.ForEachAsync(n => sb.AppendLine(Format.Bold(n.Username) + $" - ``{n.ChangedOn}``"));
+                await Context.Channel.SendAuthorAsync((IGuildUser)user, sb.ToString(), $"User ID: {user.Id.ToString()}");
+            }
+        }
+
+        [Command("Newusers"), Summary("Lists 5 newest users"), Alias("nu")]
         public async Task NewUsers()
         {
             //var users = Database.Users.Where(u => u.GuildId.Equals(Context.Guild.Id))

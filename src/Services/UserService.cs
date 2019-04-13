@@ -22,27 +22,6 @@ namespace mummybot.Services
             _discord.UserJoined += UserJoin;
             _discord.UserLeft += UserLeft;
             _discord.GuildUpdated += GuildUpdated;
-            _discord.GuildMemberUpdated += Audits;
-        }
-
-        public Task Audits(SocketGuildUser before, SocketGuildUser after)
-        {
-            var _ = Task.Run(async () =>
-            {
-                var addAudit = new UserAudits();
-                addAudit.UserId = after.Id;
-
-                if (!before.Nickname.Equals(after.Nickname))
-                    addAudit.Nickname = after.Nickname;
-                //    user.Nickname = after.Nickname;
-                else if (!before.Username.Equals(after.Username))
-                    addAudit.Username = after.Username;
-                //    user.Username = after.Username;
-
-                await _context.UserAudits.AddAsync(addAudit);
-                await _context.SaveChangesAsync();
-            });
-            return Task.CompletedTask;
         }
 
         public async Task DownloadUsers(SocketGuild guild)
@@ -75,25 +54,30 @@ namespace mummybot.Services
 
         private Task UserUpdated(SocketGuildUser before, SocketGuildUser after)
         {
-            //if (before.IsBot || after.IsBot) return;
-            //Console.WriteLine(after.Nickname);
-            //var user = await _context.Users.SingleAsync(u => u.UserId.Equals(after.Id) && u.GuildId.Equals(after.Guild.Id));
-
-            //if (!before.Nickname.Equals(after.Nickname))
-            //    user.Nickname = after.Nickname;
-            //else if (!before.Username.Equals(after.Username))
-            //    user.Username = after.Username;
-            //else if (!before.Equals(after.GetAvatarUrl()))
-            //    user.Avatar = after.GetAvatarUrl();
-
             var _ = Task.Run(async () =>
             {
                 var user = await _context.Users.SingleAsync(u => u.UserId.Equals(after.Id) && u.GuildId.Equals(after.Guild.Id));
 
                 if (!before.Nickname.Equals(after.Nickname))
+                {
                     user.Nickname = after.Nickname;
+                    await _context.UsersAudit.AddAsync(new UsersAudit
+                    {
+                        UserId = after.Id,
+                        GuildId = after.Guild.Id,
+                        Nickname = after.Nickname
+                    });
+                }
                 else if (!before.Username.Equals(after.Username))
+                {
                     user.Username = after.Username;
+                    await _context.UsersAudit.AddAsync(new UsersAudit
+                    {
+                        UserId = after.Id,
+                        GuildId = after.Guild.Id,
+                        Username = Utils.FullUserName(after)
+                    });
+                }
                 else if (!before.Equals(after.GetAvatarUrl()))
                     user.Avatar = after.GetAvatarUrl();
 

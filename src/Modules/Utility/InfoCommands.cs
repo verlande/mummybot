@@ -14,7 +14,7 @@ namespace mummybot.Modules.Utility
 {
     public partial class Utility : ModuleBase
     {
-        [Command("Roleinfo")]
+        [Command("Roleinfo"), Alias("ri")]
         public async Task RoleInfo(SocketRole role)
         {
             var eb = new EmbedBuilder
@@ -37,41 +37,28 @@ namespace mummybot.Modules.Utility
         [Command("Userinfo")]
         public async Task UserInfo(IGuildUser user)
         {
-            await Context.Channel.SendAuthorAsync(user, $"{user.Username} | {user.Status}\n\n" +
-            Format.Bold("Nickname: ") + user.Nickname ?? "None" +
-            "\n" +
-            Format.Bold("Joined: ") + user.JoinedAt.Value.DateTime +
-            "\n" + Format.Bold("Created: ") + user.CreatedAt.DateTime +
-            "\n" + Format.Bold($"Roles ({user.GetRoles().Count()}): ") + $"{string.Join(", ", user.GetRoles().Select(x => x.Mention))}", $"ID: {user.Id}");
+            var eb = new EmbedBuilder()
+                .WithTitle($"{user.Username} " + user.Nickname ?? "")
+                .WithThumbnailUrl(user.GetAvatarUrl())
+                .AddField("ID", user.Id, true)
+                .AddField("Account created", user.CreatedAt.ToLocalTime(), true)
+                .AddField("Joined at", user.JoinedAt.Value.ToLocalTime(), true)
+                .AddField("Roles", Format.Code($"{string.Join(", ", user.GetRoles().Select(x => x.Name))}"))
+                .Build();
+
+            await ReplyAsync(string.Empty, embed: eb);
+            //await Context.Channel.SendAuthorAsync(user, $"{user.Username} | {user.Status}\n\n" +
+            //Format.Bold("Nickname: ") + user.Nickname ?? "None" +
+            //"\n" +
+            //Format.Bold("Joined: ") + user.JoinedAt.Value.DateTime +
+            //"\n" + Format.Bold("Created: ") + user.CreatedAt.DateTime +
+            //"\n" + Format.Bold($"Roles ({user.GetRoles().Count()}): ") + $"{string.Join(", ", user.GetRoles().Select(x => x.Mention))}", $"ID: {user.Id}");
         }
 
         [Command("Botinfo"), Summary("Displays bot information")]
         public async Task BotInfo()
         {
             var application = await Context.Client.GetApplicationInfoAsync();
-            var footer = "https://i.imgur.com/mCnQNtK.jpg?1";
-            //var eb = new EmbedBuilder
-            //{
-
-            //    ThumbnailUrl = Context.Client.CurrentUser.GetAvatarUrl(),
-            //    Description = $"{Format.Bold("Bot Info")}\n" +
-            //                  $"- Author: {application.Owner.Mention}\n" +
-            //                  $"- Library: Discord.Net ({DiscordConfig.Version})\n" +
-            //                  $"- Kernel: {Environment.OSVersion}\n" +
-            //                  "- PostgreSQL Version: 10.1\n" +
-            //                  $"- Runtime: {RuntimeInformation.FrameworkDescription} {RuntimeInformation.OSArchitecture}\n" +
-            //                  $"- Uptime: {(DateTime.Now - Process.GetCurrentProcess().StartTime):dd\\.hh\\:mm\\:ss}\n\n" +
-
-            //        $"{Format.Bold("Stats")}\n" +
-            //        $"- Heap Size: {Math.Round(GC.GetTotalMemory(true) / (1024.0 * 1024.0), 2)} MB\n" +
-            //        $"- Guilds Served: {Context.Client.Guilds.Count}\n" +
-            //        $"- Total Commands: {_command.Commands.Count()}\n" +
-            //        $"- Channels: {Context.Client.Guilds.Sum(g => g.TextChannels.Count)}\n" +
-            //        $"- Users: {Context.Client.Guilds.Sum(g => g.Users.Count)}\n"
-            //};
-            //eb.WithFooter("Made with Discord.NET", "https://i.imgur.com/mCnQNtK.jpg?1");
-            //eb.WithColor(Utils.GetRandomColor());
-            //await ReplyAsync(string.Empty, embed: eb.Build());
 
             await Context.Channel.SendConfirmAsync("", $"{Format.Bold("Bot Info")}\n" +
                               $"- Author: {application.Owner.Mention}\n" +
@@ -215,6 +202,7 @@ namespace mummybot.Modules.Utility
         }
 
         [Command("Membercount"), Summary("Guild member count")]
-        public async Task MemberCount() => await Context.Channel.SendConfirmAsync($"{Context.Guild.MemberCount} users in this guild");
+        public async Task MemberCount() 
+            => await Context.Channel.SendConfirmAsync($"{Context.Guild.MemberCount} users in this guild");
     }
 }

@@ -30,23 +30,23 @@ namespace mummybot.Modules.Utility
             await Context.Channel.SendAuthorAsync(user, message.UpdatedContent ?? message.Content, createdAt);
         }
 
-        [Command("delmsg"), Summary("List's deleted messages of a user")]
-        public async Task DeletedMessages(SocketGuildUser user)
+        [Command("Undelete"), Summary("List's deleted messages of a user"), Alias("ud")]
+        public async Task DeletedMessages(SocketGuildUser arg = null)
         {
+            var user = arg ?? Context.User;
             if (user.IsBot) return;
 
-            var messages = Database.MessageLogs.Where(m => m.Authorid.Equals(user.Id) && m.Guildid.Equals(Context.Guild.Id) && m.Deleted).Take(5);
+            //var messages = Database.MessageLogs.Where(m => m.Authorid.Equals(user.Id) && m.Guildid.Equals(Context.Guild.Id) && m.Deleted)
+            //    .OrderBy(m => m.Createdat).Take(10);
+            var messages = Database.MessageLogs.Where(m => m.Authorid.Equals(user.Id) && m.Channelid.Equals(Context.Channel.Id)
+                && m.Guildid.Equals(Context.Guild.Id) && m.Deleted).OrderByDescending(x => x.Id).Take(10);
+
             var sb = new StringBuilder();
 
             foreach (var msg in messages)
-            {
-                if (msg.Content.Length > 50)
-                    sb.AppendLine($"MSG ID ({msg.Messageid})\n" + msg.Content.Substring(0, msg.Content.Length / 2) + "...\n");
-                else
-                    sb.AppendLine($"MSG ID ({msg.Messageid})\n" + msg.Content + "\n");
-            }
+                sb.AppendLine($"``{msg.Createdat.ToLocalTime()}``\n{msg.UpdatedContent ?? msg.Content}");
 
-            await Context.Channel.SendConfirmAsync(string.Empty, sb.ToString(), footer: $"More info £source <message id>", author: user);
+            await ReplyAsync($"Last {messages.Count()} deleted messages from {Format.Bold(Utils.FullUserName(user))}:\n" + sb.ToString());
         }
 
         [Command("Source"), Summary("Fetch info about a message using message id")]

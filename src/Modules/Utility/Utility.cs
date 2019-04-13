@@ -32,6 +32,18 @@ namespace mummybot.Modules.Utility
             await Context.Channel.SendAuthorAsync(user, string.Join("\n", roles.Select(x => x.Mention)));
         }
 
+        [Command("ListRoles"), Summary("Display all guild roles")]
+        public async Task ListRoles()
+        {
+            var roles = Context.Guild.Roles;
+            var sb = new StringBuilder();
+
+            foreach (var role in roles)
+                sb.AppendLine($"``{role.Name}: {role.Id} {role.Color} MEMBERS: {role.Members.Count()}``");
+
+            await Context.Channel.SendConfirmAsync(sb.ToString(), null);
+        }
+
         [Command("Ping")]
         public async Task Ping()
         {
@@ -61,7 +73,7 @@ namespace mummybot.Modules.Utility
             }
         }
 
-        [Command("Checkperms")]
+        [Command("Checkperms"), Summary("View permissions of a user")]
         public async Task Perms(IGuildUser arg = null)
         {
             var sb = new StringBuilder();

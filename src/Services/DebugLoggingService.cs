@@ -30,7 +30,7 @@ namespace mummybot.Services
             var debugText =
                 $"{DateTime.UtcNow:O} [{msg.Severity}] {msg.Source} : {msg.Exception?.ToString() ?? msg.Message}";
 
-            await File.AppendAllTextAsync(LogFile, debugText + "\n").ConfigureAwait(false);
+            //await File.AppendAllTextAsync(LogFile, debugText + "\n").ConfigureAwait(false);
 
             switch (msg.Severity)
             {

@@ -7,7 +7,6 @@ using Discord.WebSocket;
 using mummybot.Services;
 using mummybot.Extensions;
 using Microsoft.EntityFrameworkCore;
-using mummybot.Attributes;
 
 namespace mummybot.Modules
 {

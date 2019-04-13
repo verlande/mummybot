@@ -15,18 +15,6 @@ namespace mummybot.Modules.General
 {
     public partial class General : ModuleBase
     {
-        [Command("Cat"), Summary("Random cat image")]
-        public async Task Cat()
-        {
-            const string Url = "https://aws.random.cat/meow";
-            using (var http = new HttpClient())
-            {
-                var res = await http.GetStringAsync(Url).ConfigureAwait(false);
-                var cat = JsonConvert.DeserializeObject<Cats>(res);
-                await ReplyAsync(string.Empty, embed: new EmbedBuilder().WithColor(Utils.GetRandomColor()).WithImageUrl(cat.File).Build());
-            }
-        }
-
         [Command("Bible"), Remarks("£bible exodus 21:15"), Cooldown(10, true)]
         public async Task Bible(string passage = null, string chapverse = null)
         {

@@ -2,7 +2,9 @@
 {
     public class Quotes
     {
-        internal readonly string[] QuoteList = new string[] {    "What, you ran out of donuts?",
+        internal readonly string[] QuoteList = new string[] 
+        {
+      "What, you ran out of donuts?",
       "You can talk about this in the shower with your buddies!",
       "Fuck you, one time!",
       "Fuck you po-po!",

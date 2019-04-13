@@ -13,11 +13,13 @@ namespace mummybot.Services
     {
         private readonly DiscordSocketClient _discord;
         private readonly CommandService _commands;
+        private IServiceProvider _provider;
 
-        public StartupService(DiscordSocketClient discord, CommandService commands)
+        public StartupService(DiscordSocketClient discord, CommandService commands, IServiceProvider provider)
         {
             _discord = discord;
             _commands = commands;
+            _provider = provider;
             
             CancellationToken cancellationToken = new CancellationToken();
             Task timerTask = RunPeriodically(Status, TimeSpan.FromSeconds(25), cancellationToken);
@@ -27,10 +29,10 @@ namespace mummybot.Services
         {
             var config = new ConfigService();
             
-            await _discord.LoginAsync(TokenType.Bot, config.Config["token"]);
-            await _discord.StartAsync();
+            await _discord.LoginAsync(TokenType.Bot, config.Config["token"]).ConfigureAwait(false);
+            await _discord.StartAsync().ConfigureAwait(false);
             await _discord.SetStatusAsync(UserStatus.Online);
-            await _commands.AddModulesAsync(Assembly.GetEntryAssembly());
+            await _commands.AddModulesAsync(this.GetType().GetTypeInfo().Assembly, _provider);
         }
 
         private async void Status()
