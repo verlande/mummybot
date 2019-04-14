@@ -5,6 +5,7 @@ using Discord;
 using Discord.WebSocket;
 using mummybot.Models;
 using Microsoft.EntityFrameworkCore;
+using NLog;
 
 namespace mummybot.Services
 {
@@ -12,6 +13,7 @@ namespace mummybot.Services
     {
         private readonly DiscordSocketClient _discord;
         private readonly mummybotDbContext _context;
+        private readonly Logger _log;
 
         public UserService(DiscordSocketClient discord, mummybotDbContext context)
         {
@@ -22,6 +24,8 @@ namespace mummybot.Services
             _discord.UserJoined += UserJoin;
             _discord.UserLeft += UserLeft;
             _discord.GuildUpdated += GuildUpdated;
+
+            _log = LogManager.GetCurrentClassLogger();
         }
 
         public async Task DownloadUsers(SocketGuild guild)
@@ -104,7 +108,7 @@ namespace mummybot.Services
                         await channel.SendMessageAsync(greeting).ConfigureAwait(false);
                     }
                 }
-                catch (Exception ex) { Console.WriteLine(ex); }
+                catch (Exception ex) { _log.Error(ex); }
             });
 
             return Task.CompletedTask;
@@ -127,7 +131,7 @@ namespace mummybot.Services
                     }
                     await RemoveUser(guildUser);
                 }
-                catch (Exception ex) { Console.WriteLine(ex); }
+                catch (Exception ex) { _log.Error(ex); }
             });
 
             return Task.CompletedTask;
@@ -136,7 +140,6 @@ namespace mummybot.Services
         private async Task GuildUpdated(SocketGuild before, SocketGuild after)
         {
             if (before.Name.Equals(after.Name) || before.OwnerId.Equals(after.OwnerId)) return;
-            Console.WriteLine($"{before.Name}\t{after.Name}");
 
             var ownerId = await _context.Guilds.SingleAsync(g => g.OwnerId.Equals(after.OwnerId));
             if (ownerId == null)
@@ -170,7 +173,7 @@ namespace mummybot.Services
                     });
                     await _context.SaveChangesAsync();
                 }
-                catch (Exception ex) { Console.WriteLine(ex); }
+                catch (Exception ex) { _log.Error(ex); }
             }
         }
 

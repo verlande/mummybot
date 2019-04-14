@@ -1,4 +1,5 @@
 using Discord.Commands;
+using NLog;
 
 namespace mummybot.Modules
 {
@@ -6,5 +7,8 @@ namespace mummybot.Modules
     public class ModuleBase : ModuleBase<SocketCommandContext>
     {
         public mummybotDbContext Database { get; set; }
+        public Logger _log;
+
+        public ModuleBase() => _log = LogManager.GetCurrentClassLogger();
     }
 }

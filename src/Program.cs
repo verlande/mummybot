@@ -55,7 +55,7 @@ namespace mummybot
             provider.GetRequiredService<UserService>();
             provider.GetRequiredService<CommandService>();
             provider.GetRequiredService<CommandHandlerService>();
-
+            NLogSetup.SetupLogger();
             await Task.Delay(-1).ConfigureAwait(false);
         }
     }

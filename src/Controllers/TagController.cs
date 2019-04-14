@@ -80,7 +80,6 @@ namespace mummybot.Controllers
                 .AddField("Last used by", _tag.LastUsedBy == null ? "Nobody" : _discord.GetUser((ulong) _tag.LastUsedBy).Mention, true)
                 .WithColor(Utils.GetRandomColor())
                 .Build();
-
         }
     }
 }
