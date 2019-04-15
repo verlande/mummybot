@@ -32,9 +32,8 @@ namespace mummybot.Controllers
             => _tag != null ? _tag.Content : $"Tag ``{name}`` doesn't exist";
 
         public void AddUse()
-        {
-            if (_tag != null)
-                _tag.Uses = _tag.Uses + 1;
+        { 
+            if (_tag != null) _tag.Uses += 1;
         }
 
         public bool Exists()
