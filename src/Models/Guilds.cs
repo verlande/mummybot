@@ -11,6 +11,6 @@ namespace mummybot.Models
         public string Greeting { get; set; }
         public string Goodbye { get; set; }
         public ulong? GreetChl { get; set; }
-        //public ulong? ModLog { get; set; }
+        public bool MessageLogging { get; set; }
     }
 }

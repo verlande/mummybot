@@ -198,6 +198,8 @@ namespace mummybot
                 entity.Property(e => e.Goodbye).HasColumnName("goodbye");
 
                 entity.Property(e => e.GreetChl).HasColumnName("greetchl");
+
+                entity.Property(e => e.MessageLogging).HasColumnName("messagelogging");
             });
         }
     }

@@ -8,7 +8,7 @@ using mummybot.Services;
 using mummybot.Extensions;
 using Microsoft.EntityFrameworkCore;
 
-namespace mummybot.Modules
+namespace mummybot.Modules.Tag
 {
     [Name("Tags"), Group("tag"), Alias("t")]
     public class TagModule : ModuleBase
@@ -34,7 +34,7 @@ namespace mummybot.Modules
         [Command("Create"), Summary("Creates a tag")]
         public async Task CreateTag([Summary("Max length = 12")] string name, [Remainder, Summary("Max length = 255")]
             string content)
-        {                
+        {
             var blacklistCommands = _commands.Commands.Select(c => c.Name).ToList();
             var isTagBanned = Database.Users.Any(b =>
                 b.TagBanned && b.GuildId.Equals(Context.Guild.Id) && b.UserId.Equals(Context.User.Id));
@@ -44,7 +44,7 @@ namespace mummybot.Modules
                 await ReplyAsync("Tag exists choose another");
                 return;
             }
-            
+
             if (name.Length > 12 || content.Length > 255)
             {
                 await ReplyAsync("Tag name or content length exceeded");
@@ -70,7 +70,7 @@ namespace mummybot.Modules
         [Command("Delete"), Summary("Owners or admins can delete a tag")]
         public async Task Delete(string name)
         {
-            var userRole = (SocketGuildUser) Context.User;
+            var userRole = (SocketGuildUser)Context.User;
             if (userRole.GuildPermissions.Administrator || await Database.Tags.AnyAsync(t => t.Name.Equals(name) && t.Author.Equals(Context.User.Id)))
                 await ReplyAsync(Tags.GetTag(Database, name, Context.Guild).DeleteTag());
         }
@@ -93,9 +93,9 @@ namespace mummybot.Modules
         public async Task ListTags([Summary("List tags belonging to a user")]SocketGuildUser user = null, int page = 1)
         {
             var tagList = Database.Tags.Where(t => t.Guild.Equals(Context.Guild.Id));
-            
+
             page--;
-            
+
             if (page < 0 || page > 20) return;
 
             var tagsPerPage = 15;
@@ -154,7 +154,7 @@ namespace mummybot.Modules
 
         //    await ReplyAsync("Done");
         //}
-        
+
         protected override async void AfterExecute(CommandInfo command)
         {
             base.AfterExecute(command);

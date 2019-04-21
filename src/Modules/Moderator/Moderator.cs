@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using mummybot.Extensions;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using System;
 
 namespace mummybot.Modules.Moderator
 {
@@ -31,6 +32,7 @@ namespace mummybot.Modules.Moderator
                 await ReplyAsync($"{user.Nickname} has been unbanned from creating tags");
             }
         }
+
         [Command("Nick"), Summary("Sets this bots nickname"), RequireUserPermission(GuildPermission.ManageNicknames)]
         public async Task Nick([Remainder] string nickname)
         {

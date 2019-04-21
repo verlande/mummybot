@@ -8,7 +8,7 @@ using Discord.Commands;
 namespace mummybot.Modules
 {
     [Group("Help")]
-    public class HelpModule : ModuleBase<SocketCommandContext>
+    public class HelpModule : ModuleBase
     {
         private readonly CommandService _commands;
         private readonly IServiceProvider _map;
@@ -32,7 +32,7 @@ namespace mummybot.Modules
             };
 
             if (module == String.Empty)
-                foreach (var mod in _commands.Modules.Where(m => m.Parent == null && m.Name != "ModuleBase"))
+                foreach (var mod in _commands.Modules.Where(m => m.Parent == null && m.Name != "ModuleBase" && m.Name != "Help").OrderBy(x => x.Name))
                 {
                     AddHelp(mod, ref embed);
                 }

@@ -22,7 +22,7 @@ namespace mummybot.Services
             };
 
             config.AddRule(LogLevel.Trace, LogLevel.Fatal, logConsole);
-            config.AddRule(LogLevel.Info, LogLevel.Fatal, logFile);
+            config.AddRule(LogLevel.Debug, LogLevel.Fatal, logFile);
 
             LogManager.Configuration = config;
         }

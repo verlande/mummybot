@@ -23,9 +23,8 @@ namespace mummybot.Controllers
             if (_tag == null)
                 return $"``{_tag.Name}`` does not exist";
 
-            var reply = $"``{_tag.Name}`` deleted";
             _context.Tags.Remove(_tag);
-            return reply;
+            return $"``{_tag.Name}`` deleted"; ;
         }
 
         public string GetContent(string name)
