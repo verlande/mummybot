@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 
 namespace mummybot.Modules
 {
+    [RequireContext(ContextType.Guild)]
     public abstract class ModuleBase : Discord.Commands.ModuleBase<SocketCommandContext>
     {
         public string ModuleTypeName { get; }
