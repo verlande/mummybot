@@ -35,6 +35,7 @@ namespace mummybot
                         options.UseNpgsql(new ConfigService().Config["dbstring"]
                             );
                     }, ServiceLifetime.Transient)
+                .AddSingleton<Modules.Tag.Services.TagService>()
                 .AddSingleton<MessageService>()
                 .AddSingleton<GuildService>()
                 .AddSingleton<UserService>()
