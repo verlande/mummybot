@@ -12,9 +12,7 @@ namespace mummybot.Modules.Tag.Controllers
     {
         private readonly DiscordSocketClient _discord;
         private readonly mummybotDbContext _context;
-        private Tags _tag;
-        private mummybotDbContext context;
-        private readonly Models.Tags tag;
+        private readonly Tags _tag;
 
         public TagController(mummybotDbContext context, DiscordSocketClient discord, Tags tag)
         {
