@@ -1,10 +1,14 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
+//using mummybot.Services.Database.Models;
+using NadekoBot.Core.Services.Database.Models;
 using mummybot.Models;
 using NLog;
 
@@ -16,6 +20,7 @@ namespace mummybot.Services
         private readonly CommandService _commands;
         private mummybotDbContext _context;
         private Logger _log;
+
 
         public GuildService(DiscordSocketClient discord, CommandService commands, mummybotDbContext context)
         {
@@ -29,30 +34,35 @@ namespace mummybot.Services
             _log = LogManager.GetCurrentClassLogger();
         }
 
+        public List<ulong> GetCurrentGuildIds()
+        {
+            return _context.Guilds.Select(x => x.GuildId).ToList();
+        }
+
         private Task JoinedGuild(SocketGuild guild)
         {
-            var _ = Task.Run(async () =>
-            {
-                var guildExists = await _context.Guilds.SingleAsync(x => x.GuildId == guild.Id);
-                if (guildExists == null)
-                {
-                    await Save(new Guilds
-                    {
-                        GuildId = guild.Id,
-                        GuildName = guild.Name,
-                        OwnerId = guild.OwnerId,
-                        Region = guild.VoiceRegionId
-                    });
-                    await _discord.GetGuild(guild.Id).DefaultChannel.SendMessageAsync("morning");
-                }
-                else
-                {
-                    guildExists.Active = true;
-                    await Save(guildExists);
-                }
-                await _discord.GetGuild(guild.Id).DefaultChannel.SendMessageAsync("ty for adding me back");
-                await SaveUsers(guild.Users.ToList());
-            });
+            //var _ = Task.Run(async () =>
+            //{
+            //    var guildExists = await _context.Guilds.SingleAsync(x => x.GuildId == guild.Id);
+            //    if (guildExists == null)
+            //    {
+            //        //await Save(new Models.Guilds
+            //        //{
+            //        //    GuildId = guild.Id,
+            //        //    GuildName = guild.Name,
+            //        //    OwnerId = guild.OwnerId,
+            //        //    Region = guild.VoiceRegionId
+            //        //});
+            //        await _discord.GetGuild(guild.Id).DefaultChannel.SendMessageAsync("morning");
+            //    }
+            //    else
+            //    {
+            //        guildExists.Active = true;
+            //        await Save(guildExists);
+            //    }
+            //    await _discord.GetGuild(guild.Id).DefaultChannel.SendMessageAsync("ty for adding me back");
+            //    await SaveUsers(guild.Users.ToList());
+            //});
             return Task.CompletedTask;
         }
 

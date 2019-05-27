@@ -34,23 +34,28 @@ namespace mummybot.Modules.Moderator
         }
 
         [Command("Nick"), Summary("Sets this bots nickname"), RequireUserPermission(GuildPermission.ManageNicknames)]
-        public async Task Nick([Remainder] string nickname)
-        {
-            await Context.Guild.GetUser(Context.Client.CurrentUser.Id).ModifyAsync(x => x.Nickname = nickname);
-        }
+        public async Task Nick([Remainder] string nickname) 
+            => await Context.Guild.GetUser(Context.Client.CurrentUser.Id).ModifyAsync(x => x.Nickname = nickname);
 
-        [Command("Setnick"), RequireBotPermission(GuildPermission.ManageNicknames)]
-        public async Task Nick(IGuildUser arg, [Remainder] string newNick)
+        [Command("Setnick"), Summary("Set a users nickname") , RequireBotPermission(GuildPermission.ManageNicknames)]
+        public async Task Nick(IGuildUser arg, [Remainder] string nickname)
         {
-            if (string.IsNullOrWhiteSpace(newNick)) return;
-
-            await arg.ModifyAsync(u => u.Nickname = newNick).ConfigureAwait(false);
+            if (string.IsNullOrWhiteSpace(nickname)) return;
+            await arg.ModifyAsync(u => u.Nickname = nickname).ConfigureAwait(false);
         }
 
         [Command("Kick"), RequireBotPermission(GuildPermission.KickMembers), RequireUserPermission(GuildPermission.KickMembers)]
-        public async Task Kick(IGuildUser user, string reason = null) => await user.KickAsync(reason);
+        public async Task Kick(IGuildUser user, string reason = null) 
+            => await user.KickAsync(reason);
 
-        [Command("Clearbot"), Summary("Clears messagea from all bots"), RequireBotPermission(GuildPermission.ManageMessages)]
+        [Command("Ban"), RequireUserPermission(GuildPermission.BanMembers), RequireBotPermission(GuildPermission.BanMembers)]
+        public async Task Ban (IGuildUser user, string reason = null)
+        {
+            await user.BanAsync(0, reason);
+            await Context.Channel.SendConfirmAsync(Format.Bold(Utils.FullUserName((SocketUser)user) + " has been banned"));
+        }
+
+        [Command("Clearbot"), Summary("Clears bot messages"), RequireBotPermission(GuildPermission.ManageMessages)]
         public async Task Clearbot()
         {
             var msgs = await Context.Channel.GetMessagesAsync().FlattenAsync();
@@ -58,12 +63,12 @@ namespace mummybot.Modules.Moderator
             await ((ITextChannel)Context.Channel).DeleteMessagesAsync(result);
         }
 
-        [Command("clearinv")]
+        [Command("Clearinv"), Summary("Clear all invite links")]
         public async Task clearInv()
         {
             var invites = Context.Guild.GetInvitesAsync().ConfigureAwait(false).GetAwaiter().GetResult();
             foreach (var inv in invites) await inv.DeleteAsync();
-            await Context.Channel.SendConfirmAsync($"Deleted {invites.Count} invites");
+            await Context.Channel.SendConfirmAsync($"Deleted {invites.Count} invite links");
         }
 
         protected override async void AfterExecute(CommandInfo command)

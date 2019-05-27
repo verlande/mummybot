@@ -7,12 +7,13 @@ using System.Text;
 using System.Threading.Tasks;
 using mummybot.Extensions;
 using Microsoft.EntityFrameworkCore;
+using mummybot.Attributes;
 
 namespace mummybot.Modules.Utility
 {
     public partial class Utility : ModuleBase
     {
-        [Command("Snipe"), Summary("Display last deleted message")]
+        [Command("Snipe"), Summary("Display last deleted message"), IsLogging()]
         public async Task Snipe()
         {
             var message = await Database.MessageLogs.Where(m => m.Guildid.Equals(Context.Guild.Id) && m.Deleted && m.Channelid.Equals(Context.Channel.Id))

@@ -8,29 +8,43 @@ using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Timers;
 using System.Collections.Immutable;
+using System.Threading.Tasks;
+using System.Threading;
 using Discord.Net;
 using System.IO;
 using mummybot.Extensions;
 using NLog;
+using mummybot.Common;
+using Timer = System.Threading.Timer;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace mummybot.Services
 {
-    public class CommandHandlerService
+    public class CommandHandlerService : INService
     {
         private readonly DiscordSocketClient _discord;
         private readonly CommandService _commands;
         private IServiceProvider _provider;
         public readonly ConfigService _config;
         private readonly Logger _log;
-
         public string DefaultPrefix { get; private set; }
+
+        private IEnumerable<IEarlyBehavior> _earlyBehaviors;
+        private IEnumerable<IInputTransformer> _inputTransformers;
+        private IEnumerable<ILateBlocker> _lateBlockers;
+        private IEnumerable<ILateExecutor> _lateExecutors;
 
         public event Func<IUserMessage, CommandInfo, Task> CommandExecuted = delegate { return Task.CompletedTask; };
         public event Func<CommandInfo, ITextChannel, string, Task> CommandErrored = delegate { return Task.CompletedTask; };
         public event Func<IUserMessage, Task> OnMessageNoTrigger = delegate { return Task.CompletedTask; };
 
+
         //userid/msg count
         public ConcurrentDictionary<ulong, uint> UserMessagesSent { get; } = new ConcurrentDictionary<ulong, uint>();
+        public ConcurrentHashSet<ulong> UsersOnShortCooldown { get; } = new ConcurrentHashSet<ulong>();
+        private readonly Timer _clearUsersOnShortCooldown;
+        private const int GlobalCommandsCooldown = 2000;
+
 
         public CommandHandlerService(DiscordSocketClient discord, CommandService commands, ConfigService config, IServiceProvider provider)
         {
@@ -42,15 +56,70 @@ namespace mummybot.Services
             DefaultPrefix = _config.Config["prefix"];
             _log = LogManager.GetCurrentClassLogger();
 
+            _clearUsersOnShortCooldown = new Timer(_ =>
+            {
+                UsersOnShortCooldown.Clear();
+            }, null, GlobalCommandsCooldown, GlobalCommandsCooldown);
+
+
             _discord.MessageReceived += MessageReceivedHandler;
         }
 
-        private Task LogSuccessfulExecution(IUserMessage usrMsg, ITextChannel channel)
+        public void AddServices(IServiceCollection services)
+        {
+            _lateBlockers = services.Where(x => x.ImplementationType?.GetInterfaces().Contains(typeof(ILateBlocker)) ?? false)
+                .Select(x => _provider.GetService(x.ImplementationType) as ILateBlocker)
+                .ToArray();
+
+            _lateExecutors = services.Where(x => x.ImplementationType?.GetInterfaces().Contains(typeof(ILateExecutor)) ?? false)
+                .Select(x => _provider.GetService(x.ImplementationType) as ILateExecutor)
+                .ToArray();
+
+            _inputTransformers = services.Where(x => x.ImplementationType?.GetInterfaces().Contains(typeof(IInputTransformer)) ?? false)
+                .Select(x => _provider.GetService(x.ImplementationType) as IInputTransformer)
+                .ToArray();
+
+            _earlyBehaviors = services.Where(x => x.ImplementationType?.GetInterfaces().Contains(typeof(IEarlyBehavior)) ?? false)
+                .Select(x => _provider.GetService(x.ImplementationType) as IEarlyBehavior)
+                .ToArray();
+        }
+
+        public Task StartHandling()
+        {
+            _discord.MessageReceived += (msg) => { var _ = Task.Run(() => MessageReceivedHandler(msg)); return Task.CompletedTask; };
+            return Task.CompletedTask;
+        }
+
+        public async Task ExecuteExternal(ulong? guildId, ulong channelId, string commandText)
+        {
+            if (guildId != null)
+            {
+                var guild = _discord.GetGuild(guildId.Value);
+                if (!(guild?.GetChannel(channelId) is SocketTextChannel channel))
+                {
+                    _log.Warn("Channel for external execution not found");
+                    return;
+                }
+
+                try
+                {
+                    IUserMessage msg = await channel.SendMessageAsync(commandText).ConfigureAwait(false);
+                    msg = (IUserMessage)await channel.GetMessageAsync(msg.Id).ConfigureAwait(false);
+                    await TryRunCommand(guild, channel, (SocketUserMessage)msg).ConfigureAwait(false);
+                    //msg.DeleteAfter(5);
+                }
+                catch { }
+            }
+        }
+
+        public float _oneThousandth = 1.0f / 1000;
+
+        private Task LogSuccessfulExecution(IUserMessage usrMsg, ITextChannel channel, params int[] execPoints)
         {
             bool normal = true;
             if (normal)
             {
-                _log.Info($"" +
+                _log.Info($"Command executed after " + string.Join("/", execPoints.Select(x => (x * _oneThousandth).ToString("F3"))) + "s\n\t" +
                         "User: {0}\n\t" +
                         "Server: {1}\n\t" +
                         "Channel: {2}\n\t" +
@@ -72,13 +141,13 @@ namespace mummybot.Services
             return Task.CompletedTask;
         }
 
-        private async Task LogErroredExecution(string errorMessage, IUserMessage usrMsg, ITextChannel channel)
+        private async Task LogErroredExecution(string errorMessage, IUserMessage usrMsg, ITextChannel channel, params int[] execPoints)
         {
             await channel.SendErrorAsync(string.Empty, errorMessage);
             bool normal = true;
             if (normal)
             {
-                _log.Error($"" +
+                _log.Error($"Command error at" + string.Join("/", execPoints.Select(x => (x * _oneThousandth).ToString("F3"))) + "s\n\t" +
                             "User: {0}\n\t" +
                             "Server: {1}\n\t" +
                             "Channel: {2}\n\t" +
@@ -119,11 +188,11 @@ namespace mummybot.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                _log.Warn(ex.Message);
 
                 if (ex.InnerException != null)
                 {
-                    Console.WriteLine(ex.InnerException);
+                    _log.Warn(ex.InnerException);
                 }
             }
         }
@@ -131,10 +200,10 @@ namespace mummybot.Services
         private async Task TryRunCommand(SocketGuild guild, ISocketMessageChannel channel, SocketUserMessage usrMsg)
         {
             var execTime = Environment.TickCount;
-
             var messageContent = usrMsg.Content;
             var isPrefixCommand = messageContent.StartsWith(DefaultPrefix, StringComparison.InvariantCultureIgnoreCase);
             var exec2 = Environment.TickCount - execTime;
+
 
             if (messageContent.StartsWith(DefaultPrefix, StringComparison.InvariantCultureIgnoreCase))
             {
@@ -142,12 +211,12 @@ namespace mummybot.Services
 
                 if (Success)
                 {
-                    await LogSuccessfulExecution(usrMsg, channel as ITextChannel).ConfigureAwait(false);
+                    await LogSuccessfulExecution(usrMsg, channel as ITextChannel, exec2, execTime).ConfigureAwait(false);
                     return;
                 }
                 else if (Error != null)
                 {
-                    await LogErroredExecution(Error, usrMsg, channel as ITextChannel);
+                    await LogErroredExecution(Error, usrMsg, channel as ITextChannel, exec2, execTime);
                     if (guild != null)
                         await CommandErrored(Info, channel as ITextChannel, Error).ConfigureAwait(false);
                 }

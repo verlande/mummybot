@@ -5,6 +5,10 @@ namespace mummybot
 {
     public class mummybotDbContext : DbContext
     {
+        public mummybotDbContext()
+        {
+        }
+
         public mummybotDbContext(DbContextOptions<mummybotDbContext> options)
             : base(options)
         {

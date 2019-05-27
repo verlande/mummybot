@@ -56,10 +56,11 @@ namespace mummybot.Services
             await _context.SaveChangesAsync();
         }
 
-        private Task UserUpdated(SocketGuildUser before, SocketGuildUser after)
+        private Task UserUpdated(SocketGuildUser before, SocketGuildUser uAfter)
         {
             var _ = Task.Run(async () =>
             {
+                if (!(uAfter is SocketGuildUser after)) return;
                 var user = await _context.Users.SingleAsync(u => u.UserId.Equals(after.Id) && u.GuildId.Equals(after.Guild.Id));
 
                 if (!before.Nickname.Equals(after.Nickname))

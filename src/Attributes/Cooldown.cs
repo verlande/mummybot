@@ -3,9 +3,23 @@ using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using System.Linq;
 
 namespace mummybot.Attributes
 {
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
+    public sealed class IsLogging : PreconditionAttribute
+    {
+        public mummybotDbContext Database { get; }
+
+        public override Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
+        {
+            var guildId = Database.Guilds.Single(x => x.GuildId.Equals(context.Guild.Id));
+            if (guildId.MessageLogging) return Task.FromResult(PreconditionResult.FromSuccess());
+            return Task.FromResult(PreconditionResult.FromError("Command disabled as this guild has logging disabled"));
+        }
+    }
+
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
     public sealed class Cooldown : PreconditionAttribute
     {
