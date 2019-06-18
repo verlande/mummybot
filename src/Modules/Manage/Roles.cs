@@ -14,7 +14,7 @@ namespace mummybot.Modules.Manage
     public partial class Manage
     {
         [RequireBotPermission(GuildPermission.ManageRoles), RequireUserPermission(GuildPermission.ManageRoles)]
-        public class Roles : mummybotSubmodule//<RoleCommandService>
+        public class Roles : mummybotSubmodule
         {
             [Command("Role"), Summary("Add or remove a role")]
             public async Task Role(IGuildUser usr, [Remainder] IRole role)
@@ -82,6 +82,60 @@ namespace mummybot.Modules.Manage
                 {
                     await Context.Channel.SendConfirmAsync(role.Mention + " is already mentionable").ConfigureAwait(false);
                 }
+            }
+
+            [Command("Roleinfo"), Alias("ri")]
+            public async Task RoleInfo(SocketRole role)
+            {
+                var eb = new EmbedBuilder
+                {
+                    Title = $"Role Info: {role.Name}",
+                    Description = $"**Position:** {Context.Guild.Roles.Count - role.Position}/{Context.Guild.Roles.Count}\n" +
+                    Format.Bold("Colour: ") + role.Color + "\n" +
+                    $"**{role.Members.Count()} member** | {role.Members.Count(x => x.Status != UserStatus.Offline)} online\n" +
+                    $"**Created:** {role.CreatedAt.UtcDateTime}\n" +
+                    $"**Mentionable**: {role.IsMentionable}\n" +
+                    $"**Permissions:** {string.Join("\n", role.Permissions.ToList())}",
+                    ThumbnailUrl = $"https://www.colorhexa.com/{role.Color.ToString().Substring(1)}.png",
+                    Color = role.Color
+                };
+                eb.WithFooter($"ID: {role.Id}");
+
+                await ReplyAsync(string.Empty, embed: eb.Build());
+            }
+
+            [Command("Roles"), Summary("List roles of a user")]
+            public async Task InRole(IGuildUser arg = null)
+            {
+                var channel = (ITextChannel)Context.Channel;
+                var user = arg ?? (IGuildUser)Context.User;
+                var roles = user.GetRoles().Except(new[] { channel.Guild.EveryoneRole }).OrderBy(r => r.Position);
+
+                await Context.Channel.SendAuthorAsync(user, string.Join("\n", roles.Select(x => x.Mention)));
+            }
+
+            [Command("ListRoles"), Summary("Display all guild roles")]
+            public async Task ListRoles()
+            {
+                var roles = Context.Guild.Roles;
+                var sb = new StringBuilder();
+
+                foreach (var role in roles)
+                    sb.AppendLine($"``{role.Name}: {role.Id} {role.Color} MEMBERS: {role.Members.Count()}``");
+                await ReplyAsync(sb.ToString());
+                //await Context.Channel.SendConfirmAsync(sb.ToString(), null);
+            }
+
+            [Command("Checkperms"), Summary("View permissions of a user")]
+            public async Task Perms(IGuildUser arg = null)
+            {
+                var sb = new StringBuilder();
+                var user = arg ?? (IGuildUser)Context.User;
+                var perms = user.GetPermissions((ITextChannel)Context.Channel);
+
+                foreach (var p in perms.GetType().GetProperties().Where(p => !p.GetGetMethod().GetParameters().Any()))
+                    sb.AppendLine($"{p.Name} : {p.GetValue(perms, null)}");
+                await Context.Channel.SendAuthorAsync(user, sb.ToString(), $"User ID: {user.Id}");
             }
         }
     }

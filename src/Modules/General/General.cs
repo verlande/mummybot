@@ -5,6 +5,7 @@ using Discord.Commands;
 using mummybot.Modules.General.Common;
 using mummybot.Extensions;
 using System.Linq;
+using Discord.WebSocket;
 
 namespace mummybot.Modules.General
 {
@@ -13,6 +14,24 @@ namespace mummybot.Modules.General
         [Command("Clap"), Summary("Clap between words")]
         public async Task Clap([Remainder] string words)
             => await ReplyAsync(words.Replace(" ", ":clap:"));
+
+        [Command("Avatar"), Alias("Av"), Summary("gets user avatar")]
+        public async Task Avatar(SocketUser user = null)
+        {
+            var avatar = user ?? Context.Client.CurrentUser;
+            if (user == null)
+            {
+                var avatarUrl = Context.User.GetAvatarUrl();
+                avatarUrl = avatarUrl.Remove(avatarUrl.Length - 2, 2) + "024";
+                await ReplyAsync($":camera_with_flash:**avatar for {avatar}**\n{avatarUrl}");
+            }
+            else
+            {
+                var avatarUrl = avatar.GetAvatarUrl();
+                avatarUrl = avatarUrl.Remove(avatarUrl.Length - 2, 2) + "024";
+                await ReplyAsync($":camera_with_flash:**avatar for {avatar}**\n{avatarUrl}");
+            }
+        }
 
         [Command("Timezone")]
         public async Task Timezone(int page = 1)
