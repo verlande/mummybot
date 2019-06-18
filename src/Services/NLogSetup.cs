@@ -18,7 +18,7 @@ namespace mummybot.Services
 
             var logConsole = new ColoredConsoleTarget("logconsole")
             {
-                Layout = "${longdate} ${logger:shortName=True} | ${level:uppercase=True} | ${message}"
+                Layout = "${longdate} | ${level:uppercase=True} | ${message}",
             };
 
             config.AddRule(LogLevel.Trace, LogLevel.Fatal, logConsole);

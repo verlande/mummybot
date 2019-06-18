@@ -1,6 +1,6 @@
 # mummybot
 
-[![Build Status](https://travis-ci.org/mummy603/mummybot.svg?branch=master)](https://travis-ci.org/mummy603/mummybot)
+[![Build Status](https://gitlab.com/mummy603/mummybot/badges/dev/pipline.svg)](https://gitlab.com/mummy603/mummybot/tree/dev)
 
 Just another Discord Bot
 
