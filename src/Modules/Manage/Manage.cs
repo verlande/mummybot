@@ -86,19 +86,29 @@ namespace mummybot.Modules.Manage
             if (!conf.MessageLogging)
             {
                 conf.MessageLogging = true;
-                await Context.Channel.SendConfirmAsync("Message logging enabled");
+                await Context.Channel.SendConfirmAsync("Logging enabled");
                 return;
             }
 
-            var msg = await PromptUserConfirmAsync(new EmbedBuilder()
-                .WithDescription("Disabling logged with also disable\n\n``Snipe\nUndelete\nSource``")
-                .WithColor(Utils.GetRandomColor()));
-            if (msg)
+            if (conf.MessageLogging)
             {
-                conf.MessageLogging = false;
-                await ReplyAsync("Disabled Logging");
+                var msg = await PromptUserConfirmAsync(new EmbedBuilder()
+                    .WithDescription("Disabling message logging will disable these commands: " +
+                    "\n``£Snipe\n£Undelete\n£Source``")
+                    .WithColor(Utils.GetRandomColor()));
+                if (msg)
+                {
+                    conf.MessageLogging = false;
+                    await ReplyAsync("Logging has been disabled");
+                }
             }
+        }
+
+        protected override async void AfterExecute(CommandInfo command)
+        {
+            base.AfterExecute(command);
             await Database.SaveChangesAsync();
+            Database.Dispose();
         }
     }
 }
