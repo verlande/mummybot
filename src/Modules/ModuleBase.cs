@@ -31,7 +31,7 @@ namespace mummybot.Modules
         public async Task<bool> PromptUserConfirmAsync(EmbedBuilder embed)
         {
             embed.WithColor(Utils.GetRandomColor())
-                .WithFooter("yes/no");
+                .WithFooter("Type yes/no");
 
             var msg = await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
             try
@@ -40,9 +40,7 @@ namespace mummybot.Modules
                 input = input?.ToUpperInvariant();
 
                 if (input != "YES" && input != "Y")
-                {
                     return false;
-                }
 
                 return true;
             }
