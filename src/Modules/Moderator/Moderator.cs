@@ -33,11 +33,25 @@ namespace mummybot.Modules.Moderator
             }
         }
 
-        [Command("Nick"), Summary("Sets this bots nickname"), RequireUserPermission(GuildPermission.ManageNicknames)]
-        public async Task Nick([Remainder] string nickname)
+        [Command("Prune"), Summary("Prune user messages"), RequireBotPermission(GuildPermission.ManageMessages), RequireUserPermission(GuildPermission.ManageMessages)]
+        public async Task Prune(IGuildUser user)
         {
-            await Context.Guild.GetUser(Context.Client.CurrentUser.Id).ModifyAsync(x => x.Nickname = nickname);
+            var msgs = await Context.Channel.GetMessagesAsync().FlattenAsync();
+            var result = msgs.Where(x => x.Author.Id.Equals(user.Id));
+
+            try
+            {
+                await ((ITextChannel)Context.Channel).DeleteMessagesAsync(result);
+                await Context.Channel.SendConfirmAsync($"Successfully pruned {result.Count()} messages");
+            }
+            catch (Exception ex)
+            {
+                await Context.Channel.SendErrorAsync(string.Empty, ex.Message);
+            }
         }
+
+        [Command("Botnick"), Summary("Sets this bots nickname"), RequireUserPermission(GuildPermission.ManageNicknames)]
+        public async Task Nick([Remainder] string nickname) => await Context.Guild.GetUser(Context.Client.CurrentUser.Id).ModifyAsync(x => x.Nickname = nickname);
 
         [Command("Setnick"), RequireBotPermission(GuildPermission.ManageNicknames)]
         public async Task Nick(IGuildUser arg, [Remainder] string newNick)
@@ -47,10 +61,13 @@ namespace mummybot.Modules.Moderator
             await arg.ModifyAsync(u => u.Nickname = newNick).ConfigureAwait(false);
         }
 
+        [Command("Ban"), RequireBotPermission(GuildPermission.BanMembers), RequireUserPermission(GuildPermission.BanMembers)]
+        public async Task Ban(IGuildUser user, string reason = null) => await user.BanAsync(0, reason);
+
         [Command("Kick"), RequireBotPermission(GuildPermission.KickMembers), RequireUserPermission(GuildPermission.KickMembers)]
         public async Task Kick(IGuildUser user, string reason = null) => await user.KickAsync(reason);
 
-        [Command("Clearbot"), Summary("Clears messagea from all bots"), RequireBotPermission(GuildPermission.ManageMessages)]
+        [Command("Clearbots"), Summary("Clears messages from all bots"), RequireBotPermission(GuildPermission.ManageMessages)]
         public async Task Clearbot()
         {
             var msgs = await Context.Channel.GetMessagesAsync().FlattenAsync();
