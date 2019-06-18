@@ -50,6 +50,29 @@ namespace mummybot.Modules.General
             timezones.Length, timezonesPerPage).ConfigureAwait(false);
         }
 
+        [Command("Fame"), Summary("Add a message to the Hall of Fame")]
+        public async Task Fame(IMessage msg)
+        {
+            var channel = Context.Guild.Channels.Single(x => x.Name.Equals("⭐hall-of-fame"));
+
+            if (channel == null)
+            {
+                await Context.Guild.CreateTextChannelAsync("⭐hall-of-fame").ConfigureAwait(false);
+            }
+
+            var eb = new EmbedBuilder()
+                 .WithAuthor(new EmbedAuthorBuilder()
+                 .WithName(Utils.FullUserName((SocketUser)msg.Author))
+                 .WithIconUrl(msg.Author.GetAvatarUrl()))
+                 .WithColor(Utils.GetRandomColor())
+                 .WithDescription(msg.Content)
+                 .WithFooter(new EmbedFooterBuilder()
+                 .WithText($"#{msg.Channel} • {msg.CreatedAt.UtcDateTime}"));
+
+            await Context.Guild.GetTextChannel(channel.Id).SendMessageAsync(string.Empty, embed: eb.Build())
+		    .ConfigureAwait(false).GetAwaiter().GetResult().AddReactionAsync(new Emoji("\uD83C\uDF1F"));
+        }
+
         [Command("Hmm")]
         public async Task Hmm()
         {
