@@ -75,7 +75,7 @@ namespace mummybot.Modules.Moderator
             await ((ITextChannel)Context.Channel).DeleteMessagesAsync(result);
         }
 
-        [Command("clearinv")]
+        [Command("Delinv")]
         public async Task clearInv()
         {
             var invites = Context.Guild.GetInvitesAsync().ConfigureAwait(false).GetAwaiter().GetResult();

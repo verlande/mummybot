@@ -24,7 +24,7 @@ namespace mummybot.Services
             _log = LogManager.GetCurrentClassLogger();
         }
 
-        private async Task OnLog(LogMessage msg)
+        private Task OnLog(LogMessage msg)
         {
             if (!Directory.Exists(LogDirectory))
                 Directory.CreateDirectory(LogDirectory);
@@ -57,7 +57,7 @@ namespace mummybot.Services
                     _log.Debug(msg.Message);
                     break;
             }
-
+            return Task.CompletedTask;
             //await Console.Out.WriteLineAsync(debugText).ConfigureAwait(false);
         }
     }
