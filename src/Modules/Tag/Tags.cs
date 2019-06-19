@@ -88,7 +88,11 @@ namespace mummybot.Modules.Tag
 
                 var tagsPerPage = 15;
 
-                if (!tagList.Any()) await ReplyAsync("This guild does not have any tags");
+                if (!tagList.Any())
+                {
+                    await ReplyAsync("This guild does not have any tags");
+                    return;
+                }
 
                 if (user == null)
                 {
