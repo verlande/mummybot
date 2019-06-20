@@ -18,18 +18,16 @@ namespace mummybot.Modules.Moderator
 
             var result = await Database.Users.SingleAsync(u => u.UserId.Equals(user.Id)
                                                    && u.GuildId.Equals(user.Guild.Id));
+
             if (result != null && !result.TagBanned)
             {
                 result.TagBanned = true;
-                Database.Users.Attach(result);
-
-                await ReplyAsync($"{user.Nickname} has been banned from creating tags");
+                await ReplyAsync($"{user} has been banned from creating tags");
             }
             else if (result != null && result.TagBanned)
             {
                 result.TagBanned = false;
-                Database.Users.Attach(result);
-                await ReplyAsync($"{user.Nickname} has been unbanned from creating tags");
+                await ReplyAsync($"{user} has been unbanned from creating tags");
             }
         }
 
@@ -70,9 +68,19 @@ namespace mummybot.Modules.Moderator
         [Command("Clearbots"), Summary("Clears messages from all bots"), RequireBotPermission(GuildPermission.ManageMessages)]
         public async Task Clearbot()
         {
-            var msgs = await Context.Channel.GetMessagesAsync().FlattenAsync();
-            var result = msgs.Where(x => x.Author.IsBot).Take(100);
-            await ((ITextChannel)Context.Channel).DeleteMessagesAsync(result);
+            try
+            {
+
+                var msgs = await Context.Channel.GetMessagesAsync().FlattenAsync();
+                var result = msgs.Where(x => x.Author.IsBot).Take(100);
+
+                await ((ITextChannel)Context.Channel).DeleteMessagesAsync(result);
+                await ReplyAsync("deleted " + result.Count());
+            }
+            catch (Exception ex)
+            {
+                await Context.Channel.SendErrorAsync(string.Empty, ex.Message);
+            }
         }
 
         [Command("Delinv")]

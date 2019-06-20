@@ -59,6 +59,7 @@ namespace mummybot.Modules.Tag
                 {
                     await Context.Channel.SendErrorAsync("creating tag", "Tag name should be less than 12 chars" +
                         "\nTag content should be less than 255 chars");
+                    return;
                 }
 
                 if (_tag.GetTag(Database, name, Context.Guild).Exists())
