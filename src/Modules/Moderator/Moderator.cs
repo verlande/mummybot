@@ -22,10 +22,6 @@ namespace mummybot.Modules.Moderator
             if (result != null && !result.TagBanned)
             {
                 result.TagBanned = true;
-<<<<<<< HEAD
-=======
-
->>>>>>> dev
                 await ReplyAsync($"{user} has been banned from creating tags");
             }
             else if (result != null && result.TagBanned)
