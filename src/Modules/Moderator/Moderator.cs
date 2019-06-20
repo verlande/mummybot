@@ -21,15 +21,13 @@ namespace mummybot.Modules.Moderator
             if (result != null && !result.TagBanned)
             {
                 result.TagBanned = true;
-                Database.Users.Attach(result);
 
-                await ReplyAsync($"{user.Nickname} has been banned from creating tags");
+                await ReplyAsync($"{user} has been banned from creating tags");
             }
             else if (result != null && result.TagBanned)
             {
                 result.TagBanned = false;
-                Database.Users.Attach(result);
-                await ReplyAsync($"{user.Nickname} has been unbanned from creating tags");
+                await ReplyAsync($"{user} has been unbanned from creating tags");
             }
         }
 
