@@ -50,7 +50,7 @@ namespace mummybot.Modules
 
             await ReplyAsync(String.Empty, embed: embed.Build());
         }
-        
+
         private void AddHelp(ModuleInfo module, ref EmbedBuilder builder)
         {
             foreach (var sub in module.Submodules) AddHelp(sub, ref builder);
@@ -58,11 +58,20 @@ namespace mummybot.Modules
             {
                 f.Name = $"**{module.Name} module**";
                 //f.Value = $"Submodules: {string.Join(", ", module.Submodules.Select(m => m))}" +
-                f.Value = "\n" +
-                          $"Commands: {string.Join(", ", module.Commands.Select(x => $"`{x.Name}`"))}";
+                // f.Value = "\n" +
+                //           $"Commands: {string.Join(", ", module.Commands.Select(x => $"`{x.Name}`"))}";
 
-                if (module.Submodules.Count < 0) f.Value = $"submodules: {string.Join(", ", module.Submodules.Select(m => m))}" + "\n" + $"commands: {string.Join(", ", module.Commands.Select(x => $"`{x.Name}`"))}";
-                else f.Value = "\n" + $"commands: {string.Join("\t ", module.Commands.Select(x => $"`£{x.Name}`"))}";
+            if (module.Submodules.Count < 0)
+                f.Value = $"submodules: {string.Join(", ", module.Submodules.Select(m => m))}" + "\n" + $"commands: {string.Join(", ", module.Commands.Select(x => $"`{x.Name}`"))}";
+            else
+            {
+                var commands = "";
+
+                if (module.Commands.Any(x => x.Aliases.Count > 0))
+                    commands = string.Join("\t", module.Commands.Select(x => $"£{x.Aliases.Last()}"));
+
+                f.Value = $"\nCommands: {commands}";
+            }
 
             });
         }
@@ -79,7 +88,7 @@ namespace mummybot.Modules
         private void AddCommand(CommandInfo command, ref EmbedBuilder embedBuilder)
         {
             embedBuilder.AddField(f =>
-            {               
+            {
                 f.Name = $"**{command.Name}**";
                 f.Value = $"{command.Summary}\n" +
                           (!string.IsNullOrEmpty(command.Remarks) ? $"({command.Remarks})\n" : "") +
@@ -87,7 +96,7 @@ namespace mummybot.Modules
                           $"**Usage:** `£{GetPrefix(command)}{GetAliases(command)}`";
             });
         }
-        
+
         private string GetAliases(CommandInfo command)
         {
             StringBuilder output = new StringBuilder();

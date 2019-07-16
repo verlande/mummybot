@@ -4,12 +4,7 @@ using System;
 using System.Linq;
 using Discord;
 using Discord.WebSocket;
-using mummybot.Services;
 using mummybot.Extensions;
-using Microsoft.EntityFrameworkCore;
-using mummybot.Modules.Tag.Services;
-using mummybot.Modules.Tag.Controllers;
-using System.Text;
 
 namespace mummybot.Modules.Tag
 {
@@ -24,7 +19,7 @@ namespace mummybot.Modules.Tag
             public TagCommands(CommandService commands)
                 => _commands = commands;
 
-            [Command, Summary("Fetch a tag")]
+            [Command, Alias("Get"), Summary("Fetch a tag")]
             public async Task Get(string arg)
             {
                 var tag = _tag.GetTag(Database, arg, Context.Guild);
