@@ -31,8 +31,7 @@ namespace mummybot.Modules.Utility
         [Command("Finddups"), Summary("Find users with matching nicknames"), Alias("fd")]
         public async Task Finddups()
         {
-
-            var dups = Context.Guild.Users.GroupBy(x => x.Nickname).Where(x => x.Skip(1).Any()).SelectMany(x => x);
+            var dups = Context.Guild.Users.GroupBy(x => x.Nickname).Where(x => x.Skip(1).Any()).SelectMany(x => x).Take(10);
 
             var sb = new StringBuilder();
 
@@ -62,19 +61,20 @@ namespace mummybot.Modules.Utility
             }
         }
 
-        [Command("Usernames"), Summary("Show past usernames limited to 10"), Alias("un")]
+        [Command("Pastusername"), Summary("Show past usernames"), Alias("pu")]
         public async Task Usernames(SocketGuildUser arg)
         {
             var user = arg ?? Context.User;
 
-            var result = Database.UsersAudit.Where(u => u.UserId.Equals(user.Id)).Take(10);
+            var result = Database.UsersAudit.Where(u => u.UserId.Equals(user.Id)).Select(x => new { x.Username }).Take(10);
 
             if (!result.Any())
                 await Context.Channel.SendErrorAsync(string.Empty, $"No username history for {Utils.FullUserName(user)}");
             else
             {
                 var sb = new StringBuilder();
-                await result.ForEachAsync(n => sb.AppendLine(Format.Bold(n.Username) + $" - ``{n.ChangedOn}``"));
+                foreach (var res in result.Distinct())
+                    if (!System.String.IsNullOrEmpty(res.Username)) sb.AppendLine(Format.Bold(res.Username));
                 await Context.Channel.SendAuthorAsync((IGuildUser)user, sb.ToString(), $"User ID: {user.Id.ToString()}");
             }
         }

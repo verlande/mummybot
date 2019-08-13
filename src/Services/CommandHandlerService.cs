@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using System.Linq;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
-using System.Timers;
 using System.Collections.Immutable;
 using Discord.Net;
 using System.IO;

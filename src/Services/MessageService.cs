@@ -53,7 +53,7 @@ namespace mummybot.Services
             var _ = Task.Run(async () =>
             {
                 var deletedMessages = cachedmsg.GetOrDownloadAsync();
-                var message = await _context.MessageLogs.SingleAsync(m => m.Messageid == deletedMessages.Result.Id);
+                var message = await _context.MessageLogs.SingleAsync(m => m.Messageid.Equals(deletedMessages.Result.Id));
 
                 message.Deleted = true;
                 message.Deletedat = DateTime.UtcNow;

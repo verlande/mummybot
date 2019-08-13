@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using NLog;
 
 namespace mummybot.Services
 {
@@ -14,15 +15,19 @@ namespace mummybot.Services
         private readonly DiscordSocketClient _discord;
         private readonly CommandService _commands;
         private IServiceProvider _provider;
+        private Logger _log;
 
         public StartupService(DiscordSocketClient discord, CommandService commands, IServiceProvider provider)
         {
             _discord = discord;
             _commands = commands;
             _provider = provider;
+            _log = LogManager.GetCurrentClassLogger();
             
             CancellationToken cancellationToken = new CancellationToken();
             Task timerTask = RunPeriodically(Status, TimeSpan.FromSeconds(25), cancellationToken);
+
+            _discord.Disconnected += Disconnected;
         }
 
         public async Task StartAsync()
@@ -52,7 +57,7 @@ namespace mummybot.Services
                 $"{users} users"
                 
             };
-            await _discord.SetGameAsync(statuses[r.Next(statuses.Length)] + " | £help");
+            await _discord.SetGameAsync($"{statuses[r.Next(statuses.Length)]} | £help", null,  ActivityType.Playing);
         }
 
         private static async Task RunPeriodically(Action action, TimeSpan interval, CancellationToken token)
@@ -69,5 +74,11 @@ namespace mummybot.Services
         //    await Task.Delay((int)executionTime.Subtract(DateTime.Now).TotalMilliseconds);
         //    action();
         //}
+
+        private Task Disconnected(Exception ex)
+        {
+            _log.Warn(ex);
+            return Task.CompletedTask;
+        }
     }
 }

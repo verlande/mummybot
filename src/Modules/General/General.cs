@@ -51,13 +51,27 @@ namespace mummybot.Modules.General
         }
 
         [Command("Fame"), Summary("Add a message to the Hall of Fame")]
-        public async Task Fame(IMessage msg)
+        public async Task Fame(IMessage msg = null)
         {
-            var channel = Context.Guild.Channels.Single(x => x.Name.Equals("⭐hall-of-fame"));
-
-            if (channel == null)
+            if (msg == null)
             {
+                await Context.Channel.SendErrorAsync(string.Empty, "Missing message ID");
+                return;
+            }
+
+            SocketGuildChannel channel = null;
+
+            if (Context.Guild.Channels.Any(x => x.Name.Equals("⭐hall-of-fame")))
+                channel = Context.Guild.Channels.Single(x => x.Name.Equals("⭐hall-of-fame"));
+            else
+            {
+                var prompt = await PromptUserConfirmAsync(new EmbedBuilder()
+                .WithDescription("Guild does not have hall-of-fame channel\nDo you wish to create one?"));
+
+                if (!prompt) return;
+                
                 await Context.Guild.CreateTextChannelAsync("⭐hall-of-fame").ConfigureAwait(false);
+                channel = Context.Guild.Channels.Single(x => x.Name.Equals("⭐hall-of-fame"));
             }
 
             var eb = new EmbedBuilder()

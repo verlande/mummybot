@@ -54,25 +54,21 @@ namespace mummybot.Modules
         private void AddHelp(ModuleInfo module, ref EmbedBuilder builder)
         {
             foreach (var sub in module.Submodules) AddHelp(sub, ref builder);
-            builder.AddField(f =>
-            {
-                f.Name = $"**{module.Name} module**";
-                //f.Value = $"Submodules: {string.Join(", ", module.Submodules.Select(m => m))}" +
-                // f.Value = "\n" +
-                //           $"Commands: {string.Join(", ", module.Commands.Select(x => $"`{x.Name}`"))}";
+                builder.AddField(f =>
+                {
+                    f.Name = $"**{module.Name} module**";
 
-            if (module.Submodules.Count < 0)
-                f.Value = $"submodules: {string.Join(", ", module.Submodules.Select(m => m))}" + "\n" + $"commands: {string.Join(", ", module.Commands.Select(x => $"`{x.Name}`"))}";
-            else
-            {
-                var commands = "";
+                if (module.Submodules.Count < 0)
+                    f.Value = $"submodules: {string.Join(", ", module.Submodules.Select(m => m))}" + "\n" + $"commands: {string.Join(", ", module.Commands.Select(x => $"`{x.Name}`"))}";
+                else
+                {
+                    var commands = string.Empty;
 
-                if (module.Commands.Any(x => x.Aliases.Count > 0))
-                    commands = string.Join("\t", module.Commands.Select(x => $"£{x.Aliases.Last()}"));
+                    if (module.Aliases.Count > 1) commands = string.Join("\t", module.Commands.Select(x => $"``{module.Aliases[1]} {x.Name}``"));
+                    else commands = "\n" + $"{string.Join("\t", module.Commands.Select(x => $"``{x.Name}``"))}";
 
-                f.Value = $"\nCommands: {commands}";
-            }
-
+                    f.Value = commands;
+                }
             });
         }
 
@@ -91,9 +87,8 @@ namespace mummybot.Modules
             {
                 f.Name = $"**{command.Name}**";
                 f.Value = $"{command.Summary}\n" +
-                          (!string.IsNullOrEmpty(command.Remarks) ? $"({command.Remarks})\n" : "") +
-                          (command.Aliases.Any() ? $"**Aliases:** {string.Join(", ", command.Aliases.Select(x => $"`£{x}`"))}\n" : "") +
-                          $"**Usage:** `£{GetPrefix(command)}{GetAliases(command)}`";
+                    (!string.IsNullOrEmpty(command.Remarks) ? $"({command.Remarks})\n" : string.Empty) + 
+                    (command.Aliases.Any() ? $"**Aliases:** {string.Join(", ", command.Aliases.Select(x => $"`{x}`"))}\n" : string.Empty);
             });
         }
 
