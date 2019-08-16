@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Discord.Commands;
 using Discord.WebSocket;
-using mummybot.Controllers;
+using mummybot.Modules.Tag.Controllers;
 using mummybot.Models;
 using Microsoft.EntityFrameworkCore;
 

@@ -5,6 +5,7 @@ using Discord.Commands;
 using mummybot.Modules.General.Common;
 using mummybot.Extensions;
 using System.Linq;
+using Discord.WebSocket;
 
 namespace mummybot.Modules.General
 {
@@ -13,6 +14,24 @@ namespace mummybot.Modules.General
         [Command("Clap"), Summary("Clap between words")]
         public async Task Clap([Remainder] string words)
             => await ReplyAsync(words.Replace(" ", ":clap:"));
+
+        [Command("Avatar"), Alias("Av"), Summary("gets user avatar")]
+        public async Task Avatar(SocketUser user = null)
+        {
+            var avatar = user ?? Context.Client.CurrentUser;
+            if (user == null)
+            {
+                var avatarUrl = Context.User.GetAvatarUrl();
+                avatarUrl = avatarUrl.Remove(avatarUrl.Length - 2, 2) + "024";
+                await ReplyAsync($":camera_with_flash:**avatar for {avatar}**\n{avatarUrl}");
+            }
+            else
+            {
+                var avatarUrl = avatar.GetAvatarUrl();
+                avatarUrl = avatarUrl.Remove(avatarUrl.Length - 2, 2) + "024";
+                await ReplyAsync($":camera_with_flash:**avatar for {avatar}**\n{avatarUrl}");
+            }
+        }
 
         [Command("Timezone")]
         public async Task Timezone(int page = 1)
@@ -29,6 +48,43 @@ namespace mummybot.Modules.General
             .WithTitle("Timezones Available")
             .WithDescription(string.Join("\n", timezones.Skip(currPage * timezonesPerPage).Take(timezonesPerPage).Select(x => $"`{x.Id, -25}` {(x.BaseUtcOffset < TimeSpan.Zero ? "-" : "+")}{x.BaseUtcOffset:hhmm}"))),
             timezones.Length, timezonesPerPage).ConfigureAwait(false);
+        }
+
+        [Command("Fame"), Summary("Add a message to the Hall of Fame")]
+        public async Task Fame(IMessage msg = null)
+        {
+            if (msg == null)
+            {
+                await Context.Channel.SendErrorAsync(string.Empty, "Missing message ID");
+                return;
+            }
+
+            SocketGuildChannel channel = null;
+
+            if (Context.Guild.Channels.Any(x => x.Name.Equals("⭐hall-of-fame")))
+                channel = Context.Guild.Channels.Single(x => x.Name.Equals("⭐hall-of-fame"));
+            else
+            {
+                var prompt = await PromptUserConfirmAsync(new EmbedBuilder()
+                .WithDescription("Guild does not have hall-of-fame channel\nDo you wish to create one?"));
+
+                if (!prompt) return;
+                
+                await Context.Guild.CreateTextChannelAsync("⭐hall-of-fame").ConfigureAwait(false);
+                channel = Context.Guild.Channels.Single(x => x.Name.Equals("⭐hall-of-fame"));
+            }
+
+            var eb = new EmbedBuilder()
+                 .WithAuthor(new EmbedAuthorBuilder()
+                 .WithName(Utils.FullUserName((SocketUser)msg.Author))
+                 .WithIconUrl(msg.Author.GetAvatarUrl()))
+                 .WithColor(Utils.GetRandomColor())
+                 .WithDescription(msg.Content)
+                 .WithFooter(new EmbedFooterBuilder()
+                 .WithText($"#{msg.Channel} • {msg.CreatedAt.UtcDateTime}"));
+
+            await Context.Guild.GetTextChannel(channel.Id).SendMessageAsync(string.Empty, embed: eb.Build())
+		    .ConfigureAwait(false).GetAwaiter().GetResult().AddReactionAsync(new Emoji("\uD83C\uDF1F"));
         }
 
         [Command("Hmm")]

@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using NLog;
 
 namespace mummybot.Services
 {
@@ -11,6 +12,7 @@ namespace mummybot.Services
     {
         private string LogDirectory { get; }
         private string LogFile => Path.Combine(LogDirectory, $"{DateTime.UtcNow:yyyy-MM-dd}.txt");
+        private readonly Logger _log;
 
         public DebugLoggingService(DiscordSocketClient discord, CommandService commands)
         {
@@ -18,9 +20,11 @@ namespace mummybot.Services
 
             discord.Log += OnLog;
             commands.Log += OnLog;
+
+            _log = LogManager.GetCurrentClassLogger();
         }
 
-        private async Task OnLog(LogMessage msg)
+        private Task OnLog(LogMessage msg)
         {
             if (!Directory.Exists(LogDirectory))
                 Directory.CreateDirectory(LogDirectory);
@@ -29,7 +33,7 @@ namespace mummybot.Services
             
             var debugText =
                 $"{DateTime.UtcNow:O} [{msg.Severity}] {msg.Source} : {msg.Exception?.ToString() ?? msg.Message}";
-
+            
             //await File.AppendAllTextAsync(LogFile, debugText + "\n").ConfigureAwait(false);
 
             switch (msg.Severity)
@@ -37,20 +41,24 @@ namespace mummybot.Services
                 case LogSeverity.Critical:
                 case LogSeverity.Error:
                     Console.ForegroundColor = ConsoleColor.Red;
+                    _log.Error(msg.Exception?.ToString() ?? msg.Message);
                     break;
                 case LogSeverity.Warning:
                     Console.ForegroundColor = ConsoleColor.Yellow;
+                    _log.Warn(msg.Message);
                     break;
                 case LogSeverity.Info:
                     Console.ForegroundColor = ConsoleColor.White;
+                    _log.Info(msg.Message);
                     break;
                 case LogSeverity.Verbose:
                 case LogSeverity.Debug:
                     Console.ForegroundColor = ConsoleColor.DarkGray;
+                    _log.Debug(msg.Message);
                     break;
             }
-
-            await Console.Out.WriteLineAsync(debugText).ConfigureAwait(false);
+            return Task.CompletedTask;
+            //await Console.Out.WriteLineAsync(debugText).ConfigureAwait(false);
         }
     }
 }

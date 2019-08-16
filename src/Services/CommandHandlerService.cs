@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 using System.Linq;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
-using System.Timers;
 using System.Collections.Immutable;
 using Discord.Net;
 using System.IO;
 using mummybot.Extensions;
+using NLog;
 
 namespace mummybot.Services
 {
@@ -20,6 +20,7 @@ namespace mummybot.Services
         private readonly CommandService _commands;
         private IServiceProvider _provider;
         public readonly ConfigService _config;
+        private readonly Logger _log;
 
         public string DefaultPrefix { get; private set; }
 
@@ -30,8 +31,6 @@ namespace mummybot.Services
         //userid/msg count
         public ConcurrentDictionary<ulong, uint> UserMessagesSent { get; } = new ConcurrentDictionary<ulong, uint>();
 
-        private readonly Timer _clearUsersOnShortCooldown;
-
         public CommandHandlerService(DiscordSocketClient discord, CommandService commands, ConfigService config, IServiceProvider provider)
         {
             _discord = discord;
@@ -40,6 +39,7 @@ namespace mummybot.Services
             _config = config;
 
             DefaultPrefix = _config.Config["prefix"];
+            _log = LogManager.GetCurrentClassLogger();
 
             _discord.MessageReceived += MessageReceivedHandler;
         }
@@ -49,7 +49,7 @@ namespace mummybot.Services
             bool normal = true;
             if (normal)
             {
-                Console.WriteLine($"" +
+                _log.Info($"" +
                         "User: {0}\n\t" +
                         "Server: {1}\n\t" +
                         "Channel: {2}\n\t" +
@@ -77,7 +77,7 @@ namespace mummybot.Services
             bool normal = true;
             if (normal)
             {
-                Console.WriteLine($"" +
+                _log.Error($"" +
                             "User: {0}\n\t" +
                             "Server: {1}\n\t" +
                             "Channel: {2}\n\t" +
@@ -93,7 +93,7 @@ namespace mummybot.Services
             }
             else
             {
-                Console.WriteLine("Err | g:{0} | c: {1} | u: {2} | msg: {3}\n\tErr: {4}",
+                _log.Error("Err | g:{0} | c: {1} | u: {2} | msg: {3}\n\tErr: {4}",
                     channel?.Guild.Id.ToString() ?? "-",
                     channel?.Id.ToString() ?? "-",
                     usrMsg.Author.Id,
@@ -109,7 +109,6 @@ namespace mummybot.Services
                 if (msg.Source != MessageSource.User || !(msg is SocketUserMessage usrMsg)) return;
 
                 UserMessagesSent.AddOrUpdate(usrMsg.Author.Id, 1, (key, old) => old += 1);
-                Console.WriteLine(UserMessagesSent[usrMsg.Author.Id]);
 
                 var channel = msg.Channel as ISocketMessageChannel;
                 var guild = (msg.Channel as SocketTextChannel)?.Guild;
@@ -146,7 +145,7 @@ namespace mummybot.Services
                 }
                 else if (Error != null)
                 {
-                    LogErroredExecution(Error, usrMsg, channel as ITextChannel);
+                    await LogErroredExecution(Error, usrMsg, channel as ITextChannel);
                     if (guild != null)
                         await CommandErrored(Info, channel as ITextChannel, Error).ConfigureAwait(false);
                 }
@@ -266,60 +265,3 @@ namespace mummybot.Services
         private readonly object errorLogLock = new object();
     }
 }
-
-//using Discord;
-//using Discord.Commands;
-//using Discord.WebSocket;
-//using System;
-//using System.Reflection;
-//using System.Threading.Tasks;
-//using System.Linq;
-
-//namespace mummybot.Services
-//{
-//    public class CommandHandlerService
-//    {
-//        private readonly DiscordSocketClient _discord;
-//        private readonly CommandService _commands;
-//        private IServiceProvider _provider;
-        
-//        public CommandHandlerService(
-//            DiscordSocketClient discord,
-//            CommandService commands,
-//            IServiceProvider provider)
-//        {
-//            _discord = discord;
-//            _commands = commands;
-//            _provider = provider;
-
-//            _discord.MessageReceived += OnMessageReceived;
-//        }
-
-//        public async Task InitializeAsync(IServiceProvider provider)
-//        {
-//            _provider = provider;
-//            await _commands.AddModulesAsync(Assembly.GetEntryAssembly());
-//        }
-
-//        private async Task OnMessageReceived(SocketMessage s)
-//        {
-//            var config = new ConfigService();
-//            var prefix = config.Config["prefix"];
-
-//            if (!(s is SocketUserMessage message)) return;
-//            if (message.Source != MessageSource.User) return;
-
-//            var argPos = 0;
-//            var context = new SocketCommandContext(_discord, message);
-
-//            if (!(message.HasMentionPrefix(_discord.CurrentUser, ref argPos) ||
-//                  message.HasStringPrefix(prefix, ref argPos))) return;
-
-
-//            var result = await _commands.ExecuteAsync(context, argPos, _provider);
-
-//            if (result.Error.HasValue && result.Error.Value != CommandError.UnknownCommand)
-//                await context.Channel.SendMessageAsync(result.ErrorReason);
-//        }
-//    }
-//}

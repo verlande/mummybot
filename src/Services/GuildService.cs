@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -6,6 +7,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
 using mummybot.Models;
+using NLog;
 
 namespace mummybot.Services
 {
@@ -14,6 +16,8 @@ namespace mummybot.Services
         private readonly DiscordSocketClient _discord;
         private readonly CommandService _commands;
         private mummybotDbContext _context;
+        private Logger _log;
+        public static ConcurrentDictionary<ulong, bool> GuildMsgLogging = new ConcurrentDictionary<ulong, bool>();
 
         public GuildService(DiscordSocketClient discord, CommandService commands, mummybotDbContext context)
         {
@@ -23,6 +27,10 @@ namespace mummybot.Services
             _discord.JoinedGuild += JoinedGuild;
             _discord.LeftGuild += LeftGuild;
             _discord.GuildUpdated += GuildUpdated;
+
+            _context.Guilds.AsQueryable().ForEachAsync(x => GuildMsgLogging.TryAdd(x.GuildId, x.MessageLogging));
+
+            _log = LogManager.GetCurrentClassLogger();
         }
 
         private Task JoinedGuild(SocketGuild guild)
@@ -92,7 +100,7 @@ namespace mummybot.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.InnerException);
+                _log.Error(ex.InnerException);
             }
         }
 
@@ -118,7 +126,7 @@ namespace mummybot.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.InnerException);
+                _log.Error(ex.InnerException);
             }
         }
     }

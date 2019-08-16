@@ -77,5 +77,38 @@ namespace mummybot.Modules.Manage
             guild.GreetChl = channel.Id;
             await Context.Channel.SendConfirmAsync($"Set greeting channel to {channel.Mention}");
         }
+
+        [Command("Logging"), Summary("Enabled/Disable message logging")]
+        public async Task Logging(string arg = null, ITextChannel chl = null)
+        {
+            var conf = await Database.Guilds.SingleAsync(g => g.GuildId.Equals(Context.Guild.Id));
+
+            if (!conf.MessageLogging)
+            {
+                conf.MessageLogging = true;
+                await Context.Channel.SendConfirmAsync("Logging enabled");
+                return;
+            }
+
+            if (conf.MessageLogging)
+            {
+                var msg = await PromptUserConfirmAsync(new EmbedBuilder()
+                    .WithDescription("Disabling message logging will disable these commands: " +
+                    "\n``£Snipe\n£Undelete\n£Source``")
+                    .WithColor(Utils.GetRandomColor()));
+                if (msg)
+                {
+                    conf.MessageLogging = false;
+                    await ReplyAsync("Logging has been disabled");
+                }
+            }
+        }
+
+        protected override async void AfterExecute(CommandInfo command)
+        {
+            base.AfterExecute(command);
+            await Database.SaveChangesAsync();
+            Database.Dispose();
+        }
     }
 }

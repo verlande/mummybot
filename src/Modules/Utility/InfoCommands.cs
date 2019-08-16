@@ -14,26 +14,6 @@ namespace mummybot.Modules.Utility
 {
     public partial class Utility : ModuleBase
     {
-        [Command("Roleinfo"), Alias("ri")]
-        public async Task RoleInfo(SocketRole role)
-        {
-            var eb = new EmbedBuilder
-            {
-                Title = $"Role Info: {role.Name}",
-                Description = $"**Position:** {Context.Guild.Roles.Count - role.Position}/{Context.Guild.Roles.Count}\n" +
-                Format.Bold("Colour: ") + role.Color + "\n" +
-                $"**{role.Members.Count()} member** | {role.Members.Count(x => x.Status != UserStatus.Offline)} online\n" +
-                $"**Created:** {role.CreatedAt.UtcDateTime}\n" +
-                $"**Mentionable**: {role.IsMentionable}\n" +
-                $"**Permissions:** {string.Join("\n", role.Permissions.ToList())}",
-                ThumbnailUrl = $"https://www.colorhexa.com/{role.Color.ToString().Substring(1)}.png",
-                Color = role.Color
-            };
-            eb.WithFooter($"ID: {role.Id}");
-
-            await ReplyAsync(string.Empty, embed: eb.Build());
-        }
-
         [Command("Userinfo")]
         public async Task UserInfo(IGuildUser user)
         {
@@ -61,7 +41,7 @@ namespace mummybot.Modules.Utility
             var application = await Context.Client.GetApplicationInfoAsync();
 
             await Context.Channel.SendConfirmAsync("", $"{Format.Bold("Bot Info")}\n" +
-                              $"- Author: {application.Owner.Mention}\n" +
+                              $"- Author: {application.Owner}\n" +
                               $"- Library: Discord.Net ({DiscordConfig.Version})\n" +
                               $"- Kernel: {Environment.OSVersion}\n" +
                               "- PostgreSQL Version: 10.1\n" +
@@ -70,6 +50,7 @@ namespace mummybot.Modules.Utility
 
                     $"{Format.Bold("Stats")}\n" +
                     $"- Heap Size: {Math.Round(GC.GetTotalMemory(true) / (1024.0 * 1024.0), 2)} MB\n" +
+                    $"- Used Memory: {Process.GetCurrentProcess().PrivateMemorySize64 / (1024 * 1024)} MB\n" +
                     $"- Guilds Served: {Context.Client.Guilds.Count}\n" +
                     $"- Total Commands: {_command.Commands.Count()}\n" +
                     $"- Channels: {Context.Client.Guilds.Sum(g => g.TextChannels.Count)}\n" +
@@ -77,10 +58,7 @@ namespace mummybot.Modules.Utility
         }
 
         [Command("Uptime")]
-        public async Task Uptime()
-        {
-            await ReplyAsync($"``{DateTime.Now - Process.GetCurrentProcess().StartTime:g}``");
-        }
+        public async Task Uptime() => await ReplyAsync($"``{DateTime.Now - Process.GetCurrentProcess().StartTime:g}``");
 
         [Command("Isadmin"), Summary("Check is a user is an admin")]
         public async Task IsAdmin(SocketGuildUser user)
@@ -181,24 +159,6 @@ namespace mummybot.Modules.Utility
             });
 
             await ReplyAsync(string.Empty, embed: eb.Build());
-        }
-
-        [Command("Avatar"), Summary("gets user avatar")]
-        public async Task Avatar(SocketUser user = null)
-        {
-            var avatar = user ?? Context.Client.CurrentUser;
-            if (user == null)
-            {
-                var avatarUrl = Context.User.GetAvatarUrl();
-                avatarUrl = avatarUrl.Remove(avatarUrl.Length - 2, 2) + "024";
-                await ReplyAsync($":camera_with_flash:**avatar for {avatar}**\n{avatarUrl}");
-            }
-            else
-            {
-                var avatarUrl = avatar.GetAvatarUrl();
-                avatarUrl = avatarUrl.Remove(avatarUrl.Length - 2, 2) + "024";
-                await ReplyAsync($":camera_with_flash:**avatar for {avatar}**\n{avatarUrl}");
-            }
         }
 
         [Command("Membercount"), Summary("Guild member count")]

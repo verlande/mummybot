@@ -22,28 +22,6 @@ namespace mummybot.Modules.Utility
             _command = command;
         }
 
-        [Command("Roles"), Summary("List roles of a user")]
-        public async Task InRole(IGuildUser arg = null)
-        {
-            var channel = (ITextChannel)Context.Channel;
-            var user = arg ?? (IGuildUser)Context.User;
-            var roles = user.GetRoles().Except(new[] { channel.Guild.EveryoneRole }).OrderBy(r => r.Position);
-
-            await Context.Channel.SendAuthorAsync(user, string.Join("\n", roles.Select(x => x.Mention)));
-        }
-
-        [Command("ListRoles"), Summary("Display all guild roles")]
-        public async Task ListRoles()
-        {
-            var roles = Context.Guild.Roles;
-            var sb = new StringBuilder();
-
-            foreach (var role in roles)
-                sb.AppendLine($"``{role.Name}: {role.Id} {role.Color} MEMBERS: {role.Members.Count()}``");
-
-            await Context.Channel.SendConfirmAsync(sb.ToString(), null);
-        }
-
         [Command("Ping")]
         public async Task Ping()
         {
@@ -71,18 +49,6 @@ namespace mummybot.Modules.Utility
             {
                 await Context.Channel.SendErrorAsync("Error fetching ban list", ex.Message);
             }
-        }
-
-        [Command("Checkperms"), Summary("View permissions of a user")]
-        public async Task Perms(IGuildUser arg = null)
-        {
-            var sb = new StringBuilder();
-            var user = arg ?? (IGuildUser)Context.User;
-            var perms = user.GetPermissions((ITextChannel)Context.Channel);
-
-            foreach (var p in perms.GetType().GetProperties().Where(p => !p.GetGetMethod().GetParameters().Any()))
-                sb.AppendLine($"{p.Name} : {p.GetValue(perms, null)}");
-            await Context.Channel.SendAuthorAsync(user, sb.ToString(), $"User ID: {user.Id}");
         }
     }
 }

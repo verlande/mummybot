@@ -7,18 +7,23 @@ using System.Text;
 using System.Threading.Tasks;
 using mummybot.Extensions;
 using Microsoft.EntityFrameworkCore;
+using mummybot.Attributes;
 
 namespace mummybot.Modules.Utility
 {
     public partial class Utility : ModuleBase
     {
-        [Command("Snipe"), Summary("Display last deleted message")]
+        [Command("Snipe"), Summary("Display last deleted message that's less than a day old"), Logging()]
         public async Task Snipe()
         {
             var message = await Database.MessageLogs.Where(m => m.Guildid.Equals(Context.Guild.Id) && m.Deleted && m.Channelid.Equals(Context.Channel.Id))
                 .LastAsync();
 
-            if (message == null) await Context.Channel.SendErrorAsync(string.Empty, "No message to snipe");
+            if (message == null || DateTime.Now.Subtract(message.Createdat).TotalDays >= 1)//DateTime.Now.Subtract(message.Createdat).TotalMinutes > 45)
+            {
+                await Context.Channel.SendErrorAsync(string.Empty, "No message to snipe");
+                return;
+            }
 
             var user = Context.Guild.GetUser(message.Authorid);
             string createdAt;
@@ -30,7 +35,7 @@ namespace mummybot.Modules.Utility
             await Context.Channel.SendAuthorAsync(user, message.UpdatedContent ?? message.Content, createdAt);
         }
 
-        [Command("Undelete"), Summary("List's deleted messages of a user"), Alias("ud")]
+        [Command("Undelete"), Summary("List's deleted messages of a user"), Alias("ud"), Logging()]
         public async Task DeletedMessages(SocketGuildUser arg = null)
         {
             var user = arg ?? Context.User;
@@ -49,7 +54,7 @@ namespace mummybot.Modules.Utility
             await ReplyAsync($"Last {messages.Count()} deleted messages from {Format.Bold(Utils.FullUserName(user))}:\n" + sb.ToString());
         }
 
-        [Command("Source"), Summary("Fetch info about a message using message id")]
+        [Command("Source"), Summary("Fetch info about a message using message id"), Logging()]
         public async Task Source([Summary("Message id")] ulong id)
         {
             var msg = await Database.MessageLogs.FirstOrDefaultAsync(m => m.Messageid.Equals(id)
@@ -60,7 +65,7 @@ namespace mummybot.Modules.Utility
                                               "Messages after 2 weeks are automatically deleted");
 
             string jumpToMessage = null;
-            if (!msg.Deleted) jumpToMessage = $"[Jump to message](https://discordapp.com/channels/{Context.Guild.Id}/{msg.Channelid}/{msg.Messageid})";
+            if (!msg.Deleted) jumpToMessage = $"\n[Jump to message](https://discordapp.com/channels/{Context.Guild.Id}/{msg.Channelid}/{msg.Messageid})";
 
             var eb = new EmbedBuilder
             {
