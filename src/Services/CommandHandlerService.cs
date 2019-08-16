@@ -109,7 +109,6 @@ namespace mummybot.Services
                 if (msg.Source != MessageSource.User || !(msg is SocketUserMessage usrMsg)) return;
 
                 UserMessagesSent.AddOrUpdate(usrMsg.Author.Id, 1, (key, old) => old += 1);
-                Console.WriteLine(UserMessagesSent[usrMsg.Author.Id]);
 
                 var channel = msg.Channel as ISocketMessageChannel;
                 var guild = (msg.Channel as SocketTextChannel)?.Guild;

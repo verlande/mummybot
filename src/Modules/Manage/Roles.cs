@@ -104,7 +104,7 @@ namespace mummybot.Modules.Manage
                 await ReplyAsync(string.Empty, embed: eb.Build());
             }
 
-            [Command("Roles"), Summary("List roles of a user")]
+            [Command("Userroles"), Summary("List roles of a user")]
             public async Task InRole(IGuildUser arg = null)
             {
                 var channel = (ITextChannel)Context.Channel;
