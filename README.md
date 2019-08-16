@@ -1,6 +1,6 @@
 # mummybot
 
-[![Build Status](https://gitlab.com/mummy603/mummybot/badges/dev/pipline.svg)](https://gitlab.com/mummy603/mummybot/tree/dev)
+[![pipeline status](https://gitlab.com/mummy603/mummybot/badges/dev/pipeline.svg)](https://gitlab.com/mummy603/mummybot/commits/dev)
 
 Just another Discord Bot
 
