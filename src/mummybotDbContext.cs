@@ -47,6 +47,8 @@ namespace mummybot
                     .HasMaxLength(12);
 
                 entity.Property(e => e.Uses).HasColumnName("uses");
+
+                entity.Property(e => e.LastUsed).HasColumnName("lastused");
             });
 
             modelBuilder.Entity<Users>(entity =>

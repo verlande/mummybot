@@ -1,4 +1,4 @@
-﻿using Discord;
+using Discord;
 using Discord.WebSocket;
 using mummybot.Models;
 using System;
@@ -26,7 +26,11 @@ namespace mummybot.Modules.Tag.Controllers
 
         public void AddUse()
         {
-            if (_tag != null) _tag.Uses++;
+            if (_tag != null)
+            {
+                _tag.Uses++;
+                _tag.LastUsed = DateTime.Now;
+            }
         }
 
         public string DeleteTag(SocketUser user)
@@ -63,6 +67,7 @@ namespace mummybot.Modules.Tag.Controllers
                 //.AddField("Invoked by prefix", _tag.IsCommand, true)
                 .AddField("Uses", _tag.Uses, true)
                 .AddField("Last used by", _tag.LastUsedBy == null ? "Nobody" : _discord.GetUser((ulong)_tag.LastUsedBy).Mention, true)
+                .AddField("Last used", _tag.LastUsed == null ? "N/A" : _tag.LastUsed.ToString(), true)
                 .WithColor(Utils.GetRandomColor())
                 .Build();
         }

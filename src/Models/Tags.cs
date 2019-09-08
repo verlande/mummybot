@@ -13,5 +13,6 @@ namespace mummybot.Models
         public bool IsCommand { get; set; } = false;
         public int Uses { get; set; } = 0;
         public ulong? LastUsedBy { get; set; }
+        public DateTime? LastUsed { get; set; }
     }
 }
