@@ -70,7 +70,7 @@ namespace mummybot.Modules.Tag
             public async Task Delete(string name)
             {
                 await Context.Channel.SendConfirmAsync(_tag.GetTag(Database, name, Context.Guild)
-                    .DeleteTag(Context.User));
+                    .DeleteTag((SocketGuildUser)Context.User));
             }
 
             [Command("List"), Summary("List all tags on this guild")]

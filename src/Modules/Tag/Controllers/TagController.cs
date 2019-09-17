@@ -1,4 +1,4 @@
-using Discord;
+﻿using Discord;
 using Discord.WebSocket;
 using mummybot.Models;
 using System;
@@ -33,9 +33,9 @@ namespace mummybot.Modules.Tag.Controllers
             }
         }
 
-        public string DeleteTag(SocketUser user)
+        public string DeleteTag(SocketGuildUser user)
         {
-            if (_tag != null && user.Id.Equals(_tag.Author))
+            if (_tag != null && user.Id.Equals(_tag.Author) || user.GuildPermissions.Administrator)
             {
                 _context.Remove(_tag);
                 return $"``{_tag.Name}`` deleted";

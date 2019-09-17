@@ -2,9 +2,7 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using mummybot.Extensions;
-using NLog;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -23,6 +21,7 @@ namespace mummybot.Modules.Manage
                 var maxRole = guser.GetRoles().Max(x => x.Position);
                 if ((Context.User.Id != Context.Guild.OwnerId) && (maxRole <= role.Position || maxRole <= usr.GetRoles().Max(x => x.Position)))
                     return;
+
                 if (usr.RoleIds.Any(x => x.Equals(role.Id)))
                 {
                     await usr.RemoveRoleAsync(role).ConfigureAwait(false);
@@ -34,7 +33,6 @@ namespace mummybot.Modules.Manage
                 try
                 {
                     await usr.AddRoleAsync(role).ConfigureAwait(false);
-
                     await Context.Channel.SendConfirmAsync($"Set role {role.Name} for " + Format.Bold(usr.ToString()))
                         .ConfigureAwait(false);
                 }
@@ -48,7 +46,7 @@ namespace mummybot.Modules.Manage
             [Command("Rolerename"), Summary("Rename a role")]
             public async Task RoleRemove(IRole role, string newName)
             {
-                var guser = (IGuildUser)Context.User;Console.WriteLine("test");
+                var guser = (IGuildUser)Context.User;
                 if (Context.User.Id != guser.Guild.OwnerId && guser.GetRoles().Max(x => x.Position) <= role.Position)
                 {
                     await Context.Channel.SendConfirmAsync($"Can't rename {role.Name}");
@@ -121,7 +119,7 @@ namespace mummybot.Modules.Manage
                 var sb = new StringBuilder();
 
                 foreach (var role in roles)
-                    sb.AppendLine($"``{role.Name}: {role.Id} {role.Color} MEMBERS: {role.Members.Count()}``");
+                    sb.AppendLine($"``{role.Name} {role.Color} MEMBERS: {role.Members.Count()}``");
                 await ReplyAsync(sb.ToString());
                 //await Context.Channel.SendConfirmAsync(sb.ToString(), null);
             }

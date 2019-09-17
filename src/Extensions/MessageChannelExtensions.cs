@@ -164,7 +164,7 @@ namespace mummybot.Extensions
 
     public sealed class ReactionEventWrapper : IDisposable
     {
-                public IUserMessage Message { get; }
+        public IUserMessage Message { get; }
         public event Action<SocketReaction> OnReactionAdded = delegate { };
         public event Action<SocketReaction> OnReactionRemoved = delegate { };
         public event Action OnReactionsCleared = delegate { };
