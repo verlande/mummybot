@@ -7,108 +7,131 @@ using System.Threading.Tasks;
 
 namespace mummybot.Modules.Manage
 {
-    public partial class Manage : ModuleBase
+    public partial class Manage
     {
-        [Command("SetGreeting"), Summary("Sets a greeting for new members. Use %user% to include new user's name in the message")]
-        [RequireUserPermission(GuildPermission.ManageGuild | GuildPermission.Administrator)]
-        public async Task SetGreeting([Remainder] string greeting)
+        [Name("Manage")]
+        public class ManageCommands : mummybotSubmodule<Services.FilteringService>
         {
-            if (greeting.Length > 100)
+            [Command("SetGreeting"), Summary("Sets a greeting for new members. Use %user% to include new user's name in the message")]
+            [RequireUserPermission(GuildPermission.ManageGuild | GuildPermission.Administrator)]
+            public async Task SetGreeting([Remainder] string greeting)
             {
-                await Context.Channel.SendErrorAsync(string.Empty, "Greeting message length over 100 chars");
-                return;
-            }
-            var guild = await Database.Guilds.SingleOrDefaultAsync(g => g.GuildId.Equals(Context.Guild.Id));
-            guild.Greeting = greeting;
-
-            await Context.Channel.SendConfirmAsync("Greeting message has been set");
-
-            //if (greeting.Contains("%user%")) await ReplyAsync(greeting.Replace("%user%", Context.User.Mention));
-        }
-
-        [Command("ClearGreeting"), Summary("Clears greeting message")]
-        [RequireUserPermission(GuildPermission.ManageGuild | GuildPermission.Administrator)]
-        public async Task Cleargreeting()
-        {
-            var guild = await Database.Guilds.SingleOrDefaultAsync(g => g.GuildId.Equals(Context.Guild.Id));
-            if (string.IsNullOrWhiteSpace(guild.Greeting))
-                await Context.Channel.SendErrorAsync(string.Empty, "Can't clear a greeting if you haven't set one");
-            else
-            {
-                guild.Greeting = string.Empty;
-                await Context.Channel.SendConfirmAsync("Cleared greeting message");
-            }
-        }
-
-        [Command("SetGoodbye"), Summary("Set goodbye when a user leaves. Use %user% to include new user's name in the message")]
-        [RequireUserPermission(GuildPermission.ManageGuild | GuildPermission.Administrator)]
-        public async Task Setgoodbye([Remainder] string goodbye)
-        {
-            if (goodbye.Length > 100)
-            {
-                await Context.Channel.SendErrorAsync(string.Empty, "Goodbye message length over 100 chars");
-                return;
-            }
-            var guild = await Database.Guilds.SingleOrDefaultAsync(g => g.GuildId.Equals(Context.Guild.Id));
-            guild.Goodbye = goodbye;
-
-            await Context.Channel.SendConfirmAsync("Goodbye message has been set");
-        }
-
-        [Command("ClearGoodbye"), Summary("Clears goodbye message")]
-        [RequireUserPermission(GuildPermission.ManageGuild | GuildPermission.Administrator)]
-        public async Task Cleargoodbye()
-        {
-            var guild = await Database.Guilds.SingleOrDefaultAsync(g => g.GuildId.Equals(Context.Guild.Id));
-            if (string.IsNullOrWhiteSpace(guild.Goodbye))
-                await Context.Channel.SendErrorAsync(string.Empty, "Can't clear a goodbye message if you haven't set one");
-            else
-            {
-                guild.Goodbye = string.Empty;
-                await Context.Channel.SendConfirmAsync("Cleared goodbye message");
-            }
-        }
-
-        [Command("SetGreetchl"), Summary("Set channel to send greeting and goodbye messages")]
-        [RequireUserPermission(GuildPermission.ManageGuild | GuildPermission.Administrator)]
-        public async Task Setgreetchl(SocketTextChannel channel)
-        {
-            var guild = await Database.Guilds.SingleOrDefaultAsync(g => g.GuildId.Equals(Context.Guild.Id));
-            guild.GreetChl = channel.Id;
-            await Context.Channel.SendConfirmAsync($"Set greeting channel to {channel.Mention}");
-        }
-
-        [Command("Logging"), Summary("Enabled/Disable message logging")]
-        public async Task Logging(string arg = null, ITextChannel chl = null)
-        {
-            var conf = await Database.Guilds.SingleAsync(g => g.GuildId.Equals(Context.Guild.Id));
-
-            if (!conf.MessageLogging)
-            {
-                conf.MessageLogging = true;
-                await Context.Channel.SendConfirmAsync("Logging enabled");
-                return;
-            }
-
-            if (conf.MessageLogging)
-            {
-                var msg = await PromptUserConfirmAsync(new EmbedBuilder()
-                    .WithDescription("Disabling message logging will disable these commands: " +
-                    "\n``£Snipe\n£Undelete\n£Source``")
-                    .WithColor(Utils.GetRandomColor()));
-                if (msg)
+                if (greeting.Length > 100)
                 {
-                    conf.MessageLogging = false;
-                    await ReplyAsync("Logging has been disabled");
+                    await Context.Channel.SendErrorAsync(string.Empty, "Greeting message length over 100 chars");
+                    return;
+                }
+                var guild = await Database.Guilds.SingleOrDefaultAsync(g => g.GuildId.Equals(Context.Guild.Id));
+                guild.Greeting = greeting;
+
+                await Context.Channel.SendConfirmAsync("Greeting message has been set");
+
+                //if (greeting.Contains("%user%")) await ReplyAsync(greeting.Replace("%user%", Context.User.Mention));
+            }
+
+            [Command("ClearGreeting"), Summary("Clears greeting message")]
+            [RequireUserPermission(GuildPermission.ManageGuild | GuildPermission.Administrator)]
+            public async Task Cleargreeting()
+            {
+                var guild = await Database.Guilds.SingleOrDefaultAsync(g => g.GuildId.Equals(Context.Guild.Id));
+                if (string.IsNullOrWhiteSpace(guild.Greeting))
+                    await Context.Channel.SendErrorAsync(string.Empty, "Can't clear a greeting if you haven't set one");
+                else
+                {
+                    guild.Greeting = string.Empty;
+                    await Context.Channel.SendConfirmAsync("Cleared greeting message");
                 }
             }
-        }
 
-        protected override async void AfterExecute(CommandInfo command)
-        {
-            base.AfterExecute(command);
-            await Database.SaveChangesAsync();
-            Database.Dispose();
+            [Command("SetGoodbye"), Summary("Set goodbye when a user leaves. Use %user% to include new user's name in the message")]
+            [RequireUserPermission(GuildPermission.ManageGuild | GuildPermission.Administrator)]
+            public async Task Setgoodbye([Remainder] string goodbye)
+            {
+                if (goodbye.Length > 100)
+                {
+                    await Context.Channel.SendErrorAsync(string.Empty, "Goodbye message length over 100 chars");
+                    return;
+                }
+                var guild = await Database.Guilds.SingleOrDefaultAsync(g => g.GuildId.Equals(Context.Guild.Id));
+                guild.Goodbye = goodbye;
+
+                await Context.Channel.SendConfirmAsync("Goodbye message has been set");
+            }
+
+            [Command("ClearGoodbye"), Summary("Clears goodbye message")]
+            [RequireUserPermission(GuildPermission.ManageGuild | GuildPermission.Administrator)]
+            public async Task Cleargoodbye()
+            {
+                var guild = await Database.Guilds.SingleOrDefaultAsync(g => g.GuildId.Equals(Context.Guild.Id));
+                if (string.IsNullOrWhiteSpace(guild.Goodbye))
+                    await Context.Channel.SendErrorAsync(string.Empty, "Can't clear a goodbye message if you haven't set one");
+                else
+                {
+                    guild.Goodbye = string.Empty;
+                    await Context.Channel.SendConfirmAsync("Cleared goodbye message");
+                }
+            }
+
+            [Command("SetGreetchl"), Summary("Set channel to send greeting and goodbye messages")]
+            [RequireUserPermission(GuildPermission.ManageGuild | GuildPermission.Administrator)]
+            public async Task Setgreetchl(SocketTextChannel channel)
+            {
+                var guild = await Database.Guilds.SingleOrDefaultAsync(g => g.GuildId.Equals(Context.Guild.Id));
+                guild.GreetChl = channel.Id;
+                await Context.Channel.SendConfirmAsync($"Set greeting channel to {channel.Mention}");
+            }
+
+            [Command("Logging"), Summary("Enabled/Disable message logging")]
+            public async Task Logging(string arg = null, ITextChannel chl = null)
+            {
+                var conf = await Database.Guilds.SingleAsync(g => g.GuildId.Equals(Context.Guild.Id));
+
+                if (!conf.MessageLogging)
+                {
+                    conf.MessageLogging = true;
+                    await Context.Channel.SendConfirmAsync("Logging enabled");
+                    return;
+                }
+
+                if (conf.MessageLogging)
+                {
+                    var msg = await PromptUserConfirmAsync(new EmbedBuilder()
+                        .WithDescription("Disabling message logging will disable these commands: " +
+                        "\n``£Snipe\n£Undelete\n£Source``")
+                        .WithColor(Utils.GetRandomColor()));
+                    if (msg)
+                    {
+                        conf.MessageLogging = false;
+                        await ReplyAsync("Logging has been disabled");
+                    }
+                }
+            }
+
+            [Command("FilterInv"), Summary("Toggle invite link filtering")]
+            public async Task FilterInv()
+            {
+                var conf = await Database.Guilds.SingleAsync(x => x.GuildId.Equals(Context.Guild.Id)).ConfigureAwait(false);
+
+                if (_service.InviteFiltering.Contains(Context.Guild.Id))
+                {
+                    conf.FilterInvites = false;
+                    _service.InviteFiltering.TryRemove(Context.Guild.Id);
+                    await Context.Channel.SendConfirmAsync("Invite filtering disabled");
+                }
+                else if (!_service.InviteFiltering.Contains(Context.Guild.Id))
+                {
+                    conf.FilterInvites = true;
+                    _service.InviteFiltering.Add(Context.Guild.Id);
+                    await Context.Channel.SendConfirmAsync("Invite filtering enabled");
+                }
+            }
+
+            protected override async void AfterExecute(CommandInfo command)
+            {
+                base.AfterExecute(command);
+                await Database.SaveChangesAsync();
+                Database.Dispose();
+            }
         }
     }
 }
