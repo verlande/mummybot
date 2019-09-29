@@ -2,12 +2,18 @@
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using mummybot.Extensions;
+using System.Linq;
+using mummybot.Attributes;
+using System.Collections.Generic;
 
 namespace mummybot.Modules.Runescape
 {
     [Name("Runescape"), Summary("Runescape based commands")]
-    public class RunescapeModule : ModuleBase
+    public class RunescapeModule : ModuleBase<Services.StatsService>
     {
+        //public Services.StatsService _statsService { get; set; }
+
         [Command("Araxxi"), Summary("Current rotation of Araxxi")]
         public async Task Araxxi()
         {
@@ -49,7 +55,7 @@ namespace mummybot.Modules.Runescape
                 .AddField("Top Path (Minions)", top)
                 .AddField("Middle Path (Acid)", mid)
                 .AddField("Bottom Path (Darkness)", bot)
-                .WithFooter(new EmbedFooterBuilder().WithText($"Next path closed will be {Rotations[(int)nextRotation]} in {daysLeft} days"))
+                .WithFooter(new EmbedFooterBuilder().WithText($"Next path closed will be {Rotations[(int)nextRotation]} in {(daysLeft == 1 ? $"{daysLeft} Day": $"{daysLeft} Days")}"))
                 .Build());
         }
 
@@ -72,16 +78,27 @@ namespace mummybot.Modules.Runescape
             var daysNext = 7 - ((Math.Floor(epochNow / (24 * 60 * 60))) - 6) % (7 * rotation.Length) % 7;
             var nextRoation = currentRotation + 1;
 
-            if (nextRoation == rotation.Length) nextRoation = 0;
-
             var eb = new EmbedBuilder();
             await ReplyAsync(string.Empty, embed: eb
             .WithTitle("Vorago Roation")
             .AddField("Current Rotation", rotation[(int)currentRotation])
                 .WithColor(Utils.GetRandomColor())
                 .WithThumbnailUrl("http://i.imgur.com/e4WOs8J.png")
-                .WithFooter(new EmbedFooterBuilder().WithText($"Next rotation {rotation[(int)nextRoation]} in {daysNext} days"))
+                .WithFooter(new EmbedFooterBuilder().WithText($"Next rotation {rotation[(int)nextRoation]} in {(daysNext == 1 ? $"{daysNext} Day" : $"{daysNext} Days")}"))
                 .Build());
+        }
+
+        [Command("Stats"), Summary("Get RS3 player highscores"), Cooldown(30, true)]
+        public async Task Stats(string player)
+        {
+            var res = await _service.GetPlayerStats(player).ConfigureAwait(false);
+            if (res is null)
+            {
+                await Context.Channel.SendErrorAsync(string.Empty, "Cannot find player").ConfigureAwait(false);
+                return;
+            }
+
+            await Context.Channel.SendTableAsync(res.Skills.Values, str => $"{str}", 1).ConfigureAwait(false);
         }
     }
 }

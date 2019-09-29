@@ -21,6 +21,7 @@
         <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.2.0" />
         <PackageReference Include="NLog" Version="4.6.2" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="2.2.0" />
+        <PackageReference Include="NRuneScape" Version="0.1.0" />
     </ItemGroup>
 
 </Project>
