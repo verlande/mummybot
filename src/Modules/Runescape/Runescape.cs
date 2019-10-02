@@ -5,15 +5,12 @@ using Discord.Commands;
 using mummybot.Extensions;
 using System.Linq;
 using mummybot.Attributes;
-using System.Collections.Generic;
 
 namespace mummybot.Modules.Runescape
 {
     [Name("Runescape"), Summary("Runescape based commands")]
     public class RunescapeModule : ModuleBase<Services.StatsService>
     {
-        //public Services.StatsService _statsService { get; set; }
-
         [Command("Araxxi"), Summary("Current rotation of Araxxi")]
         public async Task Araxxi()
         {
@@ -55,7 +52,7 @@ namespace mummybot.Modules.Runescape
                 .AddField("Top Path (Minions)", top)
                 .AddField("Middle Path (Acid)", mid)
                 .AddField("Bottom Path (Darkness)", bot)
-                .WithFooter(new EmbedFooterBuilder().WithText($"Next path closed will be {Rotations[(int)nextRotation]} in {(daysLeft == 1 ? $"{daysLeft} Day": $"{daysLeft} Days")}"))
+                .WithFooter(new EmbedFooterBuilder().WithText($"Next path closed will be {Rotations[(int)nextRotation]} in {(daysLeft == 1 ? $"{daysLeft} Day" : $"{daysLeft} Days")}"))
                 .Build());
         }
 
@@ -89,16 +86,24 @@ namespace mummybot.Modules.Runescape
         }
 
         [Command("Stats"), Summary("Get RS3 player highscores"), Cooldown(30, true)]
-        public async Task Stats(string player)
+        public async Task Stats([Remainder]string player)
         {
             var res = await _service.GetPlayerStats(player).ConfigureAwait(false);
+
             if (res is null)
             {
-                await Context.Channel.SendErrorAsync(string.Empty, "Cannot find player").ConfigureAwait(false);
+                await Context.Channel.SendErrorAsync(string.Empty, "No player found");
                 return;
             }
 
-            await Context.Channel.SendTableAsync(res.Skills.Values, str => $"{str}", 1).ConfigureAwait(false);
+            var sb = new System.Text.StringBuilder();
+
+            sb.AppendFormat("{0, -15} | {1, -5} | {2, -6} | {3, -12}\n", "Skill", "Level", "Rank", "Xp");
+
+            foreach (var r in res.Skills.Values.ToList())
+                sb.AppendFormat("{0, -15} | {1, -5} | {2, -6} | {3, -12:n0}\n", r.Name, r.Level, r.Rank, r.Experience);
+
+            await ReplyAsync(Format.Code($"\t\t{player} Highscores\n\n{sb.ToString()}", "css"));
         }
     }
 }
