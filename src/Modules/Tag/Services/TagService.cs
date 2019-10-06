@@ -1,13 +1,11 @@
 ﻿using Discord.WebSocket;
-using Microsoft.EntityFrameworkCore;
 using mummybot.Services;
 using mummybot.Modules.Tag.Controllers;
 using NLog;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using System.Linq;
+using mummybot.Models;
 
 namespace mummybot.Modules.Tag.Services
 {
@@ -36,15 +34,17 @@ namespace mummybot.Modules.Tag.Services
 
         public async Task<TagController> CreateTag(mummybotDbContext context, string name, string content, SocketUser user, SocketGuild guild)
         {
-            var tag = new Models.Tags
+            var tag = new Tags
             {
                 Name = name,
                 Content = content,
                 Author = user.Id,
                 Guild = guild.Id
             };
-
-            await context.AddAsync(tag);
+            
+            await _context.Tags.AddAsync(tag);
+            await _context.SaveChangesAsync();
+            
             return new TagController(context, _discord, tag);
         }
     }

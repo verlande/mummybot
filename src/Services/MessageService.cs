@@ -5,6 +5,7 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
+using mummybot.Models;
 
 namespace mummybot.Services
 {
@@ -42,7 +43,6 @@ namespace mummybot.Services
                     Attachments = msg.Attachments.Select(a => a.Url).FirstOrDefault(),
                     Mentionedusers = msg.MentionedUsers.Select(u => u.Username).ToArray()
                 });
-
                 await _context.SaveChangesAsync();
             });
             return Task.CompletedTask;

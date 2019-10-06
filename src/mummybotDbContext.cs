@@ -13,7 +13,6 @@ namespace mummybot
         public virtual DbSet<Tags> Tags { get; set; }
         public virtual DbSet<Users> Users { get; set; }
         public virtual DbSet<UsersAudit> UsersAudit { get; set; }
-        //public virtual DbSet<UserAudits> UserAudits { get; set; }
         public virtual DbSet<MessageLogs> MessageLogs { get; set; }
         public virtual DbSet<Guilds> Guilds { get; set; }
 
@@ -102,25 +101,6 @@ namespace mummybot
 
                 entity.Property(e => e.Username).HasColumnName("username");
             });
-
-            //modelBuilder.Entity<UserAudits>(entity =>
-            //{
-            //    entity.ToTable("user_audit");
-
-            //    entity.Property(e => e.Id).HasColumnName("id");
-
-            //    entity.Property(e => e.ChangedOn)
-            //        .HasColumnName("changedon")
-            //        .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-            //    entity.Property(e => e.GuildId).HasColumnName("guildid");
-
-            //    entity.Property(e => e.Nickname).HasColumnName("nickname");
-
-            //    entity.Property(e => e.UserId).HasColumnName("userid");
-
-            //    entity.Property(e => e.Username).HasColumnName("username");
-            //});
 
             modelBuilder.Entity<MessageLogs>(entity =>
             {

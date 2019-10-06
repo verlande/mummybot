@@ -10,7 +10,7 @@ namespace mummybot
 {
     public sealed class Program
     {
-        private static void Main(string[] args)
+        private static void Main()
             => StartAsync().GetAwaiter().GetResult();
 
         private static async Task StartAsync()

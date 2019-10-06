@@ -63,6 +63,7 @@ namespace mummybot.Modules.Tag
                     return;
                 }
                 await _tag.CreateTag(Database, name, content, Context.User, Context.Guild);
+                await Context.Channel.SendConfirmAsync($"{name} created");
             }
 
             //TODO: Can admins delete tags?

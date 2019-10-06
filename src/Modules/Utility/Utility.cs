@@ -1,12 +1,9 @@
-﻿using Discord;
-using Discord.Commands;
+﻿using Discord.Commands;
 using Discord.WebSocket;
 using System;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using mummybot.Extensions;
-
 
 namespace mummybot.Modules.Utility
 {
@@ -40,10 +37,9 @@ namespace mummybot.Modules.Utility
                 if (banList.Count > 0)
                 { 
                     foreach (var bans in banList) sb.AppendLine($"{bans.User} - {bans.Reason}");
-                await Context.Channel.SendConfirmAsync(sb.ToString(), "List of bans").ConfigureAwait(false);
+                        await Context.Channel.SendConfirmAsync(sb.ToString(), "List of bans").ConfigureAwait(false);
                 }
-                else
-                    await Context.Channel.SendConfirmAsync("No bans to display");
+                await Context.Channel.SendConfirmAsync("No bans to display");
             }
             catch (Exception ex)
             {

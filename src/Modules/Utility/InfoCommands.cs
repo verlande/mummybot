@@ -12,7 +12,7 @@ using mummybot.Extensions;
 
 namespace mummybot.Modules.Utility
 {
-    public partial class Utility : ModuleBase
+    public partial class Utility
     {
         [Command("Userinfo")]
         public async Task UserInfo(IGuildUser user)

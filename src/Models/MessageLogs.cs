@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace mummybot
+namespace mummybot.Models
 {
-    public partial class MessageLogs
+    public class MessageLogs
     {
         public long Id { get; set; }
         public ulong Guildid { get; set; }

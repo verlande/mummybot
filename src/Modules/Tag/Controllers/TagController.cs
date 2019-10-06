@@ -2,9 +2,6 @@
 using Discord.WebSocket;
 using mummybot.Models;
 using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace mummybot.Modules.Tag.Controllers
 {
@@ -40,9 +37,9 @@ namespace mummybot.Modules.Tag.Controllers
                 _context.Remove(_tag);
                 return $"``{_tag.Name}`` deleted";
             }
-            else if (_tag == null)
+            if (_tag == null)
                 return "Tag doesn't exist";
-            else if (_tag != null && !user.Id.Equals(_tag.Author))
+            if (_tag != null && !user.Id.Equals(_tag.Author))
                 return "Tag doesn't belong to you";
             return "Can't delete tag";
         }

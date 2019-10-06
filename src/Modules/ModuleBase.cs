@@ -4,9 +4,6 @@ using Discord.WebSocket;
 using mummybot.Extensions;
 using mummybot.Services;
 using NLog;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace mummybot.Modules
@@ -18,7 +15,7 @@ namespace mummybot.Modules
         public string LowerModuleTypeName { get; }
         public CommandHandlerService CmdHandler { get; set; }
         public mummybotDbContext Database { get; set; }
-        public Logger _log;
+        public readonly Logger _log;
 
 
         protected ModuleBase(bool isTopLevelModule = true)
@@ -53,7 +50,7 @@ namespace mummybot.Modules
         public async Task<string> GetUserInputAsync(ulong userId, ulong channelId)
         {
             var userInputTask = new TaskCompletionSource<string>();
-            var dsc = (DiscordSocketClient)Context.Client;
+            var dsc = Context.Client;
             try
             {
                 dsc.MessageReceived += MessageReceived;
@@ -75,7 +72,7 @@ namespace mummybot.Modules
                 var _ = Task.Run(() =>
                 {
                     if (!(arg is SocketUserMessage userMsg) ||
-                        !(userMsg.Channel is ITextChannel chan) ||
+                        !(userMsg.Channel is ITextChannel) ||
                         userMsg.Author.Id != userId ||
                         userMsg.Channel.Id != channelId)
                     {

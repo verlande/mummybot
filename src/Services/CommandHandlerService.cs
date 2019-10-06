@@ -62,7 +62,7 @@ namespace mummybot.Services
             }
             else
             {
-                Console.WriteLine("Succ | g:{0} | c: {1} | u: {2} | msg: {3}",
+                _log.Info("Succ | g:{0} | c: {1} | u: {2} | msg: {3}",
                     channel?.Guild.Id.ToString() ?? "-",
                     channel?.Id.ToString() ?? "-",
                     usrMsg.Author.Id,
@@ -110,18 +110,18 @@ namespace mummybot.Services
 
                 UserMessagesSent.AddOrUpdate(usrMsg.Author.Id, 1, (key, old) => old += 1);
 
-                var channel = msg.Channel as ISocketMessageChannel;
+                var channel = msg.Channel;
                 var guild = (msg.Channel as SocketTextChannel)?.Guild;
 
                 await TryRunCommand(guild, channel, usrMsg).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                _log.Warn(ex.Message);
 
                 if (ex.InnerException != null)
                 {
-                    Console.WriteLine(ex.InnerException);
+                    _log.Warn(ex.InnerException);
                 }
             }
         }
