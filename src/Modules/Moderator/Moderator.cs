@@ -22,12 +22,12 @@ namespace mummybot.Modules.Moderator
             if (result != null && !result.TagBanned)
             {
                 result.TagBanned = true;
-                await ReplyAsync($"{user} has been banned from creating tags");
+                await Context.Channel.SendConfirmAsync($"{user} has been banned from creating tags").ConfigureAwait(false);
             }
             else if (result != null && result.TagBanned)
             {
                 result.TagBanned = false;
-                await ReplyAsync($"{user} has been unbanned from creating tags");
+                await Context.Channel.SendConfirmAsync($"{user} has been unbanned from creating tags").ConfigureAwait(false);
             }
         }
 
@@ -44,7 +44,7 @@ namespace mummybot.Modules.Moderator
             }
             catch (Exception ex)
             {
-                await Context.Channel.SendErrorAsync(string.Empty, ex.Message);
+                await Context.Channel.SendErrorAsync(string.Empty, ex.Message).ConfigureAwait(false); ;
             }
         }
 
@@ -60,22 +60,21 @@ namespace mummybot.Modules.Moderator
         }
 
         [Command("Ban"), RequireBotPermission(GuildPermission.BanMembers), RequireUserPermission(GuildPermission.BanMembers)]
-        public async Task Ban(IGuildUser user, string reason = null) => await user.BanAsync(0, reason);
+        public async Task Ban(IGuildUser user, string reason = null) => await user.BanAsync(0, reason).ConfigureAwait(false);
 
         [Command("Kick"), RequireBotPermission(GuildPermission.KickMembers), RequireUserPermission(GuildPermission.KickMembers)]
-        public async Task Kick(IGuildUser user, string reason = null) => await user.KickAsync(reason);
+        public async Task Kick(IGuildUser user, string reason = null) => await user.KickAsync(reason).ConfigureAwait(false);
 
         [Command("Clearbots"), Summary("Clears messages from all bots"), RequireBotPermission(GuildPermission.ManageMessages)]
         public async Task Clearbot()
         {
             try
             {
-
-                var msgs = await Context.Channel.GetMessagesAsync().FlattenAsync();
+                var msgs = await Context.Channel.GetMessagesAsync().FlattenAsync().ConfigureAwait(false); ;
                 var result = msgs.Where(x => x.Author.IsBot).Take(100);
 
-                await ((ITextChannel)Context.Channel).DeleteMessagesAsync(result);
-                await ReplyAsync("deleted " + result.Count());
+                await ((ITextChannel)Context.Channel).DeleteMessagesAsync(result).ConfigureAwait(false);
+                await Context.Channel.SendConfirmAsync($"Deleted {result.Count()} bot messages").ConfigureAwait(false); ;
             }
             catch (Exception ex)
             {
@@ -83,12 +82,12 @@ namespace mummybot.Modules.Moderator
             }
         }
 
-        [Command("Delinv")]
-        public async Task clearInv()
+        [Command("Delinv"), Summary("Delete all created invite links"), RequireBotPermission(GuildPermission.Administrator), RequireUserPermission(GuildPermission.Administrator)]
+        public async Task ClearInvite()
         {
             var invites = Context.Guild.GetInvitesAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-            foreach (var inv in invites) await inv.DeleteAsync();
-            await Context.Channel.SendConfirmAsync($"Deleted {invites.Count} invites");
+            foreach (var inv in invites) await inv.DeleteAsync().ConfigureAwait(false);
+            await Context.Channel.SendConfirmAsync($"Deleted {invites.Count} invites").ConfigureAwait(false); ;
         }
 
         protected override async void AfterExecute(CommandInfo command)

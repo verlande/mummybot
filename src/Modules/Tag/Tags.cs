@@ -66,7 +66,6 @@ namespace mummybot.Modules.Tag
                 await Context.Channel.SendConfirmAsync($"{name} created");
             }
 
-            //TODO: Can admins delete tags?
             [Command("Delete")]
             public async Task Delete(string name)
             {

@@ -71,10 +71,10 @@ namespace mummybot.Services
             return Task.CompletedTask;
         }
 
-        private async Task LogErroredExecution(string errorMessage, IUserMessage usrMsg, ITextChannel channel)
+        private async Task LogErroredExecution(string erroredCmd, string errorMessage, IUserMessage usrMsg, ITextChannel channel)
         {
-            await channel.SendErrorAsync(string.Empty, errorMessage);
-            bool normal = true;
+            await channel.SendErrorAsync($"executing {erroredCmd}", errorMessage);
+            var normal = true;
             if (normal)
             {
                 _log.Error($"" +
@@ -145,7 +145,7 @@ namespace mummybot.Services
                 }
                 else if (Error != null)
                 {
-                    await LogErroredExecution(Error, usrMsg, channel as ITextChannel);
+                    await LogErroredExecution(Info.Name, Error, usrMsg, channel as ITextChannel);
                     if (guild != null)
                         await CommandErrored(Info, channel as ITextChannel, Error).ConfigureAwait(false);
                 }

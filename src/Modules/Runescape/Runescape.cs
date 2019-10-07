@@ -45,8 +45,7 @@ namespace mummybot.Modules.Runescape
                     break;
             }
 
-            var eb = new EmbedBuilder();
-            await ReplyAsync(String.Empty, embed: eb.WithTitle("Araxxi Rotation")
+            await ReplyAsync(String.Empty, embed: new EmbedBuilder().WithTitle("Araxxi Rotation")
                 .WithThumbnailUrl("http://i.imgur.com/9m39UaE.png")
                 .WithColor(Utils.GetRandomColor())
                 .AddField("Top Path (Minions)", top)
@@ -73,7 +72,6 @@ namespace mummybot.Modules.Runescape
                                 DateTimeKind.Utc)).TotalMilliseconds / 1000;
             var currentRotation = Math.Floor(((Math.Floor(Math.Floor(epochNow) / (24 * 60 * 60))) - 6) % (7 * rotation.Length) / 7);
             var daysNext = 7 - ((Math.Floor(epochNow / (24 * 60 * 60))) - 6) % (7 * rotation.Length) % 7;
-            var nextRoation = currentRotation + 1;
 
             var eb = new EmbedBuilder();
             await ReplyAsync(string.Empty, embed: eb
@@ -81,7 +79,7 @@ namespace mummybot.Modules.Runescape
             .AddField("Current Rotation", rotation[(int)currentRotation])
                 .WithColor(Utils.GetRandomColor())
                 .WithThumbnailUrl("http://i.imgur.com/e4WOs8J.png")
-                .WithFooter(new EmbedFooterBuilder().WithText($"Next rotation {rotation[(int)nextRoation]} in {(daysNext == 1 ? $"{daysNext} Day" : $"{daysNext} Days")}"))
+                .WithFooter(new EmbedFooterBuilder().WithText($"Next rotation {rotation[(int)currentRotation + 1]} in {(daysNext == 1 ? $"{daysNext} Day" : $"{daysNext} Days")}"))
                 .Build());
         }
 
@@ -103,7 +101,7 @@ namespace mummybot.Modules.Runescape
             foreach (var r in res.Skills.Values.ToList())
                 sb.AppendFormat("{0, -15} | {1, -5} | {2, -6} | {3, -12:n0}\n", r.Name, r.Level, r.Rank, r.Experience);
 
-            await ReplyAsync(Format.Code($"\t\t{player} Highscores\n\n{sb.ToString()}", "css"));
+            await ReplyAsync(Format.Code($"\t\t{res.Name} Highscores\n\n{sb.ToString()}", "css"));
         }
     }
 }

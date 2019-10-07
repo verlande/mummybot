@@ -41,10 +41,10 @@ namespace mummybot.Modules.Tag.Services
                 Author = user.Id,
                 Guild = guild.Id
             };
-            
+
             await _context.Tags.AddAsync(tag);
             await _context.SaveChangesAsync();
-            
+
             return new TagController(context, _discord, tag);
         }
     }

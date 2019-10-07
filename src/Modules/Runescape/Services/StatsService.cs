@@ -14,9 +14,7 @@ namespace mummybot.Modules.Runescape.Services
         public void Initialize(IServiceProvider service)
             => _services = service;
 
-        public async Task<RS3HiscoreCharacter> GetPlayerStats(string name)
-        {
-            return await RS3.GetCharacterAsync(name).ConfigureAwait(false);
-        }
+        public async Task<RS3HiscoreCharacter> GetPlayerStats(string name) 
+            => await RS3.GetCharacterAsync(name).ConfigureAwait(false);
     }
 }

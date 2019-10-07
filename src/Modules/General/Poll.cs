@@ -9,7 +9,7 @@ namespace mummybot.Modules.General
 {
     public partial class General
     {
-        internal enum Regional
+        private enum Regional
         {
             A, B, C, D, E, F
         }

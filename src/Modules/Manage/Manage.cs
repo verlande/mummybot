@@ -78,7 +78,7 @@ namespace mummybot.Modules.Manage
             await Context.Channel.SendConfirmAsync($"Set greeting channel to {channel.Mention}");
         }
 
-        [Command("Logging"), Summary("Enabled/Disable message logging")]
+        [Command("Logging"), Summary("Enabled/Disable message logging"), RequireUserPermission(GuildPermission.ManageGuild)]
         public async Task Logging(string arg = null, ITextChannel chl = null)
         {
             var conf = await Database.Guilds.SingleAsync(g => g.GuildId.Equals(Context.Guild.Id));
