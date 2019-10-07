@@ -36,7 +36,6 @@ namespace mummybot
                             );
                     }, ServiceLifetime.Transient)
                 .AddSingleton<Modules.Tag.Services.TagService>()
-                .AddSingleton<Modules.Runescape.Services.StatsService>()
                 .AddSingleton<Modules.Manage.Services.FilteringService>()
                 .AddSingleton<MessageService>()
                 .AddSingleton<GuildService>()
