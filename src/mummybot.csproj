@@ -6,6 +6,7 @@
         <PackageProjectUrl>https://gitlab.com/mummy603/mummybot</PackageProjectUrl>
         <RepositoryUrl>https://gitlab.com/mummy603/mummybot.git</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
+      <LangVersion>8.0</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
