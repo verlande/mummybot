@@ -11,10 +11,10 @@ namespace mummybot.Modules.Manage
 {
     public partial class Manage
     {
-        [RequireBotPermission(GuildPermission.ManageRoles), RequireUserPermission(GuildPermission.ManageRoles)]
+        [Summary("Role management"), RequireBotPermission(GuildPermission.ManageRoles), RequireUserPermission(GuildPermission.ManageRoles)]
         public class Roles : mummybotSubmodule
         {
-            [Command("Role"), Summary("Add or remove a role")]
+            [Command("Role"), Summary("Add or remove a role"), Remarks("<user> <role>")]
             public async Task Role(IGuildUser usr, [Remainder] IRole role)
             {
                 var guser = (IGuildUser)Context.User;
@@ -43,13 +43,13 @@ namespace mummybot.Modules.Manage
                 }
             }
 
-            [Command("Rolerename"), Summary("Rename a role")]
+            [Command("Rolerename"), Summary("Rename a role"), Remarks("<role> <rolename>")]
             public async Task RoleRemove(IRole role, string newName)
             {
                 var guser = (IGuildUser)Context.User;
                 if (Context.User.Id != guser.Guild.OwnerId && guser.GetRoles().Max(x => x.Position) <= role.Position)
                 {
-                    await Context.Channel.SendConfirmAsync($"Can't rename {role.Name}");
+                    await Context.Channel.SendConfirmAsync($"Can't rename {role.Name}").ConfigureAwait(false);
                     return;
                 }
                 try
@@ -68,7 +68,7 @@ namespace mummybot.Modules.Manage
                 }
             }
 
-            [Command("Rolemention"), Summary("Set role to metionable")]
+            [Command("Rolemention"), Summary("Set role to metionable"), Remarks("<role>")]
             public async Task RoleColour([Remainder] IRole role)
             {
                 if (!role.IsMentionable)
@@ -82,7 +82,7 @@ namespace mummybot.Modules.Manage
                 }
             }
 
-            [Command("Roleinfo"), Alias("ri")]
+            [Command("Roleinfo"), Alias("ri"), Remarks("<role>")]
             public async Task RoleInfo(SocketRole role)
             {
                 var eb = new EmbedBuilder
@@ -99,17 +99,17 @@ namespace mummybot.Modules.Manage
                 };
                 eb.WithFooter($"ID: {role.Id}");
 
-                await ReplyAsync(string.Empty, embed: eb.Build());
+                await ReplyAsync(string.Empty, embed: eb.Build()).ConfigureAwait(false);
             }
 
-            [Command("Userroles"), Summary("List roles of a user")]
+            [Command("Userroles"), Summary("List roles of a user"), Remarks("<user>")]
             public async Task InRole(IGuildUser arg = null)
             {
                 var channel = (ITextChannel)Context.Channel;
                 var user = arg ?? (IGuildUser)Context.User;
                 var roles = user.GetRoles().Except(new[] { channel.Guild.EveryoneRole }).OrderBy(r => r.Position);
 
-                await Context.Channel.SendAuthorAsync(user, string.Join("\n", roles.Select(x => x.Mention)));
+                await Context.Channel.SendAuthorAsync(user, string.Join("\n", roles.Select(x => x.Mention))).ConfigureAwait(false);
             }
 
             [Command("ListRoles"), Summary("Display all guild roles")]
@@ -124,7 +124,7 @@ namespace mummybot.Modules.Manage
                 //await Context.Channel.SendConfirmAsync(sb.ToString(), null);
             }
 
-            [Command("Checkperms"), Summary("View permissions of a user")]
+            [Command("Checkperms"), Summary("View permissions of a user"), Remarks("<user>")]
             public async Task Perms(IGuildUser arg = null)
             {
                 var sb = new StringBuilder();
@@ -133,7 +133,7 @@ namespace mummybot.Modules.Manage
 
                 foreach (var p in perms.GetType().GetProperties().Where(p => !p.GetGetMethod().GetParameters().Any()))
                     sb.AppendLine($"{p.Name} : {p.GetValue(perms, null)}");
-                await Context.Channel.SendAuthorAsync(user, sb.ToString(), $"User ID: {user.Id}");
+                await Context.Channel.SendAuthorAsync(user, sb.ToString(), $"User ID: {user.Id}").ConfigureAwait(false);
             }
         }
     }

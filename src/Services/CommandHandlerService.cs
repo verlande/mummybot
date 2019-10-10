@@ -110,10 +110,9 @@ namespace mummybot.Services
 
                 UserMessagesSent.AddOrUpdate(usrMsg.Author.Id, 1, (key, old) => old += 1);
 
-                var channel = msg.Channel;
                 var guild = (msg.Channel as SocketTextChannel)?.Guild;
 
-                await TryRunCommand(guild, channel, usrMsg).ConfigureAwait(false);
+                await TryRunCommand(guild, msg.Channel, usrMsg).ConfigureAwait(false);
             }
             catch (Exception ex)
             {

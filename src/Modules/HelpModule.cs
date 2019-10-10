@@ -48,7 +48,7 @@ namespace mummybot.Modules
                 AddCommands(mod, ref embed);
             }
 
-            await ReplyAsync(String.Empty, embed: embed.Build());
+            await ReplyAsync(String.Empty, embed: embed.Build()).ConfigureAwait(false); ;
         }
 
         private void AddHelp(ModuleInfo module, ref EmbedBuilder builder)

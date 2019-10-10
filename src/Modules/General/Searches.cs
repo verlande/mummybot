@@ -37,11 +37,10 @@ namespace mummybot.Modules.General
                         eab.WithName($"{verse[0].Bookname} {verse[0].Chapter}:{verse[0].Verse}")
                             .WithUrl($"{bibleGate}{verse[0].Bookname}+{verse[0].Chapter}:{verse[0].Verse}&version=ISV")
                             .WithIconUrl(bibleIcon))
-                    .WithColor(Utils.GetRandomColor())
-                    .AddField(
-                        efb => efb.WithName("Verse").WithValue(verse[0].Text).WithIsInline(false));
+                    .WithColor(Utils.GetRandomColor());
+                eb.WithDescription(verse[0].Text);
 
-                await ReplyAsync(string.Empty, embed: eb.Build());
+                await ReplyAsync(string.Empty, embed: eb.Build()).ConfigureAwait(false);
             }
         }
 
@@ -80,7 +79,7 @@ namespace mummybot.Modules.General
                             efb.WithName("Date").WithValue($"{comic.Day}/{comic.Month}/{comic.Year}").WithIsInline(true))
                         .AddField(efb => efb.WithName("Title").WithValue(comic.Title).WithIsInline(false));
 
-                    await ReplyAsync(String.Empty, embed: eb.Build());
+                    await ReplyAsync(String.Empty, embed: eb.Build()).ConfigureAwait(false);
                 }
             }
             catch (HttpRequestException)
@@ -105,7 +104,7 @@ namespace mummybot.Modules.General
 
                 if (UrbanList.Length == 0)
                 {
-                    await Context.Channel.SendErrorAsync(string.Empty, "Invalid term");
+                    await Context.Channel.SendErrorAsync(string.Empty, "Invalid term").ConfigureAwait(false);
                     return;
                 }
 

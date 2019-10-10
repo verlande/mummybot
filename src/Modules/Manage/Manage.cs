@@ -18,13 +18,14 @@ namespace mummybot.Modules.Manage
             {
                 if (greeting.Length > 100)
                 {
-                    await Context.Channel.SendErrorAsync(string.Empty, "Greeting message length over 100 chars");
+                    await Context.Channel.SendErrorAsync(string.Empty, "Greeting message length over 100 chars")
+                        .ConfigureAwait(false);
                     return;
                 }
                 var guild = await Database.Guilds.SingleOrDefaultAsync(g => g.GuildId.Equals(Context.Guild.Id));
                 guild.Greeting = greeting;
 
-                await Context.Channel.SendConfirmAsync("Greeting message has been set");
+                await Context.Channel.SendConfirmAsync("Greeting message has been set").ConfigureAwait(false);
 
                 //if (greeting.Contains("%user%")) await ReplyAsync(greeting.Replace("%user%", Context.User.Mention));
             }
@@ -35,11 +36,11 @@ namespace mummybot.Modules.Manage
             {
                 var guild = await Database.Guilds.SingleOrDefaultAsync(g => g.GuildId.Equals(Context.Guild.Id));
                 if (string.IsNullOrWhiteSpace(guild.Greeting))
-                    await Context.Channel.SendErrorAsync(string.Empty, "Can't clear a greeting if you haven't set one");
+                    await Context.Channel.SendErrorAsync(string.Empty, "Can't clear a greeting if you haven't set one").ConfigureAwait(false);
                 else
                 {
                     guild.Greeting = string.Empty;
-                    await Context.Channel.SendConfirmAsync("Cleared greeting message");
+                    await Context.Channel.SendConfirmAsync("Cleared greeting message").ConfigureAwait(false);
                 }
             }
 
@@ -49,13 +50,14 @@ namespace mummybot.Modules.Manage
             {
                 if (goodbye.Length > 100)
                 {
-                    await Context.Channel.SendErrorAsync(string.Empty, "Goodbye message length over 100 chars");
+                    await Context.Channel.SendErrorAsync(string.Empty, "Goodbye message length over 100 chars")
+                        .ConfigureAwait(false);
                     return;
                 }
                 var guild = await Database.Guilds.SingleOrDefaultAsync(g => g.GuildId.Equals(Context.Guild.Id));
                 guild.Goodbye = goodbye;
 
-                await Context.Channel.SendConfirmAsync("Goodbye message has been set");
+                await Context.Channel.SendConfirmAsync("Goodbye message has been set").ConfigureAwait(false);
             }
 
             [Command("ClearGoodbye"), Summary("Clears goodbye message")]
@@ -64,11 +66,12 @@ namespace mummybot.Modules.Manage
             {
                 var guild = await Database.Guilds.SingleOrDefaultAsync(g => g.GuildId.Equals(Context.Guild.Id));
                 if (string.IsNullOrWhiteSpace(guild.Goodbye))
-                    await Context.Channel.SendErrorAsync(string.Empty, "Can't clear a goodbye message if you haven't set one");
+                    await Context.Channel.SendErrorAsync(string.Empty, "Can't clear a goodbye message if you haven't set one")
+                        .ConfigureAwait(false);
                 else
                 {
                     guild.Goodbye = string.Empty;
-                    await Context.Channel.SendConfirmAsync("Cleared goodbye message");
+                    await Context.Channel.SendConfirmAsync("Cleared goodbye message").ConfigureAwait(false);
                 }
             }
 
@@ -78,7 +81,7 @@ namespace mummybot.Modules.Manage
             {
                 var guild = await Database.Guilds.SingleOrDefaultAsync(g => g.GuildId.Equals(Context.Guild.Id));
                 guild.GreetChl = channel.Id;
-                await Context.Channel.SendConfirmAsync($"Set greeting channel to {channel.Mention}");
+                await Context.Channel.SendConfirmAsync($"Set greeting channel to {channel.Mention}").ConfigureAwait(false);
             }
 
             [Command("Logging"), Summary("Enabled/Disable message logging"), RequireUserPermission(GuildPermission.ManageGuild)]
@@ -95,7 +98,7 @@ namespace mummybot.Modules.Manage
                     if (msg)
                     {
                         conf.MessageLogging = false;
-                        await ReplyAsync("Logging has been disabled");
+                        await Context.Channel.SendConfirmAsync("Logging has been disabled").ConfigureAwait(false);
                     }
                 }
             }
@@ -109,13 +112,13 @@ namespace mummybot.Modules.Manage
                 {
                     conf.FilterInvites = false;
                     _service.InviteFiltering.TryRemove(Context.Guild.Id);
-                    await Context.Channel.SendConfirmAsync("Invite filtering disabled");
+                    await Context.Channel.SendConfirmAsync("Invite filtering disabled").ConfigureAwait(false);
                 }
                 else if (!_service.InviteFiltering.Contains(Context.Guild.Id))
                 {
                     conf.FilterInvites = true;
                     _service.InviteFiltering.Add(Context.Guild.Id);
-                    await Context.Channel.SendConfirmAsync("Invite filtering enabled");
+                    await Context.Channel.SendConfirmAsync("Invite filtering enabled").ConfigureAwait(false);
                 }
             }
 
