@@ -1,4 +1,4 @@
-FROM microsoft/dotnet:3.0-sdk AS build
+FROM mcr.microsoft.com/dotnet/core/sdk:3.0-buster AS build
 
 COPY . /mummybot
 WORKDIR /mummybot
