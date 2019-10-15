@@ -103,7 +103,7 @@ namespace mummybot.Modules.Manage
                 }
             }
 
-            [Command("FilterInv"), Summary("Toggle invite link filtering")]
+            [Command("FilterInv"), Summary("Toggle invite link filtering"), RequireUserPermission(GuildPermission.ManageGuild)]
             public async Task FilterInv()
             {
                 var conf = await Database.Guilds.SingleAsync(x => x.GuildId.Equals(Context.Guild.Id)).ConfigureAwait(false);

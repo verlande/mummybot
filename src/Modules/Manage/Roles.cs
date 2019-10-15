@@ -11,10 +11,11 @@ namespace mummybot.Modules.Manage
 {
     public partial class Manage
     {
-        [Summary("Role management"), RequireBotPermission(GuildPermission.ManageRoles), RequireUserPermission(GuildPermission.ManageRoles)]
+        [Summary("Role management")]
         public class Roles : mummybotSubmodule
         {
-            [Command("Role"), Summary("Add or remove a role"), Remarks("<user> <role>")]
+            [Command("Role"), Summary("Add or remove a role"), Remarks("<user> <role>"),
+                RequireBotPermission(GuildPermission.ManageRoles), RequireUserPermission(GuildPermission.ManageRoles)]
             public async Task Role(IGuildUser usr, [Remainder] IRole role)
             {
                 var guser = (IGuildUser)Context.User;
@@ -43,7 +44,8 @@ namespace mummybot.Modules.Manage
                 }
             }
 
-            [Command("Rolerename"), Summary("Rename a role"), Remarks("<role> <rolename>")]
+            [Command("Rolerename"), Summary("Rename a role"), Remarks("<role> <rolename>"),
+                RequireBotPermission(GuildPermission.ManageRoles), RequireUserPermission(GuildPermission.ManageRoles)]
             public async Task RoleRemove(IRole role, string newName)
             {
                 var guser = (IGuildUser)Context.User;
@@ -68,7 +70,8 @@ namespace mummybot.Modules.Manage
                 }
             }
 
-            [Command("Rolemention"), Summary("Set role to metionable"), Remarks("<role>")]
+            [Command("Rolemention"), Summary("Set role to metionable"), Remarks("<role>"),
+                RequireBotPermission(GuildPermission.ManageRoles), RequireUserPermission(GuildPermission.ManageRoles)]
             public async Task RoleColour([Remainder] IRole role)
             {
                 if (!role.IsMentionable)
