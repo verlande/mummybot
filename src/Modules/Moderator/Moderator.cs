@@ -11,7 +11,7 @@ namespace mummybot.Modules.Moderator
 {
     public partial class Moderator : ModuleBase
     {
-        [Command("Tagban"), Summary("Ban/Unban a user from creating tags in your guild")]
+        [Command("Tagban"), Summary("Ban/Unban a user from creating tags in your guild"), RequireUserPermission(GuildPermission.Administrator)]
         public async Task TagBan(SocketGuildUser user)
         {
             if (user.IsBot) return;

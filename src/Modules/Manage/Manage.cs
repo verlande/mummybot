@@ -13,7 +13,7 @@ namespace mummybot.Modules.Manage
         public class ManageCommands : mummybotSubmodule<Services.FilteringService>
         {
             [Command("SetGreeting"), Summary("Sets a greeting for new members. Use %user% to include new user's name in the message")]
-            [RequireUserPermission(GuildPermission.ManageGuild | GuildPermission.Administrator)]
+            [RequireUserPermission(GuildPermission.ManageGuild)]
             public async Task SetGreeting([Remainder] string greeting)
             {
                 if (greeting.Length > 100)
@@ -31,7 +31,7 @@ namespace mummybot.Modules.Manage
             }
 
             [Command("ClearGreeting"), Summary("Clears greeting message")]
-            [RequireUserPermission(GuildPermission.ManageGuild | GuildPermission.Administrator)]
+            [RequireUserPermission(GuildPermission.ManageGuild)]
             public async Task Cleargreeting()
             {
                 var guild = await Database.Guilds.SingleOrDefaultAsync(g => g.GuildId.Equals(Context.Guild.Id));
@@ -45,7 +45,7 @@ namespace mummybot.Modules.Manage
             }
 
             [Command("SetGoodbye"), Summary("Set goodbye when a user leaves. Use %user% to include new user's name in the message")]
-            [RequireUserPermission(GuildPermission.ManageGuild | GuildPermission.Administrator)]
+            [RequireUserPermission(GuildPermission.ManageGuild)]
             public async Task Setgoodbye([Remainder] string goodbye)
             {
                 if (goodbye.Length > 100)
@@ -61,7 +61,7 @@ namespace mummybot.Modules.Manage
             }
 
             [Command("ClearGoodbye"), Summary("Clears goodbye message")]
-            [RequireUserPermission(GuildPermission.ManageGuild | GuildPermission.Administrator)]
+            [RequireUserPermission(GuildPermission.ManageGuild)]
             public async Task Cleargoodbye()
             {
                 var guild = await Database.Guilds.SingleOrDefaultAsync(g => g.GuildId.Equals(Context.Guild.Id));
@@ -76,7 +76,7 @@ namespace mummybot.Modules.Manage
             }
 
             [Command("SetGreetchl"), Summary("Set channel to send greeting and goodbye messages")]
-            [RequireUserPermission(GuildPermission.ManageGuild | GuildPermission.Administrator)]
+            [RequireUserPermission(GuildPermission.ManageGuild)]
             public async Task Setgreetchl(SocketTextChannel channel)
             {
                 var guild = await Database.Guilds.SingleOrDefaultAsync(g => g.GuildId.Equals(Context.Guild.Id));
