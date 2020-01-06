@@ -2,7 +2,7 @@
 {
     public class Quotes
     {
-        internal readonly string[] QuoteList = new string[] 
+       public readonly string[] QuoteList = new string[] 
         {
       "What, you ran out of donuts?",
       "You can talk about this in the shower with your buddies!",

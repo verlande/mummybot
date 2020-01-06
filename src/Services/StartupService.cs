@@ -36,7 +36,7 @@ namespace mummybot.Services
             
             await _discord.LoginAsync(TokenType.Bot, config.Config["token"]).ConfigureAwait(false);
             await _discord.StartAsync().ConfigureAwait(false);
-            await _discord.SetStatusAsync(UserStatus.Online);
+            await _discord.SetStatusAsync(UserStatus.Online).ConfigureAwait(false);
             await _commands.AddModulesAsync(this.GetType().GetTypeInfo().Assembly, _provider);
         }
 
@@ -57,7 +57,7 @@ namespace mummybot.Services
                 $"{users} users"
                 
             };
-            await _discord.SetGameAsync($"{statuses[r.Next(statuses.Length)]} | £help", null,  ActivityType.Playing);
+            await _discord.SetGameAsync($"{statuses[r.Next(statuses.Length)]} | £help", null,  ActivityType.Playing).ConfigureAwait(false);
         }
 
         private static async Task RunPeriodically(Action action, TimeSpan interval, CancellationToken token)

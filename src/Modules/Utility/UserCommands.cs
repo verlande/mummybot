@@ -25,7 +25,7 @@ namespace mummybot.Modules.Utility
                 .WithThumbnailUrl("https://www.shareicon.net/data/128x128/2016/05/15/765355_multimedia_512x512.png")
                 .WithDescription(sb.ToString())
                 .WithColor(Utils.GetRandomColor())
-                .Build());
+                .Build()).ConfigureAwait(false);
         }
 
         [Command("Finddups"), Summary("Find users with matching nicknames"), Alias("fd")]
@@ -40,7 +40,7 @@ namespace mummybot.Modules.Utility
                     sb.AppendLine($"{Format.Bold(Utils.FullUserName(dup))} - {dup.Nickname}");
                 else if (sb.Length == 0) sb.AppendLine("No duplicate nicknames");
 
-            await Context.Channel.SendConfirmAsync(sb.ToString(), "Duplicate nicknames");
+            await Context.Channel.SendConfirmAsync(sb.ToString(), "Duplicate nicknames").ConfigureAwait(false);
         }
 
         [Command("Pastnicks"), Summary("Show past nicknames limited to 10"), Alias("pn")]
@@ -52,12 +52,12 @@ namespace mummybot.Modules.Utility
                 && u.GuildId.Equals(Context.Guild.Id)).OrderByDescending(u => u.Id).Take(10);
 
             if (!result.Any())
-                await Context.Channel.SendErrorAsync(string.Empty, $"No nickname history for {Utils.FullUserName(user)}");
+                await Context.Channel.SendErrorAsync(string.Empty, $"No nickname history for {Utils.FullUserName(user)}").ConfigureAwait(false);
             else
             {
                 var sb = new StringBuilder();
-                await result.ForEachAsync(n => sb.AppendLine(Format.Bold(n.Nickname) + $" - ``{n.ChangedOn}``"));
-                await Context.Channel.SendAuthorAsync((IGuildUser)user, sb.ToString(), $"User ID: {user.Id.ToString()}");
+                await result.ForEachAsync(n => sb.AppendLine($"{n.Nickname} - ``{n.ChangedOn}``"));
+                await Context.Channel.SendAuthorAsync((IGuildUser)user, sb.ToString(), $"User ID: {user.Id.ToString()}").ConfigureAwait(false);
             }
         }
 
@@ -69,13 +69,13 @@ namespace mummybot.Modules.Utility
             var result = Database.UsersAudit.Where(u => u.UserId.Equals(user.Id)).Select(x => new { x.Username }).Take(10);
 
             if (!result.Any())
-                await Context.Channel.SendErrorAsync(string.Empty, $"No username history for {Utils.FullUserName(user)}");
+                await Context.Channel.SendErrorAsync(string.Empty, $"No username history for {Utils.FullUserName(user)}").ConfigureAwait(false);
             else
             {
                 var sb = new StringBuilder();
                 foreach (var res in result.Distinct())
                     if (!System.String.IsNullOrEmpty(res.Username)) sb.AppendLine(Format.Bold(res.Username));
-                await Context.Channel.SendAuthorAsync((IGuildUser)user, sb.ToString(), $"User ID: {user.Id.ToString()}");
+                await Context.Channel.SendAuthorAsync((IGuildUser)user, sb.ToString(), $"User ID: {user.Id.ToString()}").ConfigureAwait(false);
             }
         }
 
@@ -90,10 +90,10 @@ namespace mummybot.Modules.Utility
 
             //await users.ForEachAsync(u => eb.AddField($"{u.Username} ({u.UserId})", u.Joined));
 
-            var users = Context.Guild.Users.ToList().Where(u => !u.IsBot).OrderByDescending(u => u.JoinedAt).Take(5);
+            var users = Context.Guild.Users.ToList().Where(u => !u.IsBot).OrderByDescending(u => u.JoinedAt).Take(10);
 
             foreach (var user in users) eb.AddField($"{user.Username} ({user.Id})", user.JoinedAt);
-            await ReplyAsync(string.Empty, embed: eb.Build());
+            await ReplyAsync(string.Empty, embed: eb.Build()).ConfigureAwait(false);
         }
     }
 }

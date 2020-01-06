@@ -50,7 +50,7 @@ namespace mummybot.Modules.Manage.Services
             => _services = service;
 
         public async Task<bool> RunBehavior(DiscordSocketClient _, IGuild guild, IUserMessage msg)
-            => !(msg.Author is IGuildUser gu) ? false : (await FilterInvites(guild, msg).ConfigureAwait(false));
+            => !(msg.Author is IGuildUser gu) ? false : !gu.GuildPermissions.Administrator && (await FilterInvites(guild, msg).ConfigureAwait(false));
 
         public async Task<bool> FilterInvites(IGuild guild, IUserMessage msg)
         {

@@ -53,13 +53,11 @@ namespace mummybot.Modules.Tag.Controllers
         public bool Exists()
             => _tag != null;
 
-        public Embed TagInfoEmbed()
-        {
-            if (_tag == null) return null;
-            var author = _discord.GetUser(_tag.Author);
-            return new EmbedBuilder()
+        public Embed TagInfoEmbed() => _tag == null
+                ? null
+                : new EmbedBuilder()
                 .WithTitle(_tag.Name)
-                .AddField("Created by", author.Mention, true)
+                .AddField("Created by", _discord.GetUser(_tag.Author).Mention, true)
                 .AddField("Date created", _tag.Createdat, true)
                 //.AddField("Invoked by prefix", _tag.IsCommand, true)
                 .AddField("Uses", _tag.Uses, true)
@@ -67,6 +65,5 @@ namespace mummybot.Modules.Tag.Controllers
                 .AddField("Last used", _tag.LastUsed == null ? "N/A" : _tag.LastUsed.ToString(), true)
                 .WithColor(Utils.GetRandomColor())
                 .Build();
-        }
     }
 }

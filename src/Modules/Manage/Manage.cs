@@ -84,26 +84,7 @@ namespace mummybot.Modules.Manage
                 await Context.Channel.SendConfirmAsync($"Set greeting channel to {channel.Mention}").ConfigureAwait(false);
             }
 
-            [Command("Logging"), Summary("Enabled/Disable message logging"), RequireUserPermission(GuildPermission.ManageGuild)]
-            public async Task Logging(string arg = null, ITextChannel chl = null)
-            {
-                var conf = await Database.Guilds.SingleAsync(g => g.GuildId.Equals(Context.Guild.Id));
-
-                if (conf.MessageLogging)
-                {
-                    var msg = await PromptUserConfirmAsync(new EmbedBuilder()
-                        .WithDescription("Disabling message logging will disable these commands: " +
-                        "\n``£Snipe\n£Undelete\n£Source``")
-                        .WithColor(Utils.GetRandomColor()));
-                    if (msg)
-                    {
-                        conf.MessageLogging = false;
-                        await Context.Channel.SendConfirmAsync("Logging has been disabled").ConfigureAwait(false);
-                    }
-                }
-            }
-
-            [Command("FilterInv"), Summary("Toggle invite link filtering"), RequireUserPermission(GuildPermission.ManageGuild)]
+            [Command("FilterInv"), Summary("Toggle invite link filtering"), RequireUserPermission(GuildPermission.ManageGuild | GuildPermission.Administrator)]
             public async Task FilterInv()
             {
                 var conf = await Database.Guilds.SingleAsync(x => x.GuildId.Equals(Context.Guild.Id)).ConfigureAwait(false);

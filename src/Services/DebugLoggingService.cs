@@ -31,8 +31,8 @@ namespace mummybot.Services
             if (!File.Exists(LogFile))
                 File.Create(LogFile).Dispose();
             
-            var debugText =
-                $"{DateTime.UtcNow:O} [{msg.Severity}] {msg.Source} : {msg.Exception?.ToString() ?? msg.Message}";
+            //var debugText =
+            //    $"{DateTime.UtcNow:O} [{msg.Severity}] {msg.Source} : {msg.Exception?.ToString() ?? msg.Message}";
             
             //await File.AppendAllTextAsync(LogFile, debugText + "\n").ConfigureAwait(false);
 

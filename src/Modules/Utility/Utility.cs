@@ -20,10 +20,7 @@ namespace mummybot.Modules.Utility
         }
 
         [Command("Ping")]
-        public async Task Ping()
-        {
-            await Context.Channel.SendConfirmAsync($"🏓 {_client.Latency.ToString()}ms");
-        }
+        public async Task Ping() => await Context.Channel.SendConfirmAsync($"🏓 {_client.Latency.ToString()}ms").ConfigureAwait(false);
 
         //TODO: Make this paginated
         [Command("Bans"), Summary("Returns list of bans")]
@@ -39,11 +36,11 @@ namespace mummybot.Modules.Utility
                     foreach (var bans in banList) sb.AppendLine($"{bans.User} - {bans.Reason}");
                         await Context.Channel.SendConfirmAsync(sb.ToString(), "List of bans").ConfigureAwait(false);
                 }
-                await Context.Channel.SendConfirmAsync("No bans to display");
+                await Context.Channel.SendConfirmAsync("No bans to display").ConfigureAwait(false);
             }
             catch (Exception ex)
             {
-                await Context.Channel.SendErrorAsync("Error fetching ban list", ex.Message);
+                await Context.Channel.SendErrorAsync("Error fetching ban list", ex.Message).ConfigureAwait(false);
             }
         }
     }

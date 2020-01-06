@@ -15,24 +15,25 @@ namespace mummybot.Modules.Utility
     public partial class Utility
     {
         [Command("Userinfo")]
-        public async Task UserInfo(IGuildUser user)
+        public async Task UserInfo(SocketGuildUser user = null)
         {
-            var eb = new EmbedBuilder()
-                .WithTitle($"{user.Username} " + user.Nickname ?? "")
-                .WithThumbnailUrl(user.GetAvatarUrl())
-                .AddField("ID", user.Id, true)
-                .AddField("Account created", user.CreatedAt.ToLocalTime(), true)
-                .AddField("Joined at", user.JoinedAt.Value.ToLocalTime(), true)
-                .AddField("Roles", Format.Code($"{string.Join(", ", user.GetRoles().Select(x => x.Name))}"))
-                .Build();
+            user ??= (SocketGuildUser)Context.User;
 
-            await ReplyAsync(string.Empty, embed: eb);
-            //await Context.Channel.SendAuthorAsync(user, $"{user.Username} | {user.Status}\n\n" +
-            //Format.Bold("Nickname: ") + user.Nickname ?? "None" +
-            //"\n" +
-            //Format.Bold("Joined: ") + user.JoinedAt.Value.DateTime +
-            //"\n" + Format.Bold("Created: ") + user.CreatedAt.DateTime +
-            //"\n" + Format.Bold($"Roles ({user.GetRoles().Count()}): ") + $"{string.Join(", ", user.GetRoles().Select(x => x.Mention))}", $"ID: {user.Id}");
+            var userRoles = user.Roles.Where(x => x.Id != Context.Guild!.EveryoneRole.Id)
+                .OrderByDescending(x => x.Position)
+                .ToList();
+
+            var eb = new EmbedBuilder()
+                .WithColor(Utils.GetRandomColor())
+                .WithThumbnailUrl(user.GetDefaultAvatarUrl())
+                .AddField("Username", user, true)
+                .AddField("Nickname", !string.IsNullOrEmpty(user.Nickname) ? user.Nickname : "None", true)
+                //.AddField("Activity", !string.IsNullOrEmpty(user.Activity.Name) ? user.Activity.Name : "ok", true)
+                .AddField("Status", user.Status, true)
+                .AddField("Joined", user.JoinedAt?.ToString("yyyy-MM-dd hh:mm:ss tt") ?? "-", true)
+                .AddField("Account Created", user.CreatedAt.ToString("yyyy-MM-dd hh:mm:ss tt"), true)
+                .AddField($"Roles ({userRoles.Count})", userRoles.Count != 0 ? string.Join("\n", userRoles.Take(10)) : "-", true);
+            await ReplyAsync(string.Empty, embed: eb.Build()).ConfigureAwait(false);
         }
 
         [Command("Botinfo"), Summary("Displays bot information")]
@@ -44,7 +45,6 @@ namespace mummybot.Modules.Utility
                               $"- Author: {application.Owner}\n" +
                               $"- Library: Discord.Net ({DiscordConfig.Version})\n" +
                               $"- Kernel: {Environment.OSVersion}\n" +
-                              "- PostgreSQL Version: 10.1\n" +
                               $"- Runtime: {RuntimeInformation.FrameworkDescription} {RuntimeInformation.OSArchitecture}\n" +
                               $"- Uptime: {(DateTime.Now - Process.GetCurrentProcess().StartTime):dd\\.hh\\:mm\\:ss}\n\n" +
 
@@ -58,14 +58,15 @@ namespace mummybot.Modules.Utility
         }
 
         [Command("Uptime")]
-        public async Task Uptime() => await ReplyAsync($"``{DateTime.Now - Process.GetCurrentProcess().StartTime:g}``");
+        public async Task Uptime() => await Context.Channel.SendConfirmAsync($"``{DateTime.Now - Process.GetCurrentProcess().StartTime:g}``")
+            .ConfigureAwait(false);
 
         [Command("Isadmin"), Summary("Check is a user is an admin")]
         public async Task IsAdmin(SocketGuildUser user)
         {
             if (user.GuildPermissions.Administrator)
-                await ReplyAsync($"{Utils.FullUserName(user)} is an admin");
-            else await ReplyAsync($"{Utils.FullUserName(user)} is not an admin");
+                await Context.Channel.SendConfirmAsync($"{Utils.FullUserName(user)} is an admin").ConfigureAwait(false);
+            else await Context.Channel.SendConfirmAsync($"{Utils.FullUserName(user)} is not an admin").ConfigureAwait(false);
         }
 
         [Command("Guildinfo")]
@@ -158,11 +159,21 @@ namespace mummybot.Modules.Utility
                 field.Value = guild.VerificationLevel;
             });
 
-            await ReplyAsync(string.Empty, embed: eb.Build());
+            await ReplyAsync(string.Empty, embed: eb.Build()).ConfigureAwait(false);
         }
 
         [Command("Membercount"), Summary("Guild member count")]
-        public async Task MemberCount() 
-            => await Context.Channel.SendConfirmAsync($"{Context.Guild.MemberCount} users in this guild");
+        public async Task MemberCount()
+        {
+            var sb = new StringBuilder();
+
+            sb.AppendLine($"Online {Context.Guild.Users.Count(x => x.Status == UserStatus.Online)}");
+            sb.AppendLine($"Idle {Context.Guild.Users.Count(x => x.Status == UserStatus.Idle)}");
+            sb.AppendLine($"Do Not Disturb {Context.Guild.Users.Count(x => x.Status == UserStatus.DoNotDisturb)}");
+            sb.AppendLine($"Offline {Context.Guild.Users.Count(x => x.Status == UserStatus.Offline)}");
+            sb.AppendLine($"Bot {Context.Guild.Users.Count(x => x.IsBot)}");
+
+            await Context.Channel.SendConfirmAsync(sb.ToString()).ConfigureAwait(false);
+        }
     }
 }

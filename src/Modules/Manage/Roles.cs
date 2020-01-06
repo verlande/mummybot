@@ -39,19 +39,19 @@ namespace mummybot.Modules.Manage
                 }
                 catch (Exception ex)
                 {
-                    await Context.Channel.SendErrorAsync("", "setrole_err").ConfigureAwait(false);
+                    await Context.Channel.SendErrorAsync(string.Empty, "setrole_err").ConfigureAwait(false);
                     _log.Warn(ex ?? ex.InnerException);
                 }
             }
 
             [Command("Rolerename"), Summary("Rename a role"), Remarks("<role> <rolename>"),
                 RequireBotPermission(GuildPermission.ManageRoles), RequireUserPermission(GuildPermission.ManageRoles)]
-            public async Task RoleRemove(IRole role, string newName)
+            public async Task RoleRemove(IRole role, [Remainder] string newName)
             {
                 var guser = (IGuildUser)Context.User;
                 if (Context.User.Id != guser.Guild.OwnerId && guser.GetRoles().Max(x => x.Position) <= role.Position)
                 {
-                    await Context.Channel.SendConfirmAsync($"Can't rename {role.Name}").ConfigureAwait(false);
+                    await Context.Channel.SendErrorAsync(string.Empty, $"Can't rename {role.Name}").ConfigureAwait(false);
                     return;
                 }
                 try
@@ -64,9 +64,10 @@ namespace mummybot.Modules.Manage
                     await role.ModifyAsync(g => g.Name = newName).ConfigureAwait(false);
                     await Context.Channel.SendConfirmAsync($"Renamed {role.Name} to {newName}").ConfigureAwait(false);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     await Context.Channel.SendErrorAsync("renaming role", string.Empty).ConfigureAwait(false);
+                    _log.Warn(ex ?? ex.InnerException);
                 }
             }
 
@@ -78,17 +79,15 @@ namespace mummybot.Modules.Manage
                 {
                     await role.ModifyAsync(r => r.Mentionable = true).ConfigureAwait(false);
                     await Context.Channel.SendConfirmAsync(role.Mention + " is now mentionable").ConfigureAwait(false);
+                    return;
                 }
-                else
-                {
-                    await Context.Channel.SendConfirmAsync(role.Mention + " is already mentionable").ConfigureAwait(false);
-                }
+                await Context.Channel.SendConfirmAsync(role.Mention + " is already mentionable").ConfigureAwait(false);
             }
 
             [Command("Roleinfo"), Alias("ri"), Remarks("<role>")]
             public async Task RoleInfo(SocketRole role)
             {
-                var eb = new EmbedBuilder
+                await ReplyAsync(string.Empty, embed: new EmbedBuilder
                 {
                     Title = $"Role Info: {role.Name}",
                     Description = $"**Position:** {Context.Guild.Roles.Count - role.Position}/{Context.Guild.Roles.Count}\n" +
@@ -99,10 +98,7 @@ namespace mummybot.Modules.Manage
                     $"**Permissions:** {string.Join("\n", role.Permissions.ToList())}",
                     ThumbnailUrl = $"https://www.colorhexa.com/{role.Color.ToString().Substring(1)}.png",
                     Color = role.Color
-                };
-                eb.WithFooter($"ID: {role.Id}");
-
-                await ReplyAsync(string.Empty, embed: eb.Build()).ConfigureAwait(false);
+                }.WithFooter($"Role ID: {role.Id}").Build()).ConfigureAwait(false);
             }
 
             [Command("Userroles"), Summary("List roles of a user"), Remarks("<user>")]
@@ -112,19 +108,17 @@ namespace mummybot.Modules.Manage
                 var user = arg ?? (IGuildUser)Context.User;
                 var roles = user.GetRoles().Except(new[] { channel.Guild.EveryoneRole }).OrderBy(r => r.Position);
 
-                await Context.Channel.SendAuthorAsync(user, string.Join("\n", roles.Select(x => x.Mention))).ConfigureAwait(false);
+                await Context.Channel.SendAuthorAsync(user, string.Join("\n", roles.Select(x => x.Mention)), $"User ID: {user.Id}").ConfigureAwait(false);
             }
 
             [Command("ListRoles"), Summary("Display all guild roles")]
             public async Task ListRoles()
             {
-                var roles = Context.Guild.Roles;
                 var sb = new StringBuilder();
 
-                foreach (var role in roles)
-                    sb.AppendLine($"``{role.Name} {role.Color} MEMBERS: {role.Members.Count()}``");
-                await ReplyAsync(sb.ToString());
-                //await Context.Channel.SendConfirmAsync(sb.ToString(), null);
+                foreach (var role in Context.Guild.Roles.OrderBy(x => x.Position))
+                    sb.AppendLine($"{role.Name} ({role.Members.Count()})");
+                await Context.Channel.SendConfirmAsync(sb.ToString(), "List of roles").ConfigureAwait(false);
             }
 
             [Command("Checkperms"), Summary("View permissions of a user"), Remarks("<user>")]

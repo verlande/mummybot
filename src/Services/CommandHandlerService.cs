@@ -116,12 +116,7 @@ namespace mummybot.Services
             }
             catch (Exception ex)
             {
-                _log.Warn(ex.Message);
-
-                if (ex.InnerException != null)
-                {
-                    _log.Warn(ex.InnerException);
-                }
+                _log.Warn(ex ?? ex.InnerException);
             }
         }
 
@@ -260,7 +255,6 @@ namespace mummybot.Services
 
             return (true, null, cmd);
         }
-
         private readonly object errorLogLock = new object();
     }
 }

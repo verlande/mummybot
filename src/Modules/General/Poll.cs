@@ -58,11 +58,11 @@ namespace mummybot.Modules.General
                 num += 1;
             }
 
-            var msg = await Context.Channel.SendConfirmAsync(tr, question);
+            var msg = await Context.Channel.SendConfirmAsync(tr, question).ConfigureAwait(false);
 
             foreach (var s in regionals)
             {
-                await msg.AddReactionAsync(EnumToUnicode(s));
+                await msg.AddReactionAsync(EnumToUnicode(s)).ConfigureAwait(false);
                 await Task.Delay(250);
             }
         }

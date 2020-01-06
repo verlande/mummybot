@@ -38,7 +38,6 @@ namespace mummybot.Modules
 
                 if (input != "YES" && input != "Y")
                     return false;
-
                 return true;
             }
             finally
@@ -93,8 +92,7 @@ namespace mummybot.Modules
     public abstract class ModuleBase<TService> : ModuleBase where TService : INService
     {
         public TService _service { get; set; }
-        protected ModuleBase(bool isTopLevel = true) : base(isTopLevel)
-        { }
+        protected ModuleBase(bool isTopLevel = true) : base(isTopLevel) { }
     }
 
     public abstract class mummybotSubmodule : ModuleBase

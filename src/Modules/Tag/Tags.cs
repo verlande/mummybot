@@ -5,6 +5,7 @@ using System.Linq;
 using Discord;
 using Discord.WebSocket;
 using mummybot.Extensions;
+using mummybot.Attributes;
 
 namespace mummybot.Modules.Tag
 {
@@ -25,13 +26,13 @@ namespace mummybot.Modules.Tag
                 var tag = _tag.GetTag(Database, arg, Context.Guild);
                 if (tag != null)
                 {
-                    await ReplyAsync(tag.GetContent(arg));
+                    await ReplyAsync(tag.GetContent(arg)).ConfigureAwait(false);
                     tag.AddUse();
                     tag.LastUsedBy(Context.User);
                 }
             }
 
-            [Command("Create"), Summary("Create a tag")]
+            [Command("Create"), Summary("Create a tag"), Cooldown(120, true)]
             public async Task CreateTag(string name, [Remainder] string content)
             {
                 var blacklistCommands = _commands.Commands.Select(x => x.Name).ToArray();
@@ -40,41 +41,38 @@ namespace mummybot.Modules.Tag
 
                 if (isTagBanned)
                 {
-                    await Context.Channel.SendErrorAsync("creating tag", "You are banned from creating tags");
+                    await Context.Channel.SendErrorAsync("creating tag", "You are banned from creating tags").ConfigureAwait(false);
                     return;
                 }
 
                 if (blacklistCommands.Any(b => b.Equals(name, StringComparison.OrdinalIgnoreCase)))
                 {
-                    await Context.Channel.SendErrorAsync("creating tag", "Cannot use this tag name, choose another");
+                    await Context.Channel.SendErrorAsync("creating tag", "Cant use this tag name, choose another").ConfigureAwait(false);
                     return;
                 }
 
                 if (name.Length > 12 || content.Length > 255)
                 {
                     await Context.Channel.SendErrorAsync("creating tag", "Tag name should be less than 12 chars" +
-                        "\nTag content should be less than 255 chars");
+                        "\nTag content should be less than 255 chars").ConfigureAwait(false);
                     return;
                 }
 
                 if (_tag.GetTag(Database, name, Context.Guild).Exists())
                 {
-                    await Context.Channel.SendErrorAsync("creating tag", "Tag already exists, pick another name");
+                    await Context.Channel.SendErrorAsync("creating tag", "Tag already exists, pick another name").ConfigureAwait(false);
                     return;
                 }
                 await _tag.CreateTag(Database, name, content, Context.User, Context.Guild);
-                await Context.Channel.SendConfirmAsync($"{name} created");
+                await Context.Channel.SendConfirmAsync($"{name} created").ConfigureAwait(false);
             }
 
             [Command("Delete")]
-            public async Task Delete(string name)
-            {
-                await Context.Channel.SendConfirmAsync(_tag.GetTag(Database, name, Context.Guild)
-                    .DeleteTag((SocketGuildUser)Context.User));
-            }
+            public async Task Delete(string name) => await Context.Channel.SendConfirmAsync(_tag.GetTag(Database, name, Context.Guild)
+                    .DeleteTag((SocketGuildUser)Context.User)).ConfigureAwait(false);
 
             [Command("List"), Summary("List all tags on this guild")]
-            public async Task ListTags([Summary("List tags belonging to a user")]SocketGuildUser user = null, int page = 1)
+            public async Task ListTags([Summary("List tags belonging to a user or guild")]SocketGuildUser user = null, int page = 1)
             {
                 var tagList = Database.Tags.Where(t => t.Guild.Equals(Context.Guild.Id));
 
@@ -86,26 +84,22 @@ namespace mummybot.Modules.Tag
 
                 if (!tagList.Any())
                 {
-                    await ReplyAsync("This guild does not have any tags");
+                    await ReplyAsync("This guild does not have any tags").ConfigureAwait(false);
                     return;
                 }
 
                 if (user == null)
-                {
                     await Context.SendPaginatedConfirmAsync(page, (currPage) => new EmbedBuilder()
                         .WithTitle($"List of tags - {Context.Guild.Name}")
                         .WithColor(Utils.GetRandomColor())
                         .WithDescription(string.Join("\n", tagList.Skip(currPage * tagsPerPage).Take(tagsPerPage).Select(x => $"`{x.Name}`"))),
                         tagList.Count(), tagsPerPage).ConfigureAwait(false);
-                }
                 else
-                {
                     await Context.SendPaginatedConfirmAsync(page, (currPage) => new EmbedBuilder()
                         .WithTitle($"{Utils.FullUserName(user)} tag list")
                         .WithColor(Utils.GetRandomColor())
                         .WithDescription(string.Join("\n", tagList.Skip(currPage * tagsPerPage).Take(tagsPerPage).Select(x => $"`{x.Name}`"))),
                         tagList.Count(), tagsPerPage).ConfigureAwait(false);
-                }
             }
 
             [Command("Info"), Summary("Get tag info")]
@@ -114,10 +108,10 @@ namespace mummybot.Modules.Tag
                 var tag = _tag.GetTag(Database, name, Context.Guild);
                 if (!tag.Exists())
                 {
-                    await ReplyAsync($"``{name}`` doesn't exist");
+                    await Context.Channel.SendErrorAsync(string.Empty, $"{name} doesn't exist").ConfigureAwait(false);
                     return;
                 }
-                await ReplyAsync(String.Empty, embed: tag.TagInfoEmbed());
+                await ReplyAsync(String.Empty, embed: tag.TagInfoEmbed()).ConfigureAwait(false);
             }
 
             protected override async void AfterExecute(CommandInfo command)

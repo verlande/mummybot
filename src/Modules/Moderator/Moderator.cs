@@ -51,7 +51,7 @@ namespace mummybot.Modules.Moderator
         [Command("Botnick"), Summary("Sets this bots nickname"), RequireUserPermission(GuildPermission.ManageNicknames)]
         public async Task Nick([Remainder] string nickname) => await Context.Guild.GetUser(Context.Client.CurrentUser.Id).ModifyAsync(x => x.Nickname = nickname);
 
-        [Command("Setnick"), RequireBotPermission(GuildPermission.ManageNicknames)]
+        [Command("Setnick"), RequireUserPermission(GuildPermission.ManageNicknames), RequireBotPermission(GuildPermission.ManageNicknames)]
         public async Task Nick(IGuildUser arg, [Remainder] string newNick)
         {
             if (string.IsNullOrWhiteSpace(newNick)) return;
@@ -65,7 +65,7 @@ namespace mummybot.Modules.Moderator
         [Command("Kick"), RequireBotPermission(GuildPermission.KickMembers), RequireUserPermission(GuildPermission.KickMembers)]
         public async Task Kick(IGuildUser user, string reason = null) => await user.KickAsync(reason).ConfigureAwait(false);
 
-        [Command("Clearbots"), Summary("Clears messages from all bots"), RequireBotPermission(GuildPermission.ManageMessages)]
+        [Command("Clearbots"), Summary("Clears messages from all bots"), RequireUserPermission(GuildPermission.ManageMessages), RequireBotPermission(GuildPermission.ManageMessages)]
         public async Task Clearbot()
         {
             try

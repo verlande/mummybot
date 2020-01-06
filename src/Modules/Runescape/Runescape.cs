@@ -52,7 +52,7 @@ namespace mummybot.Modules.Runescape
                 .AddField("Middle Path (Acid)", mid)
                 .AddField("Bottom Path (Darkness)", bot)
                 .WithFooter(new EmbedFooterBuilder().WithText($"Next path closed will be {Rotations[(int)nextRotation]} in {(daysLeft == 1 ? $"{daysLeft} Day" : $"{daysLeft} Days")}"))
-                .Build());
+                .Build()).ConfigureAwait(false);
         }
 
         [Command("Vorago"), Summary("Current rotation of Vorago")]
@@ -80,12 +80,13 @@ namespace mummybot.Modules.Runescape
                 .WithColor(Utils.GetRandomColor())
                 .WithThumbnailUrl("http://i.imgur.com/e4WOs8J.png")
                 .WithFooter(new EmbedFooterBuilder().WithText($"Next rotation {rotation[(int)currentRotation + 1]} in {(daysNext == 1 ? $"{daysNext} Day" : $"{daysNext} Days")}"))
-                .Build());
+                .Build()).ConfigureAwait(false);
         }
 
         [Command("Stats"), Summary("Get RS3 player highscores"), Cooldown(30, true)]
         public async Task Stats([Remainder]string player)
         {
+            if (player.Length > 12) return;
             var res = await _service.GetPlayerStats(player).ConfigureAwait(false);
 
             if (res is null)
@@ -101,7 +102,7 @@ namespace mummybot.Modules.Runescape
             foreach (var r in res.Skills.Values.ToList())
                 sb.AppendFormat("{0, -15} | {1, -5} | {2, -6} | {3, -12:n0}\n", r.Name, r.Level, r.Rank, r.Experience);
 
-            await ReplyAsync(Format.Code($"\t\t{res.Name} Highscores\n\n{sb.ToString()}", "css"));
+            await ReplyAsync(Format.Code($"\t\t{res.Name} Highscores\n\n{sb.ToString()}", "css")).ConfigureAwait(false);
         }
     }
 }

@@ -19,11 +19,12 @@ namespace mummybot.Modules.General
         public async Task Bible(string passage = null, string chapverse = null)
         {
             const string bibleUrl = "https://labs.bible.org/api/?passage=";
-            const string bibleIcon = "https://www.iconsdb.com/icons/download/gray/holy-bible-64.jpg";
+            const string bibleIcon = "https://cdn.iconscout.com/icon/premium/png-256-thumb/bible-1720260-1460821.png";
             const string bibleGate = "https://www.biblegateway.com/passage/?search=";
 
-            using (var http = new HttpClient())
+            try
             {
+                using var http = new HttpClient();
                 string res;
                 if (passage != null)
                     res = await http.GetStringAsync($"{bibleUrl}{passage} {chapverse}&type=json").ConfigureAwait(false);
@@ -34,13 +35,17 @@ namespace mummybot.Modules.General
 
                 var eb = new EmbedBuilder();
                 eb.WithAuthor(eab =>
-                        eab.WithName($"{verse[0].Bookname} {verse[0].Chapter}:{verse[0].Verse}")
-                            .WithUrl($"{bibleGate}{verse[0].Bookname}+{verse[0].Chapter}:{verse[0].Verse}&version=ISV")
-                            .WithIconUrl(bibleIcon))
-                    .WithColor(Utils.GetRandomColor());
-                eb.WithDescription(verse[0].Text);
+                    eab.WithName($"{verse[0].Bookname} {verse[0].Chapter}:{verse[0].Verse}")
+                        .WithUrl($"{bibleGate}{verse[0].Bookname}+{verse[0].Chapter}:{verse[0].Verse}&version=ISV"))
+                        .WithThumbnailUrl(bibleIcon)
+                        .WithColor(Utils.GetRandomColor());
+                        eb.WithDescription(verse[0].Text);
 
                 await ReplyAsync(string.Empty, embed: eb.Build()).ConfigureAwait(false);
+            }
+            catch (HttpRequestException)
+            {
+                await Context.Channel.SendErrorAsync(string.Empty, "Not found").ConfigureAwait(false);
             }
         }
 
@@ -54,33 +59,31 @@ namespace mummybot.Modules.General
 
             try
             {
-                using (var http = new HttpClient())
-                {
-                    string res;
-                    if (comicnum == null)
-                        res = await http.GetStringAsync($"{xkcdUrl}/info.0.json").ConfigureAwait(false);
-                    else
-                        res = await http.GetStringAsync($"{xkcdUrl}/{num}/info.0.json").ConfigureAwait(false);
+                using var http = new HttpClient();
+                string res;
+                if (comicnum == null)
+                    res = await http.GetStringAsync($"{xkcdUrl}/info.0.json").ConfigureAwait(false);
+                else
+                    res = await http.GetStringAsync($"{xkcdUrl}/{num}/info.0.json").ConfigureAwait(false);
 
-                    var comic = JsonConvert.DeserializeObject<Xkcd>(res);
+                var comic = JsonConvert.DeserializeObject<Xkcd>(res);
 
-                    var eb = new EmbedBuilder();
+                var eb = new EmbedBuilder();
 
-                    void Action(EmbedAuthorBuilder eab) => eab.WithName(comic.Title)
-                        .WithUrl($"{xkcdUrl}/{comic.Num}")
-                        .WithIconUrl("http://xkcd.com/s/919f27.ico");
+                void Action(EmbedAuthorBuilder eab) => eab.WithName(comic.Title)
+                    .WithUrl($"{xkcdUrl}/{comic.Num}")
+                    .WithIconUrl("http://xkcd.com/s/919f27.ico");
 
-                    eb.WithAuthor(Action)
-                        .WithColor(Utils.GetRandomColor())
-                        .WithImageUrl(comic.ImageLink)
-                        .AddField(
-                            efb => efb.WithName("Comic number").WithValue(comic.Num.ToString()).WithIsInline(true))
-                        .AddField(efb =>
-                            efb.WithName("Date").WithValue($"{comic.Day}/{comic.Month}/{comic.Year}").WithIsInline(true))
-                        .AddField(efb => efb.WithName("Title").WithValue(comic.Title).WithIsInline(false));
+                eb.WithAuthor(Action)
+                    .WithColor(Utils.GetRandomColor())
+                    .WithImageUrl(comic.ImageLink)
+                    .AddField(
+                        efb => efb.WithName("Comic number").WithValue(comic.Num.ToString()).WithIsInline(true))
+                    .AddField(efb =>
+                        efb.WithName("Date").WithValue($"{comic.Day}/{comic.Month}/{comic.Year}").WithIsInline(true))
+                    .AddField(efb => efb.WithName("Title").WithValue(comic.Title).WithIsInline(false));
 
-                    await ReplyAsync(String.Empty, embed: eb.Build()).ConfigureAwait(false);
-                }
+                await ReplyAsync(String.Empty, embed: eb.Build()).ConfigureAwait(false);
             }
             catch (HttpRequestException)
             {
@@ -88,7 +91,7 @@ namespace mummybot.Modules.General
             }
         }
 
-        [Command("Urban"), Cooldown(30, true)]
+        [Command("Urban"), Cooldown(30, true), Summary("Search Urban Dictionary")]
         public async Task Urban(string word)
         {
             var page = 1;
@@ -99,12 +102,12 @@ namespace mummybot.Modules.General
             {
                 var res = JObject.Parse(await http.GetStringAsync("http://api.urbandictionary.com/v0/define?term=" + word).ConfigureAwait(false));
 
-                JArray jArr = (JArray)res["list"];
+                var jArr = (JArray)res["list"];
                 var UrbanList = jArr.ToObject<IList<List>>().ToArray();
 
                 if (UrbanList.Length == 0)
                 {
-                    await Context.Channel.SendErrorAsync(string.Empty, "Invalid term").ConfigureAwait(false);
+                    await Context.Channel.SendErrorAsync(string.Empty, "Word not found").ConfigureAwait(false);
                     return;
                 }
 
