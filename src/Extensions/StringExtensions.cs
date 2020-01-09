@@ -9,7 +9,12 @@ namespace mummybot.Extensions
         private static readonly Regex discordInviteRegex = new Regex
             (@"(?:discord(?:\.gg|.me|app\.com\/invite)\/(?<id>([\w]{16}|(?:[\w]+-?){3})))");
 
+        private static readonly Regex discordAttachmentRegex = new Regex
+            (@"(https?:\/\/)?(cdn.discordapp\.com\/attachments)\/.+");
+
         public static bool IsDiscordInvite(this string str) => discordInviteRegex.IsMatch(str);
+
+        public static bool IsDiscordAttachment(this string str) => discordAttachmentRegex.IsMatch(str);
 
         public static string SanitizeMentions(this string str) =>
             str.Replace("@everyone", "@everyοne", StringComparison.InvariantCultureIgnoreCase)

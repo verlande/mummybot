@@ -92,37 +92,35 @@ namespace mummybot.Modules.General
         }
 
         [Command("Urban"), Cooldown(30, true), Summary("Search Urban Dictionary")]
-        public async Task Urban(string word)
+        public async Task Urban([Remainder]string word)
         {
             var page = 1;
             page--;
             var urbanPerPage = 1;
 
-            using (var http = new HttpClient())
+            using var http = new HttpClient();
+            var res = JObject.Parse(await http.GetStringAsync("http://api.urbandictionary.com/v0/define?term=" + word).ConfigureAwait(false));
+
+            var jArr = (JArray)res["list"];
+            var UrbanList = jArr.ToObject<IList<List>>().ToArray();
+
+            if (UrbanList.Length == 0)
             {
-                var res = JObject.Parse(await http.GetStringAsync("http://api.urbandictionary.com/v0/define?term=" + word).ConfigureAwait(false));
-
-                var jArr = (JArray)res["list"];
-                var UrbanList = jArr.ToObject<IList<List>>().ToArray();
-
-                if (UrbanList.Length == 0)
-                {
-                    await Context.Channel.SendErrorAsync(string.Empty, "Word not found").ConfigureAwait(false);
-                    return;
-                }
-
-                if (page < 0 || page > 20) return;
-
-                await Context.SendPaginatedConfirmAsync(page, (currPage) => new EmbedBuilder()
-                    .WithTitle($"Urban Dictionary - {word}")
-                    .WithUrl(UrbanList[currPage].Permalink.ToString())
-                    .WithColor(Utils.GetRandomColor())
-                    .WithThumbnailUrl("https://storage.googleapis.com/burbcommunity-morethanthecurve/2013/09/urban-dictionary-logo.gif")
-                    .WithDescription(string.Join("\n", UrbanList.Skip(currPage * urbanPerPage).Take(urbanPerPage).Select(x => x.Definition)))
-                    .AddField("Example", string.Join("\n", string.Join("\n", UrbanList.Skip(currPage * urbanPerPage).Take(urbanPerPage).Select(x => x.Example))))
-                    .AddField("Thumbs", $"👍{UrbanList[currPage].ThumbsUp}\t👎{UrbanList[currPage].ThumbsDown}"),
-                    UrbanList.Length, urbanPerPage).ConfigureAwait(false);
+                await Context.Channel.SendErrorAsync(string.Empty, "Word not found").ConfigureAwait(false);
+                return;
             }
+
+            if (page < 0 || page > 20) return;
+
+            await Context.SendPaginatedConfirmAsync(page, (currPage) => new EmbedBuilder()
+                .WithTitle($"Urban Dictionary - {word}")
+                .WithUrl(UrbanList[currPage].Permalink.ToString())
+                .WithColor(Utils.GetRandomColor())
+                .WithThumbnailUrl("https://storage.googleapis.com/burbcommunity-morethanthecurve/2013/09/urban-dictionary-logo.gif")
+                .WithDescription(string.Join("\n", UrbanList.Skip(currPage * urbanPerPage).Take(urbanPerPage).Select(x => x.Definition)))
+                .AddField("Example", string.Join("\n", string.Join("\n", UrbanList.Skip(currPage * urbanPerPage).Take(urbanPerPage).Select(x => x.Example))))
+                .AddField("Thumbs", $"👍{UrbanList[currPage].ThumbsUp}\t👎{UrbanList[currPage].ThumbsDown}"),
+                UrbanList.Length, urbanPerPage).ConfigureAwait(false);
         }
     }
 }
