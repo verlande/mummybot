@@ -91,7 +91,7 @@ namespace mummybot.Modules.Runescape
 
             if (res is null)
             {
-                await Context.Channel.SendErrorAsync(string.Empty, "No player found");
+                await Context.Channel.SendErrorAsync(string.Empty, "No player found").ConfigureAwait(false);
                 return;
             }
 

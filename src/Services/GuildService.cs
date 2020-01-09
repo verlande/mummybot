@@ -17,7 +17,7 @@ namespace mummybot.Services
         private readonly CommandService _commands;
         private mummybotDbContext _context;
         private Logger _log;
-        public static ConcurrentDictionary<ulong, bool> GuildMsgLogging = new ConcurrentDictionary<ulong, bool>();
+        //public static ConcurrentDictionary<ulong, bool> GuildMsgLogging = new ConcurrentDictionary<ulong, bool>();
 
         public GuildService(DiscordSocketClient discord, CommandService commands, mummybotDbContext context)
         {
@@ -28,7 +28,7 @@ namespace mummybot.Services
             _discord.LeftGuild += LeftGuild;
             _discord.GuildUpdated += GuildUpdated;
 
-            _context.Guilds.AsQueryable().ForEachAsync(x => GuildMsgLogging.TryAdd(x.GuildId, x.MessageLogging));
+            //_context.Guilds.AsQueryable().ForEachAsync(x => GuildMsgLogging.TryAdd(x.GuildId, x.MessageLogging));
 
             _log = LogManager.GetCurrentClassLogger();
         }

@@ -43,7 +43,6 @@ namespace mummybot.Services
         private async void Status()
         {
             var r = new Random();
-            var users = _discord.Guilds.Sum(guild => guild.MemberCount);
 
             await Task.Delay(2000);
             
@@ -54,7 +53,7 @@ namespace mummybot.Services
                 $"{_discord.Guilds.Count} guilds",
                 $"Latency: {_discord.Latency}ms",
                 //$"{GC.GetTotalMemory(true) / 1000000} Megabytes used",
-                $"{users} users"
+                $"{_discord.Guilds.Sum(guild => guild.MemberCount)} users"
                 
             };
             await _discord.SetGameAsync($"{statuses[r.Next(statuses.Length)]} | £help", null,  ActivityType.Playing).ConfigureAwait(false);
