@@ -7,7 +7,7 @@ namespace mummybot.Modules.Runescape.Services
 {
     public class StatsService : INService
     {
-        private readonly RS3RestClient RS3 = new RS3RestClient();
+        private readonly RS3RestClient _rs3 = new RS3RestClient();
 
         private IServiceProvider _services;
 
@@ -15,6 +15,6 @@ namespace mummybot.Modules.Runescape.Services
             => _services = service;
 
         public async Task<RS3HiscoreCharacter> GetPlayerStats(string name) 
-            => await RS3.GetCharacterAsync(name).ConfigureAwait(false);
+            => await _rs3.GetCharacterAsync(name).ConfigureAwait(false);
     }
 }

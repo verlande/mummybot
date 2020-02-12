@@ -31,7 +31,7 @@ namespace mummybot.Modules
                 .WithText("All commands are case insensitive")
             };
 
-            if (module == String.Empty)
+            if (module == string.Empty)
                 foreach (var mod in _commands.Modules.Where(m => m.Parent == null && m.Name != "ModuleBase" && m.Name != "Help").OrderBy(x => x.Name))
                 {
                     AddHelp(mod, ref embed);
@@ -48,8 +48,7 @@ namespace mummybot.Modules
                 AddCommands(mod, ref embed);
             }
 
-            await ReplyAsync(String.Empty, embed: embed.Build()).ConfigureAwait(false); ;
-        }
+            await ReplyAsync(string.Empty, embed: embed.Build()).ConfigureAwait(false); }
 
         private void AddHelp(ModuleInfo module, ref EmbedBuilder builder)
         {
@@ -62,7 +61,7 @@ namespace mummybot.Modules
                     f.Value = $"submodules: {string.Join(", ", module.Submodules.Select(m => m))}" + "\n" + $"commands: {string.Join(", ", module.Commands.Select(x => $"`{x.Name}`"))}";
                 else
                 {
-                    var commands = string.Empty;
+                    string commands;
 
                     if (module.Aliases.Count > 1) commands = string.Join("\t", module.Commands.Select(x => $"``{module.Aliases[1]} {x.Name}``"));
                     else commands = "\n" + $"{string.Join("\t", module.Commands.Select(x => $"``{x.Name}``"))}";
@@ -94,7 +93,7 @@ namespace mummybot.Modules
 
         private string GetAliases(CommandInfo command)
         {
-            StringBuilder output = new StringBuilder();
+            var output = new StringBuilder();
             if (!command.Parameters.Any()) return output.ToString();
             foreach (var param in command.Parameters)
             {

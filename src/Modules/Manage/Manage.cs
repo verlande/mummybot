@@ -4,13 +4,14 @@ using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
 using mummybot.Extensions;
 using System.Threading.Tasks;
+using mummybot.Modules.Manage.Services;
 
 namespace mummybot.Modules.Manage
 {
     public partial class Manage
     {
         [Name("Manage")]
-        public class ManageCommands : mummybotSubmodule<Services.FilteringService>
+        public class ManageCommands : mummybotSubmodule<FilteringService>
         {
             [Command("SetGreeting"), Summary("Sets a greeting for new members. Use %user% to include new user's name in the message")]
             [RequireUserPermission(GuildPermission.ManageGuild)]

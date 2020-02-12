@@ -6,19 +6,25 @@ using Discord;
 using Discord.WebSocket;
 using mummybot.Extensions;
 using mummybot.Attributes;
+using mummybot.Modules.Tag.Services;
+
+// ReSharper disable ImplicitlyCapturedClosure
 
 namespace mummybot.Modules.Tag
 {
-    public partial class Tag
+    public class Tag
     {
         [Name("Tags"), Group("tag"), Alias("t")]
-        public class TagCommands : mummybotSubmodule<Services.TagService>
+        public class TagCommands : mummybotSubmodule<TagService>
         {
-            public Services.TagService _tag { get; set; }
-            public readonly CommandService _commands;
+            private TagService _tag { get; }
+            private readonly CommandService _commands;
 
-            public TagCommands(CommandService commands)
-                => _commands = commands;
+            public TagCommands(CommandService commands, TagService tag)
+            {
+                _commands = commands;
+                _tag = tag;
+            }
 
             [Command, Alias("Get"), Summary("Fetch a tag")]
             public async Task Get(string arg)
@@ -74,31 +80,39 @@ namespace mummybot.Modules.Tag
             [Command("List"), Summary("List all tags on this guild")]
             public async Task ListTags([Summary("List tags belonging to a user or guild")]SocketGuildUser user = null, int page = 1)
             {
-                var tagList = Database.Tags.Where(t => t.Guild.Equals(Context.Guild.Id));
+                var tagList = user != null ? Database.Tags.Where(t => t.Guild.Equals(Context.Guild.Id) && t.Author.Equals(user.Id)) : Database.Tags.Where(t => t.Guild.Equals(Context.Guild.Id));
 
                 page--;
 
                 if (page < 0 || page > 20) return;
 
-                var tagsPerPage = 15;
+                const int tagsPerPage = 15;
 
                 if (!tagList.Any())
                 {
-                    await ReplyAsync("This guild does not have any tags").ConfigureAwait(false);
+                    await ReplyAsync("This user or guild does not have any tags").ConfigureAwait(false);
                     return;
                 }
 
                 if (user == null)
-                    await Context.SendPaginatedConfirmAsync(page, (currPage) => new EmbedBuilder()
-                        .WithTitle($"List of tags - {Context.Guild.Name}")
-                        .WithColor(Utils.GetRandomColor())
-                        .WithDescription(string.Join("\n", tagList.Skip(currPage * tagsPerPage).Take(tagsPerPage).Select(x => $"`{x.Name}`"))),
+                    await Context.SendPaginatedConfirmAsync(page, (currPage) =>
+                        {
+                            return new EmbedBuilder()
+                                .WithTitle($"List of tags - {Context.Guild.Name}")
+                                .WithColor(Utils.GetRandomColor())
+                                .WithDescription(string.Join("\n",
+                                    tagList.Skip(currPage * tagsPerPage).Take(tagsPerPage).Select(x => $"`{x.Name}`")));
+                        },
                         tagList.Count(), tagsPerPage).ConfigureAwait(false);
                 else
-                    await Context.SendPaginatedConfirmAsync(page, (currPage) => new EmbedBuilder()
-                        .WithTitle($"{Utils.FullUserName(user)} tag list")
-                        .WithColor(Utils.GetRandomColor())
-                        .WithDescription(string.Join("\n", tagList.Skip(currPage * tagsPerPage).Take(tagsPerPage).Select(x => $"`{x.Name}`"))),
+                    await Context.SendPaginatedConfirmAsync(page, (currPage) =>
+                        {
+                            return new EmbedBuilder()
+                                .WithTitle($"{Utils.FullUserName(user)} tag list")
+                                .WithColor(Utils.GetRandomColor())
+                                .WithDescription(string.Join("\n",
+                                    tagList.Skip(currPage * tagsPerPage).Take(tagsPerPage).Select(x => $"`{x.Name}`")));
+                        },
                         tagList.Count(), tagsPerPage).ConfigureAwait(false);
             }
 
@@ -111,7 +125,7 @@ namespace mummybot.Modules.Tag
                     await Context.Channel.SendErrorAsync(string.Empty, $"{name} doesn't exist").ConfigureAwait(false);
                     return;
                 }
-                await ReplyAsync(String.Empty, embed: tag.TagInfoEmbed()).ConfigureAwait(false);
+                await ReplyAsync(string.Empty, embed: tag.TagInfoEmbed()).ConfigureAwait(false);
             }
 
             protected override async void AfterExecute(CommandInfo command)

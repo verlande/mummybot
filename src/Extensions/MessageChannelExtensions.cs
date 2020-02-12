@@ -27,6 +27,7 @@ namespace mummybot.Extensions
             return ch.SendMessageAsync(string.Empty, embed: eb.Build());
         }
 
+        // ReSharper disable once MethodOverloadWithOptionalParameter
         public static Task<IUserMessage> SendConfirmAsync(this IMessageChannel ch, string title, string text, string url = null, string footer = null, SocketGuildUser author = null)
         {
             var eb = new EmbedBuilder().WithColor(Utils.GetRandomColor()).WithDescription(text)
@@ -51,7 +52,7 @@ namespace mummybot.Extensions
                 .WithName(Utils.FullUserName((SocketUser)author)).WithIconUrl(author.GetAvatarUrl())).WithDescription(description).WithColor(Utils.GetRandomColor())
                 .WithFooter(fb => fb.WithText(footer)).Build());
 
-        public static Task<IUserMessage> SendTableAsync<T>(this IMessageChannel ch, string seed, IEnumerable<T> items, Func<T, string> howToPrint, int columns = 3)
+        private static Task<IUserMessage> SendTableAsync<T>(this IMessageChannel ch, string seed, IEnumerable<T> items, Func<T, string> howToPrint, int columns = 3)
         {
             var i = 0;
             return ch.SendMessageAsync($@"```css
@@ -61,15 +62,16 @@ namespace mummybot.Extensions
         public static Task<IUserMessage> SendTableAsync<T>(this IMessageChannel ch, IEnumerable<T> items, Func<T, string> howToPrint, int columns = 3) =>
             ch.SendTableAsync("", items, howToPrint, columns);
         
-        private static readonly IEmote arrow_left = new Emoji("⬅");
-        private static readonly IEmote arrow_right = new Emoji("➡");
+        private static readonly IEmote ArrowLeft = new Emoji("⬅");
+        private static readonly IEmote ArrowRight = new Emoji("➡");
 
         public static Task SendPaginatedConfirmAsync(this ICommandContext ctx,
             int currentPage, Func<int, EmbedBuilder> pageFunc, int totalElements,
             int itemsPerPage, bool addPaginatedFooter = true)
             => ctx.SendPaginatedConfirmAsync(currentPage,
                 (x) => Task.FromResult(pageFunc(x)), totalElements, itemsPerPage, addPaginatedFooter);
-        public static async Task SendPaginatedConfirmAsync(this ICommandContext ctx, int currentPage, 
+
+        private static async Task SendPaginatedConfirmAsync(this ICommandContext ctx, int currentPage, 
             Func<int, Task<EmbedBuilder>> pageFunc, int totalElements, int itemsPerPage, bool addPaginatedFooter = true)
         {
             var embed = await pageFunc(currentPage).ConfigureAwait(false);
@@ -79,19 +81,19 @@ namespace mummybot.Extensions
             if (addPaginatedFooter)
                 embed.AddPaginatedFooter(currentPage, lastPage);
 
-            var msg = await ctx.Channel.EmbedAsync(embed).ConfigureAwait(false) as IUserMessage;
+            var msg = await ctx.Channel.EmbedAsync(embed).ConfigureAwait(false);
 
             if (lastPage == 0)
                 return;
 
-            await msg.AddReactionAsync(arrow_left).ConfigureAwait(false);
-            await msg.AddReactionAsync(arrow_right).ConfigureAwait(false);
+            await msg.AddReactionAsync(ArrowLeft).ConfigureAwait(false);
+            await msg.AddReactionAsync(ArrowRight).ConfigureAwait(false);
 
             await Task.Delay(2000).ConfigureAwait(false);
 
             var lastPageChange = DateTime.MinValue;
 
-            async Task changePage(SocketReaction r)
+            async Task ChangePage(SocketReaction r)
             {
                 try
                 {
@@ -99,7 +101,7 @@ namespace mummybot.Extensions
                         return;
                     if (DateTime.UtcNow - lastPageChange < TimeSpan.FromSeconds(1))
                         return;
-                    if (r.Emote.Name == arrow_left.Name)
+                    if (r.Emote.Name == ArrowLeft.Name)
                     {
                         if (currentPage == 0)
                             return;
@@ -109,7 +111,7 @@ namespace mummybot.Extensions
                             toSend.AddPaginatedFooter(currentPage, lastPage);
                         await msg.ModifyAsync(x => x.Embed = toSend.Build()).ConfigureAwait(false);
                     }
-                    else if (r.Emote.Name == arrow_right.Name)
+                    else if (r.Emote.Name == ArrowRight.Name)
                     {
                         if (lastPage > currentPage)
                         {
@@ -127,22 +129,19 @@ namespace mummybot.Extensions
                 }
             }
 
-            using (msg.OnReaction((DiscordSocketClient)ctx.Client, changePage, changePage))
+            using (msg.OnReaction((DiscordSocketClient)ctx.Client, ChangePage, ChangePage))
             {
                 await Task.Delay(30000).ConfigureAwait(false);
             }
 
             try
             {
-                if(msg.Channel is ITextChannel && ((SocketGuild)ctx.Guild).CurrentUser.GuildPermissions.ManageMessages)
-                {
+                if (msg.Channel is ITextChannel &&
+                    ((SocketGuild) ctx.Guild).CurrentUser.GuildPermissions.ManageMessages)
                     await msg.RemoveAllReactionsAsync().ConfigureAwait(false);
-                }
                 else
-                {
                     await Task.WhenAll(msg.Reactions.Where(x => x.Value.IsMe)
                         .Select(x => msg.RemoveReactionAsync(x.Key, ctx.Client.CurrentUser)));
-                }
             }
             catch
             {
@@ -150,19 +149,13 @@ namespace mummybot.Extensions
             }
         }
 
-        public static EmbedBuilder AddPaginatedFooter(this EmbedBuilder embed, int curPage, int? lastPage)
-        {
-            if (lastPage != null)
-                return embed.WithFooter(efb => efb.WithText($"{curPage + 1} / {lastPage + 1}"));
-            else
-                return embed.WithFooter(efb => efb.WithText(curPage.ToString()));
-        }
-
+        private static EmbedBuilder AddPaginatedFooter(this EmbedBuilder embed, int curPage, int? lastPage) 
+            => lastPage != null ? embed.WithFooter(efb => efb.WithText($"{curPage + 1} / {lastPage + 1}")) : embed.WithFooter(efb => efb.WithText(curPage.ToString()));
     }
 
     public sealed class ReactionEventWrapper : IDisposable
     {
-        public IUserMessage Message { get; }
+        private IUserMessage Message { get; }
         public event Action<SocketReaction> OnReactionAdded = delegate { };
         public event Action<SocketReaction> OnReactionRemoved = delegate { };
         public event Action OnReactionsCleared = delegate { };
@@ -186,7 +179,10 @@ namespace mummybot.Extensions
                     if (msg.Id == Message.Id)
                         OnReactionsCleared?.Invoke();
                 }
-                catch { }
+                catch
+                {
+                    // ignored
+                }
             });
 
             return Task.CompletedTask;
@@ -201,7 +197,10 @@ namespace mummybot.Extensions
                     if (msg.Id == Message.Id)
                         OnReactionRemoved?.Invoke(reaction);
                 }
-                catch { }
+                catch
+                {
+                    // ignored
+                }
             });
 
             return Task.CompletedTask;
@@ -216,7 +215,10 @@ namespace mummybot.Extensions
                     if (msg.Id == Message.Id)
                         OnReactionAdded?.Invoke(reaction);
                 }
-                catch { }
+                catch
+                {
+                    // ignored
+                }
             });
 
             return Task.CompletedTask;
@@ -232,14 +234,14 @@ namespace mummybot.Extensions
             OnReactionsCleared = null;
         }
 
-        private bool disposing = false;
+        private bool _disposing = false;
         private readonly DiscordSocketClient _client;
 
         public void Dispose()
         {
-            if (disposing)
+            if (_disposing)
                 return;
-            disposing = true;
+            _disposing = true;
             UnsubAll();
         }
     }

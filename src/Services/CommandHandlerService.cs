@@ -19,10 +19,10 @@ namespace mummybot.Services
         private readonly DiscordSocketClient _discord;
         private readonly CommandService _commands;
         private IServiceProvider _provider;
-        public readonly ConfigService _config;
+        private readonly ConfigService _config;
         private readonly Logger _log;
 
-        public string DefaultPrefix { get; private set; }
+        private string DefaultPrefix { get; set; }
 
         public event Func<IUserMessage, CommandInfo, Task> CommandExecuted = delegate { return Task.CompletedTask; };
         public event Func<CommandInfo, ITextChannel, string, Task> CommandErrored = delegate { return Task.CompletedTask; };
@@ -44,9 +44,9 @@ namespace mummybot.Services
             _discord.MessageReceived += MessageReceivedHandler;
         }
 
-        private Task LogSuccessfulExecution(IUserMessage usrMsg, ITextChannel channel)
+        private Task LogSuccessfulExecution(IMessage usrMsg, IGuildChannel channel)
         {
-            bool normal = true;
+            var normal = true;
             if (normal)
             {
                 _log.Info($"" +
@@ -71,7 +71,7 @@ namespace mummybot.Services
             return Task.CompletedTask;
         }
 
-        private async Task LogErroredExecution(string erroredCmd, string errorMessage, IUserMessage usrMsg, ITextChannel channel)
+        private async Task LogErroredExecution(string erroredCmd, string errorMessage, IMessage usrMsg, ITextChannel channel)
         {
             await channel.SendErrorAsync($"executing {erroredCmd}", errorMessage);
             var normal = true;
@@ -116,7 +116,7 @@ namespace mummybot.Services
             }
             catch (Exception ex)
             {
-                _log.Warn(ex ?? ex.InnerException);
+                _log.Warn(ex);
             }
         }
 
@@ -130,18 +130,19 @@ namespace mummybot.Services
 
             if (messageContent.StartsWith(DefaultPrefix, StringComparison.InvariantCultureIgnoreCase))
             {
-                var (Success, Error, Info) = await ExecuteCommandAsync(new SocketCommandContext(_discord, usrMsg), messageContent, isPrefixCommand ? 1 : DefaultPrefix.Length, _provider, MultiMatchHandling.Best).ConfigureAwait(false);
+                var (success, error, info) = await ExecuteCommandAsync(new SocketCommandContext(_discord, usrMsg), messageContent, isPrefixCommand ? 1 : DefaultPrefix.Length, _provider, MultiMatchHandling.Best).ConfigureAwait(false);
 
-                if (Success)
+                if (success)
                 {
                     await LogSuccessfulExecution(usrMsg, channel as ITextChannel).ConfigureAwait(false);
                     return;
                 }
-                else if (Error != null)
+
+                if (error != null)
                 {
-                    await LogErroredExecution(Info.Name, Error, usrMsg, channel as ITextChannel);
+                    await LogErroredExecution(info.Name, error, usrMsg, channel as ITextChannel);
                     if (guild != null)
-                        await CommandErrored(Info, channel as ITextChannel, Error).ConfigureAwait(false);
+                        await CommandErrored(info, channel as ITextChannel, error).ConfigureAwait(false);
                 }
             }
             else
@@ -237,24 +238,23 @@ namespace mummybot.Services
             var cmd = successfulParses[0].Key.Command;
 
             //If we get this far, at least one parse was successful. Execute the most likely overload.
-            var chosenOverload = successfulParses[0];
-            var execResult = (ExecuteResult)await chosenOverload.Key.ExecuteAsync(context, chosenOverload.Value, services).ConfigureAwait(false);
+            var (key, value) = successfulParses[0];
+            var execResult = (ExecuteResult)await key.ExecuteAsync(context, value, services).ConfigureAwait(false);
 
-            if (execResult.Exception != null && (!(execResult.Exception is HttpException he) || he.DiscordCode != 50013))
+            if (execResult.Exception == null || (execResult.Exception is HttpException he && he.DiscordCode == 50013))
+                return (true, null, cmd);
+            lock (_errorLogLock)
             {
-                lock (errorLogLock)
-                {
-                    var now = DateTime.Now;
-                    File.AppendAllText($"./command_errors_{now:yyyy-MM-dd}.txt",
-                        $"[{now:HH:mm-yyyy-MM-dd}]" + Environment.NewLine
-                        + execResult.Exception.ToString() + Environment.NewLine
-                        + "------" + Environment.NewLine);
-                    Console.WriteLine(execResult.Exception);
-                }
+                var now = DateTime.Now;
+                File.AppendAllText($"./command_errors_{now:yyyy-MM-dd}.txt",
+                    $"[{now:HH:mm-yyyy-MM-dd}]" + Environment.NewLine
+                                                + execResult.Exception + Environment.NewLine
+                                                + "------" + Environment.NewLine);
+                Console.WriteLine(execResult.Exception);
             }
 
             return (true, null, cmd);
         }
-        private readonly object errorLogLock = new object();
+        private readonly object _errorLogLock = new object();
     }
 }

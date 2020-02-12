@@ -28,7 +28,7 @@ namespace mummybot.Services
             _log = LogManager.GetCurrentClassLogger();
         }
 
-        public async Task DownloadUsers(SocketGuild guild)
+        private async Task DownloadUsers(SocketGuild guild)
         {
             var usersContext = _context.Users.AsQueryable();
             var userIdList = await usersContext.Where(x => x.GuildId.Equals(guild.Id)).Select(x => x.UserId).ToListAsync();

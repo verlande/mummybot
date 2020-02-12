@@ -9,7 +9,7 @@ using System;
 
 namespace mummybot.Modules.Moderator
 {
-    public partial class Moderator : ModuleBase
+    public class Moderator : ModuleBase
     {
         [Command("Tagban"), Summary("Ban/Unban a user from creating tags in your guild"), RequireUserPermission(GuildPermission.Administrator)]
         public async Task TagBan(SocketGuildUser user)
@@ -44,7 +44,7 @@ namespace mummybot.Modules.Moderator
             }
             catch (Exception ex)
             {
-                await Context.Channel.SendErrorAsync(string.Empty, ex.Message).ConfigureAwait(false); ;
+                await Context.Channel.SendErrorAsync(string.Empty, ex.Message).ConfigureAwait(false);
             }
         }
 
@@ -70,11 +70,11 @@ namespace mummybot.Modules.Moderator
         {
             try
             {
-                var msgs = await Context.Channel.GetMessagesAsync().FlattenAsync().ConfigureAwait(false); ;
+                var msgs = await Context.Channel.GetMessagesAsync().FlattenAsync().ConfigureAwait(false);
                 var result = msgs.Where(x => x.Author.IsBot).Take(100);
 
                 await ((ITextChannel)Context.Channel).DeleteMessagesAsync(result).ConfigureAwait(false);
-                await Context.Channel.SendConfirmAsync($"Deleted {result.Count()} bot messages").ConfigureAwait(false); ;
+                await Context.Channel.SendConfirmAsync($"Deleted {result.Count()} bot messages").ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -87,7 +87,7 @@ namespace mummybot.Modules.Moderator
         {
             var invites = Context.Guild.GetInvitesAsync().ConfigureAwait(false).GetAwaiter().GetResult();
             foreach (var inv in invites) await inv.DeleteAsync().ConfigureAwait(false);
-            await Context.Channel.SendConfirmAsync($"Deleted {invites.Count} invites").ConfigureAwait(false); ;
+            await Context.Channel.SendConfirmAsync($"Deleted {invites.Count} invites").ConfigureAwait(false);
         }
 
         protected override async void AfterExecute(CommandInfo command)

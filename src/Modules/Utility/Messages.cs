@@ -5,7 +5,7 @@ using mummybot.Services;
 
 namespace mummybot.Modules.Utility
 {
-    public partial class Utility : ModuleBase
+    public partial class Utility
     {
         [Command("Snipe"), Summary("Display last deleted message")]
         public async Task Snipe()
@@ -13,6 +13,7 @@ namespace mummybot.Modules.Utility
             if (MessageService.snipeDict.ContainsKey(Context.Channel.Id))
             {
                 var dict = MessageService.snipeDict[Context.Channel.Id];
+                // ReSharper disable once SpecifyACultureInStringConversionExplicitly
                 await Context.Channel.SendAuthorAsync(Context.Guild.GetUser(dict.AuthorId), dict.Content, dict.CreatedAt.ToString()).ConfigureAwait(false);
                 return;
             }

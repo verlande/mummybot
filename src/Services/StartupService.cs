@@ -24,8 +24,9 @@ namespace mummybot.Services
             _provider = provider;
             _log = LogManager.GetCurrentClassLogger();
             
-            CancellationToken cancellationToken = new CancellationToken();
-            Task timerTask = RunPeriodically(Status, TimeSpan.FromSeconds(25), cancellationToken);
+            var cancellationToken = new CancellationToken();
+            // ReSharper disable once UnusedVariable
+            var timerTask = RunPeriodically(Status, TimeSpan.FromSeconds(25), cancellationToken);
 
             _discord.Disconnected += Disconnected;
         }
@@ -56,7 +57,7 @@ namespace mummybot.Services
                 $"{_discord.Guilds.Sum(guild => guild.MemberCount)} users"
                 
             };
-            await _discord.SetGameAsync($"{statuses[r.Next(statuses.Length)]} | £help", null,  ActivityType.Playing).ConfigureAwait(false);
+            await _discord.SetGameAsync($"{statuses[r.Next(statuses.Length)]} | £help").ConfigureAwait(false);
         }
 
         private static async Task RunPeriodically(Action action, TimeSpan interval, CancellationToken token)

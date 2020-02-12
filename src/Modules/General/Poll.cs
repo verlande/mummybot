@@ -14,7 +14,7 @@ namespace mummybot.Modules.General
             A, B, C, D, E, F
         }
 
-        private string EnumToEmoji(Regional regional) =>
+        private static string EnumToEmoji(Regional regional) =>
             regional switch
             {
                 Regional.A => ":regional_indicator_a:",
@@ -26,7 +26,7 @@ namespace mummybot.Modules.General
                 _ => null
             };
 
-        private Emoji EnumToUnicode(Regional regional) =>
+        private static Emoji EnumToUnicode(Regional regional) =>
             regional switch
             {
                 Regional.A => new Emoji("\U0001F1E6"),
@@ -45,14 +45,14 @@ namespace mummybot.Modules.General
             if (answers.Length > 6) { await Context.Channel.SendErrorAsync(string.Empty, "Max 6 answers"); return; }
             var question = arg.Split("|")[0];
 
-            var regionals = new List<Regional>();
+            var regional = new List<Regional>();
             
             for (var i = 0; i <= answers.Length - 1; i++)
-                regionals.Add((Regional)i);
+                regional.Add((Regional)i);
             
             var tr = string.Empty;
             var num = 0;
-            foreach (var s in regionals)
+            foreach (var s in regional)
             {
                 tr = tr + EnumToEmoji(s) + $" - {answers[num]}\n";
                 num += 1;
@@ -60,7 +60,7 @@ namespace mummybot.Modules.General
 
             var msg = await Context.Channel.SendConfirmAsync(tr, question).ConfigureAwait(false);
 
-            foreach (var s in regionals)
+            foreach (var s in regional)
             {
                 await msg.AddReactionAsync(EnumToUnicode(s)).ConfigureAwait(false);
                 await Task.Delay(250);

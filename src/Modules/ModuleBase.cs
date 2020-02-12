@@ -5,17 +5,21 @@ using mummybot.Extensions;
 using mummybot.Services;
 using NLog;
 using System.Threading.Tasks;
+// ReSharper disable UnusedAutoPropertyAccessor.Local
+// ReSharper disable UnusedAutoPropertyAccessor.Global
+// ReSharper disable InconsistentNaming
 
 namespace mummybot.Modules
 {
     [RequireContext(ContextType.Guild)]
     public abstract class ModuleBase : Discord.Commands.ModuleBase<SocketCommandContext>
     {
-        public string ModuleTypeName { get; }
-        public string LowerModuleTypeName { get; }
+        private string ModuleTypeName { get; }
+        private string LowerModuleTypeName { get; }
         public CommandHandlerService CmdHandler { get; set; }
+        // ReSharper disable once MemberCanBeProtected.Global
         public mummybotDbContext Database { get; set; }
-        public readonly Logger _log;
+        protected readonly Logger _log;
 
 
         protected ModuleBase(bool isTopLevelModule = true)
@@ -25,7 +29,7 @@ namespace mummybot.Modules
             _log = LogManager.GetCurrentClassLogger();
         }
 
-        public async Task<bool> PromptUserConfirmAsync(EmbedBuilder embed)
+        protected async Task<bool> PromptUserConfirmAsync(EmbedBuilder embed)
         {
             embed.WithColor(Utils.GetRandomColor())
                 .WithFooter("Type yes/no");
@@ -36,9 +40,7 @@ namespace mummybot.Modules
                 var input = await GetUserInputAsync(Context.User.Id, Context.Channel.Id).ConfigureAwait(false);
                 input = input?.ToUpperInvariant();
 
-                if (input != "YES" && input != "Y")
-                    return false;
-                return true;
+                return input == "YES" || input == "Y";
             }
             finally
             {
@@ -46,7 +48,7 @@ namespace mummybot.Modules
             }
         }
 
-        public async Task<string> GetUserInputAsync(ulong userId, ulong channelId)
+        private async Task<string> GetUserInputAsync(ulong userId, ulong channelId)
         {
             var userInputTask = new TaskCompletionSource<string>();
             var dsc = Context.Client;

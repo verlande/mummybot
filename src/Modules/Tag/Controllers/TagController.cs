@@ -46,6 +46,7 @@ namespace mummybot.Modules.Tag.Controllers
 
         public TagController LastUsedBy(SocketUser user)
         {
+            if (!Exists()) return new TagController(_context, _discord, null);
             _tag.LastUsedBy = user.Id;
             return new TagController(_context, _discord, _tag);
         }

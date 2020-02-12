@@ -14,6 +14,7 @@ namespace mummybot.Services
         private string LogFile => Path.Combine(LogDirectory, $"{DateTime.UtcNow:yyyy-MM-dd}.txt");
         private readonly Logger _log;
 
+        // ReSharper disable once SuggestBaseTypeForParameter
         public DebugLoggingService(DiscordSocketClient discord, CommandService commands)
         {
             LogDirectory = Path.Combine(AppContext.BaseDirectory, "Debug Logs");
@@ -30,10 +31,10 @@ namespace mummybot.Services
                 Directory.CreateDirectory(LogDirectory);
             if (!File.Exists(LogFile))
                 File.Create(LogFile).Dispose();
-            
+
             //var debugText =
             //    $"{DateTime.UtcNow:O} [{msg.Severity}] {msg.Source} : {msg.Exception?.ToString() ?? msg.Message}";
-            
+
             //await File.AppendAllTextAsync(LogFile, debugText + "\n").ConfigureAwait(false);
 
             switch (msg.Severity)
@@ -56,7 +57,10 @@ namespace mummybot.Services
                     Console.ForegroundColor = ConsoleColor.DarkGray;
                     _log.Debug(msg.Message);
                     break;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
+
             return Task.CompletedTask;
             //await Console.Out.WriteLineAsync(debugText).ConfigureAwait(false);
         }

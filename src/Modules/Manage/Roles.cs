@@ -40,7 +40,7 @@ namespace mummybot.Modules.Manage
                 catch (Exception ex)
                 {
                     await Context.Channel.SendErrorAsync(string.Empty, "setrole_err").ConfigureAwait(false);
-                    _log.Warn(ex ?? ex.InnerException);
+                    _log.Warn(ex);
                 }
             }
 

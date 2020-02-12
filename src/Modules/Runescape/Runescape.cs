@@ -5,6 +5,7 @@ using Discord.Commands;
 using mummybot.Extensions;
 using System.Linq;
 using mummybot.Attributes;
+// ReSharper disable CompareOfFloatsByEqualityOperator
 
 namespace mummybot.Modules.Runescape
 {
@@ -14,7 +15,7 @@ namespace mummybot.Modules.Runescape
         [Command("Araxxi"), Summary("Current rotation of Araxxi")]
         public async Task Araxxi()
         {
-            var Rotations = new[]
+            var rotations = new[]
             {
                 "Minions",
                 "Acid",
@@ -22,11 +23,11 @@ namespace mummybot.Modules.Runescape
             };
             var epoch = (DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0,
                              DateTimeKind.Utc)).TotalMilliseconds;
-            var currentRotation = Math.Floor((Math.Floor(Math.Floor((epoch / 1000) / (24 * 60 * 60))) + 3) % (4 * Rotations.Length) / 4);
-            var daysLeft = 4 - (Math.Floor((epoch / 1000) / (24 * 60 * 60)) + 3) % (4 * Rotations.Length) % 4;
+            var currentRotation = Math.Floor((Math.Floor(Math.Floor((epoch / 1000) / (24 * 60 * 60))) + 3) % (4 * rotations.Length) / 4);
+            var daysLeft = 4 - (Math.Floor((epoch / 1000) / (24 * 60 * 60)) + 3) % (4 * rotations.Length) % 4;
             var nextRotation = currentRotation + 1;
 
-            if (nextRotation == Rotations.Length) nextRotation = 0;
+            if (nextRotation == rotations.Length) nextRotation = 0;
 
             var top = "OPEN";
             var mid = "OPEN";
@@ -45,13 +46,13 @@ namespace mummybot.Modules.Runescape
                     break;
             }
 
-            await ReplyAsync(String.Empty, embed: new EmbedBuilder().WithTitle("Araxxi Rotation")
+            await ReplyAsync(string.Empty, embed: new EmbedBuilder().WithTitle("Araxxi Rotation")
                 .WithThumbnailUrl("http://i.imgur.com/9m39UaE.png")
                 .WithColor(Utils.GetRandomColor())
                 .AddField("Top Path (Minions)", top)
                 .AddField("Middle Path (Acid)", mid)
                 .AddField("Bottom Path (Darkness)", bot)
-                .WithFooter(new EmbedFooterBuilder().WithText($"Next path closed will be {Rotations[(int)nextRotation]} in {(daysLeft == 1 ? $"{daysLeft} Day" : $"{daysLeft} Days")}"))
+                .WithFooter(new EmbedFooterBuilder().WithText($"Next path closed will be {rotations[(int)nextRotation]} in {(daysLeft == 1 ? $"{daysLeft} Day" : $"{daysLeft} Days")}"))
                 .Build()).ConfigureAwait(false);
         }
 
@@ -102,7 +103,7 @@ namespace mummybot.Modules.Runescape
             foreach (var r in res.Skills.Values.ToList())
                 sb.AppendFormat("{0, -15} | {1, -5} | {2, -6} | {3, -12:n0}\n", r.Name, r.Level, r.Rank, r.Experience);
 
-            await ReplyAsync(Format.Code($"\t\t{res.Name} Highscores\n\n{sb.ToString()}", "css")).ConfigureAwait(false);
+            await ReplyAsync(Format.Code($"\t\t{res.Name} Highscores\n\n{sb}", "css")).ConfigureAwait(false);
         }
     }
 }
