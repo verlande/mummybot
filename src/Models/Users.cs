@@ -8,7 +8,6 @@ namespace mummybot.Models
         public ulong UserId { get; set; }
         public string Username { get; set; }
         public string Nickname { get; set; }
-        public string GuildName { get; set; }
         public ulong GuildId { get; set; }
         public string Avatar { get; set; }
         public bool TagBanned { get; set; }

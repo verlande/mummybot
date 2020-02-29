@@ -14,6 +14,7 @@ namespace mummybot
         public virtual DbSet<Users> Users { get; set; }
         public virtual DbSet<UsersAudit> UsersAudit { get; set; }
         public virtual DbSet<Guilds> Guilds { get; set; }
+        public virtual DbSet<Bans> Bans { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -62,10 +63,6 @@ namespace mummybot
                 entity.Property(e => e.Avatar).HasColumnName("avatar");
 
                 entity.Property(e => e.GuildId).HasColumnName("guildid");
-
-                entity.Property(e => e.GuildName)
-                    //.IsRequired()
-                    .HasColumnName("guildname");
 
                 entity.Property(e => e.Joined).HasColumnName("joined");
 
@@ -120,15 +117,33 @@ namespace mummybot
                     .IsRequired()
                     .HasDefaultValue("true");
 
-                entity.Property(e => e.Region).HasColumnName("region");
+                entity.Property(e => e.Region).HasColumnName("region")
+                    .IsRequired();
 
-                entity.Property(e => e.Greeting).HasColumnName("greeting");
+                entity.Property(e => e.Greeting).HasColumnName("greeting")
+                    .IsRequired().HasDefaultValue("%user% has joined");
 
-                entity.Property(e => e.Goodbye).HasColumnName("goodbye");
+                entity.Property(e => e.Goodbye).HasColumnName("goodbye")
+                    .IsRequired().HasDefaultValue("%user% has left");
 
                 entity.Property(e => e.GreetChl).HasColumnName("greetchl");
 
-		entity.Property(e => e.FilterInvites).HasColumnName("filterinvites");
+		        entity.Property(e => e.FilterInvites).HasColumnName("filterinvites");
+            });
+
+            modelBuilder.Entity<Bans>(entity =>
+            {
+                entity.ToTable("bans");
+
+                entity.Property(e => e.Id).HasColumnName("id");
+                
+                entity.Property(e => e.UserId).HasColumnName("userid")
+                    .IsRequired();
+                
+                entity.Property(e => e.Reason).HasColumnName("reason");
+                
+                entity.Property(e => e.CreatedAt).HasColumnName("createdat")
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
             });
         }
     }
