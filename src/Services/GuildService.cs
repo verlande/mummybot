@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Discord;
 using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
 using mummybot.Models;
@@ -41,7 +42,7 @@ namespace mummybot.Services
                         OwnerId = guild.OwnerId,
                         Region = guild.VoiceRegionId
                     });
-                    await _discord.GetGuild(guild.Id).DefaultChannel.SendMessageAsync("morning");
+                    await _discord.GetGuild(guild.Id).DefaultChannel.SendMessageAsync($"use {new ConfigService().Config["prefix"]}help");
                 }
                 else
                 {

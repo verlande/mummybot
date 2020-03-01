@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using mummybot.Models;
 using NLog;
 
 namespace mummybot.Services
@@ -14,14 +17,16 @@ namespace mummybot.Services
     {
         private readonly DiscordSocketClient _discord;
         private readonly CommandService _commands;
-        private IServiceProvider _provider;
-        private Logger _log;
+        private readonly mummybotDbContext _context;
+        private readonly IServiceProvider _provider;
+        private readonly Logger _log;
 
-        public StartupService(DiscordSocketClient discord, CommandService commands, IServiceProvider provider)
+        public StartupService(DiscordSocketClient discord, CommandService commands, IServiceProvider provider, mummybotDbContext context)
         {
             _discord = discord;
             _commands = commands;
             _provider = provider;
+            _context = context;
             _log = LogManager.GetCurrentClassLogger();
             
             var cancellationToken = new CancellationToken();
@@ -29,8 +34,38 @@ namespace mummybot.Services
             var timerTask = RunPeriodically(Status, TimeSpan.FromSeconds(25), cancellationToken);
 
             _discord.Disconnected += Disconnected;
+            _discord.Connected += Connected;
         }
 
+        private Task Connected()
+        {
+            var _ = Task.Run(async () =>
+            {
+                foreach (var guilds in _discord.Guilds)
+                {
+                    if (_context.Guilds.Any(x => x.GuildId == guilds.Id)) continue;
+                    try
+                    {
+                        await _context.Guilds.AddAsync(new Guilds
+                        {
+                            GuildId = guilds.Id,
+                            GuildName = guilds.Name,
+                            OwnerId = guilds.OwnerId,
+                            Region = guilds.VoiceRegionId
+                        });
+                        await _context.SaveChangesAsync();
+                        _log.Info($"Inserted missing guild {guilds.Name} ({guilds.Id})");
+                    }
+                    catch (Exception ex)
+                    {
+                        _log.Error(ex.InnerException);
+                    }
+                }
+            });
+
+            return Task.CompletedTask;
+        }
+        
         public async Task StartAsync()
         {
             var config = new ConfigService();

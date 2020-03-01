@@ -6,15 +6,25 @@ using mummybot.Extensions;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System;
+using mummybot.Services;
 
 namespace mummybot.Modules.Moderator
 {
     public class Moderator : ModuleBase
     {
+        private readonly UserService _userService;
+
+        public Moderator(UserService userService)
+        {
+            _userService = userService;
+        }
+
         [Command("Tagban"), Summary("Ban/Unban a user from creating tags in your guild"), RequireUserPermission(GuildPermission.Administrator)]
         public async Task TagBan(SocketGuildUser user)
         {
             if (user.IsBot) return;
+
+            if (!await _userService.UserExists(user.Id, user.Guild.Id)) await _userService.AddUser(user);
 
             var result = await Database.Users.SingleAsync(u => u.UserId.Equals(user.Id)
                                                    && u.GuildId.Equals(user.Guild.Id));

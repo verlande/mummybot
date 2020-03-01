@@ -87,7 +87,7 @@ namespace mummybot.Modules.General
             }
             catch (HttpRequestException)
             {
-                await Context.Channel.SendErrorAsync(string.Empty, "Comic not found");
+                await Context.Channel.SendErrorAsync(string.Empty, "Comic not found").ConfigureAwait(false);
             }
         }
 

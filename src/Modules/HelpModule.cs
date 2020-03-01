@@ -32,7 +32,7 @@ namespace mummybot.Modules
             };
 
             if (module == string.Empty)
-                foreach (var mod in _commands.Modules.Where(m => m.Parent == null && m.Name != "ModuleBase" && m.Name != "Help").OrderBy(x => x.Name))
+                foreach (var mod in _commands.Modules.Where(m => m.Parent == null && m.Name != "ModuleBase" && m.Name != "Help" && m.Name != "Owner").OrderBy(x => x.Name))
                 {
                     AddHelp(mod, ref embed);
                 }
