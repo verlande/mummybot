@@ -8,7 +8,7 @@ RUN set -ex; \
     dotnet build -c Release; \
     dotnet publish -c Release -o /app
 
-FROM microsoft/dotnet:3.0-runtime AS runtime
+FROM microsoft/dotnet:3.1-runtime AS runtime
 WORKDIR /app
 COPY --from=build /app /app
 ENTRYPOINT [ "dotnet", "mummybot.dll" ]
