@@ -6,6 +6,7 @@ using mummybot.Extensions;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System;
+using System.Collections.Generic;
 using mummybot.Services;
 
 namespace mummybot.Modules.Moderator
@@ -41,11 +42,11 @@ namespace mummybot.Modules.Moderator
             }
         }
 
-        [Command("Prune"), Summary("Prune user messages"), RequireBotPermission(GuildPermission.ManageMessages), RequireUserPermission(GuildPermission.ManageMessages)]
+        [Command("Prune"), Summary("Prune user messages upto 2 weeks old"), RequireBotPermission(GuildPermission.ManageMessages), RequireUserPermission(GuildPermission.ManageMessages)]
         public async Task Prune(IGuildUser user)
         {
-            var msgs = await Context.Channel.GetMessagesAsync().FlattenAsync();
-            var result = msgs.Where(x => x.Author.Id.Equals(user.Id));
+            var msgs = await Context.Channel.GetMessagesAsync().FlattenAsync().ConfigureAwait(false);
+            var result = msgs.Where(x => x.Author.Id.Equals(user.Id) && (DateTime.Now - x.CreatedAt).TotalDays < 14);
 
             try
             {
@@ -81,7 +82,7 @@ namespace mummybot.Modules.Moderator
             try
             {
                 var msgs = await Context.Channel.GetMessagesAsync().FlattenAsync().ConfigureAwait(false);
-                var result = msgs.Where(x => x.Author.IsBot).Take(100);
+                var result = msgs.Where(x => x.Author.IsBot && (DateTime.Now - x.CreatedAt).TotalDays < 14);
 
                 await ((ITextChannel)Context.Channel).DeleteMessagesAsync(result).ConfigureAwait(false);
                 await Context.Channel.SendConfirmAsync($"Deleted {result.Count()} bot messages").ConfigureAwait(false);

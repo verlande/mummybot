@@ -27,12 +27,13 @@ namespace mummybot.Services
 
         private Task DeletedMessage(Cacheable<IMessage, ulong> cachedmsg, ISocketMessageChannel msg)
         {
-            var _ = Task.Run(() =>
+            Task.Run(async () =>
             {
-                if (cachedmsg.Value.Author.IsBot) return;
+                var cachedmsgs = await cachedmsg.DownloadAsync();
+                if (cachedmsgs.Author.IsBot) return;
                 if (snipeDict.ContainsKey(cachedmsg.Value.Channel.Id))
                     snipeDict.TryRemove(cachedmsg.Value.Channel.Id, out var _);
-                snipeDict.TryAdd(cachedmsg.Value.Channel.Id, new Snipe { AuthorId = cachedmsg.Value.Author.Id, Content = (cachedmsg.Value.Content == String.Empty) ? cachedmsg.Value.Attachments.First().Url : cachedmsg.Value.Content, CreatedAt = DateTime.UtcNow });
+                snipeDict.TryAdd(cachedmsg.Value.Channel.Id, new Snipe { AuthorId = cachedmsg.Value.Author.Id, Content = (cachedmsg.Value.Content == string.Empty) ? cachedmsg.Value.Attachments.First().Url : cachedmsg.Value.Content, CreatedAt = DateTime.UtcNow });
             });
             return Task.CompletedTask;
         }
