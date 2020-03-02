@@ -122,5 +122,16 @@ namespace mummybot.Modules.General
                 .AddField("Thumbs", $"👍{urbanList[currPage].ThumbsUp}\t👎{urbanList[currPage].ThumbsDown}"),
                 urbanList.Length, urbanPerPage).ConfigureAwait(false);
         }
+
+        [Command("Cat"), Summary("Random cat"), Cooldown(10, true)]
+        public async Task Cat()
+        {
+            const string url = @"https://cataas.com/cat";
+
+            using var http = new HttpClient();
+            var cat = await http.GetStreamAsync(url).ConfigureAwait(false);
+
+            await Context.Channel.SendFileAsync(cat, "cat.png").ConfigureAwait(false);
+        }
     }
 }
