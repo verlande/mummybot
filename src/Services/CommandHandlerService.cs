@@ -31,7 +31,7 @@ namespace mummybot.Services
 
         //userid/msg count
         private ConcurrentDictionary<ulong, uint> UserMessagesSent { get; } = new ConcurrentDictionary<ulong, uint>();
-        public ConcurrentDictionary<ulong, bool> BannedUsers { get; set; }
+        public ConcurrentDictionary<ulong, bool> BlacklistedUsers { get; set; }
 
         public CommandHandlerService(DiscordSocketClient discord, CommandService commands, mummybotDbContext context, ConfigService config, IServiceProvider provider)
         {
@@ -46,7 +46,7 @@ namespace mummybot.Services
 
             _discord.MessageReceived += MessageReceivedHandler;
 
-            BannedUsers = new ConcurrentDictionary<ulong, bool>(_context.Bans.ToDictionary(x => x.UserId, x=> false));
+            BlacklistedUsers = new ConcurrentDictionary<ulong, bool>(_context.Blacklist.ToDictionary(x => x.UserId, x=> false));
         }
 
         private Task LogSuccessfulExecution(IMessage usrMsg, IGuildChannel channel)
@@ -112,13 +112,13 @@ namespace mummybot.Services
             try
             {
                 if (msg.Source != MessageSource.User || !(msg is SocketUserMessage usrMsg)) return;
-                if (BannedUsers.ContainsKey(usrMsg.Author.Id))
+                if (BlacklistedUsers.ContainsKey(usrMsg.Author.Id))
                 {
-                    if (BannedUsers[usrMsg.Author.Id]) return;
+                    if (BlacklistedUsers[usrMsg.Author.Id]) return;
                     var pm = await usrMsg.Author.GetOrCreateDMChannelAsync(RequestOptions.Default).ConfigureAwait(false);
                     await pm.SendMessageAsync("your blacklisted from using this bot");
                     await pm.CloseAsync();
-                    BannedUsers.AddOrUpdate(usrMsg.Author.Id, true, (key, old) => true);
+                    BlacklistedUsers.AddOrUpdate(usrMsg.Author.Id, true, (key, old) => true);
                     return;
                 }
 

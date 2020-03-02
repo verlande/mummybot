@@ -14,7 +14,7 @@ namespace mummybot
         public virtual DbSet<Users> Users { get; set; }
         public virtual DbSet<UsersAudit> UsersAudit { get; set; }
         public virtual DbSet<Guilds> Guilds { get; set; }
-        public virtual DbSet<Bans> Bans { get; set; }
+        public virtual DbSet<Blacklist> Blacklist { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -131,9 +131,9 @@ namespace mummybot
 		        entity.Property(e => e.FilterInvites).HasColumnName("filterinvites");
             });
 
-            modelBuilder.Entity<Bans>(entity =>
+            modelBuilder.Entity<Blacklist>(entity =>
             {
-                entity.ToTable("bans");
+                entity.ToTable("blacklist");
 
                 entity.Property(e => e.Id).HasColumnName("id");
                 

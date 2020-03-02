@@ -24,22 +24,22 @@ namespace mummybot.Modules.Owner
         {
             try
             {
-                if (!await Database.Bans.AnyAsync(x => x.UserId.Equals(user.Id)))
+                if (!await Database.Blacklist.AnyAsync(x => x.UserId.Equals(user.Id)))
                 {
-                    await Database.Bans.AddAsync(new Bans
+                    await Database.Blacklist.AddAsync(new Blacklist
                     {
                         UserId = user.Id,
                         Reason = reason
                     });
 
-                    _commandHandlerService.BannedUsers.AddOrUpdate(user.Id, false, (key, old) => false);
+                    _commandHandlerService.BlacklistedUsers.AddOrUpdate(user.Id, false, (key, old) => false);
                     _log.Info($"User {user} ({user.Id}) blacklisted");
                 }
 
-                if (await Database.Bans.AnyAsync(x => x.UserId.Equals(user.Id)))
+                if (await Database.Blacklist.AnyAsync(x => x.UserId.Equals(user.Id)))
                 {
-                    Database.Bans.Remove(Database.Bans.Single(x => x.UserId.Equals(user.Id)));
-                    _commandHandlerService.BannedUsers.TryRemove(user.Id, out _);
+                    Database.Blacklist.Remove(Database.Blacklist.Single(x => x.UserId.Equals(user.Id)));
+                    _commandHandlerService.BlacklistedUsers.TryRemove(user.Id, out _);
                     _log.Info($"User {user} ({user.Id}) removed from blacklist");
                 }
             }
