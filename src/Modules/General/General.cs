@@ -16,11 +16,15 @@ namespace mummybot.Modules.General
             => await ReplyAsync(words.Replace(" ", ":clap:")).ConfigureAwait(false);
 
         [Command("Avatar"), Alias("Av"), Summary("Display user avatar")]
-        public async Task Avatar(SocketGuildUser user = null)
+        public async Task Avatar(SocketGuildUser user = null) => await ReplyAsync(string.Empty, embed: new EmbedBuilder
         {
-            var avatar = user ?? Context.User;
-            await ReplyAsync($":camera_with_flash: {avatar}\n{avatar.GetAvatarUrl()}").ConfigureAwait(false);
-        }
+            Author = new EmbedAuthorBuilder
+            {
+                Name = Utils.FullUserName(user ?? Context.User)
+            },
+            ImageUrl = Extensions.UserExtensions.RealAvatarUrl(user ?? Context.User, 1024).AbsoluteUri,
+            Color = Utils.GetRandomColor()
+        }.Build()).ConfigureAwait(false);
 
         //[Command("Timezone")]
         //public async Task Timezone(int page = 1)

@@ -14,7 +14,7 @@ namespace mummybot.Modules.Utility
             {
                 var dict = MessageService.snipeDict[Context.Channel.Id];
                 // ReSharper disable once SpecifyACultureInStringConversionExplicitly
-                await Context.Channel.SendAuthorAsync(Context.Guild.GetUser(dict.AuthorId), dict.Content, dict.CreatedAt.ToString()).ConfigureAwait(false);
+                await Context.Channel.SendAuthorAsync(Context.Guild.GetUser(dict.AuthorId), dict.Content, $"Sent at {dict.CreatedAt}").ConfigureAwait(false);
                 return;
             }
             await Context.Channel.SendErrorAsync(string.Empty, "Nothing to snipe").ConfigureAwait(false);

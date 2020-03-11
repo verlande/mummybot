@@ -8,6 +8,7 @@ using System.Linq;
 using System;
 using System.Collections.Generic;
 using mummybot.Services;
+using System.Text;
 
 namespace mummybot.Modules.Moderator
 {
@@ -74,7 +75,18 @@ namespace mummybot.Modules.Moderator
         public async Task Ban(IGuildUser user, string reason = null) => await user.BanAsync(0, reason).ConfigureAwait(false);
 
         [Command("Kick"), RequireBotPermission(GuildPermission.KickMembers), RequireUserPermission(GuildPermission.KickMembers)]
-        public async Task Kick(IGuildUser user, string reason = null) => await user.KickAsync(reason).ConfigureAwait(false);
+        public async Task Kick(SocketGuildUser user, string reason = null)
+        {
+            if (user.Hierarchy < Context.Guild.GetUser(_client.CurrentUser.Id).GetRoles().Max(r => r.Position))
+            {
+                Console.WriteLine("true");
+                await user.KickAsync(reason).ConfigureAwait(false);
+                await Context.Channel.SendConfirmAsync($"Kicked {user}").ConfigureAwait(false);
+                return;
+            }
+            
+            await Context.Channel.SendErrorAsync("kicking user", "Cannot kick a user that has a heigher hierachy than you").ConfigureAwait(false);
+        }
 
         [Command("Clearbots"), Summary("Clears messages from all bots"), RequireUserPermission(GuildPermission.ManageMessages), RequireBotPermission(GuildPermission.ManageMessages)]
         public async Task Clearbot()
@@ -93,7 +105,24 @@ namespace mummybot.Modules.Moderator
             }
         }
 
-        [Command("Delinv"), Summary("Delete all created invite links"), RequireBotPermission(GuildPermission.Administrator), RequireUserPermission(GuildPermission.Administrator)]
+        [Command("Listinvites"), Summary("Returns list of invites")]
+        public async Task ListInvites()
+        {
+            var sb = new StringBuilder();
+            var invites = Context.Guild.GetInvitesAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+
+            if (invites.Count is 0)
+            {
+                await Context.Channel.SendConfirmAsync("No invites to list").ConfigureAwait(false);
+                return;
+            }
+
+            foreach (var inv in invites) 
+                sb.AppendLine($"{Format.Code(inv.Url)} created by {inv.Inviter.Username}#{inv.Inviter.Discriminator} at {Format.Italics(inv.CreatedAt.Value.DateTime.ToString())} used {inv.Uses} times");
+            await Context.Channel.SendConfirmAsync(sb.ToString()).ConfigureAwait(false);
+        }
+
+        [Command("Deleteinvites"), Summary("Delete all created invite links"), RequireBotPermission(GuildPermission.Administrator), RequireUserPermission(GuildPermission.Administrator)]
         public async Task ClearInvite()
         {
             var invites = Context.Guild.GetInvitesAsync().ConfigureAwait(false).GetAwaiter().GetResult();

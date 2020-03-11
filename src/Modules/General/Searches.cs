@@ -33,15 +33,11 @@ namespace mummybot.Modules.General
 
                 var verse = JsonConvert.DeserializeObject<Bible[]>(res);
 
-                var eb = new EmbedBuilder();
-                eb.WithAuthor(eab =>
-                    eab.WithName($"{verse[0].Bookname} {verse[0].Chapter}:{verse[0].Verse}")
-                        .WithUrl($"{bibleGate}{verse[0].Bookname}+{verse[0].Chapter}:{verse[0].Verse}&version=ISV"))
-                        .WithThumbnailUrl(bibleIcon)
-                        .WithColor(Utils.GetRandomColor());
-                        eb.WithDescription(verse[0].Text);
-
-                await ReplyAsync(string.Empty, embed: eb.Build()).ConfigureAwait(false);
+                await ReplyAsync(string.Empty, embed: new EmbedBuilder().WithAuthor(eab => eab.WithName($"{verse[0].Bookname} {verse[0].Chapter}:{verse[0].Verse}")
+                    .WithUrl($"{bibleGate}{verse[0].Bookname}+{verse[0].Chapter}:{verse[0].Verse}&version=ISV"))
+                    .WithThumbnailUrl(bibleIcon)
+                    .WithColor(Utils.GetRandomColor())
+                    .WithDescription(verse[0].Text).Build()).ConfigureAwait(false);
             }
             catch (HttpRequestException)
             {
@@ -49,7 +45,7 @@ namespace mummybot.Modules.General
             }
         }
 
-        [Command("Xkcd"), Summary("Xkcd comics"), Cooldown(10, true)]
+        [Command("Xkcd"), Summary("Xkcd comics"), Remarks("Xkcd (comic number)"), Cooldown(10, true)]
         public async Task Xkcd(string comicnum = null)
         {
             var num = Convert.ToInt32(comicnum);
@@ -125,13 +121,6 @@ namespace mummybot.Modules.General
 
         [Command("Cat"), Summary("Random cat"), Cooldown(10, true)]
         public async Task Cat()
-        {
-            const string url = @"https://cataas.com/cat";
-
-            using var http = new HttpClient();
-            var cat = await http.GetStreamAsync(url).ConfigureAwait(false);
-
-            await Context.Channel.SendFileAsync(cat, "cat.png").ConfigureAwait(false);
-        }
+		=> await Context.Channel.SendFileAsync(await new HttpClient().GetStreamAsync("https://cataas.com/cat"), "cat.png").ConfigureAwait(false);
     }
 }

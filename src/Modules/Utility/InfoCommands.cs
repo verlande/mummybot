@@ -46,7 +46,8 @@ namespace mummybot.Modules.Utility
                               $"- Library: Discord.Net ({DiscordConfig.Version})\n" +
                               $"- Kernel: {Environment.OSVersion}\n" +
                               $"- Runtime: {RuntimeInformation.FrameworkDescription} {RuntimeInformation.OSArchitecture}\n" +
-                              $"- Uptime: {(DateTime.Now - Process.GetCurrentProcess().StartTime):dd\\.hh\\:mm\\:ss}\n\n" +
+                              $"- Uptime: {(DateTime.Now - Process.GetCurrentProcess().StartTime):dd\\.hh\\:mm\\:ss}\n" +
+                              $"- Ping: {_client.Latency}ms\n" +
 
                     $"{Format.Bold("Stats")}\n" +
                     $"- Heap Size: {Math.Round(GC.GetTotalMemory(true) / (1024.0 * 1024.0), 2)} MB\n" +
@@ -89,7 +90,7 @@ namespace mummybot.Modules.Utility
 
             var guild = Context.Guild;
 
-            EmbedBuilder eb = new EmbedBuilder
+            var eb = new EmbedBuilder
             {
                 Title = guild.Name,
                 ThumbnailUrl = guild.IconUrl,

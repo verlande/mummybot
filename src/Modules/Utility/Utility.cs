@@ -45,5 +45,15 @@ namespace mummybot.Modules.Utility
                 await Context.Channel.SendErrorAsync("Error fetching ban list", ex.Message).ConfigureAwait(false);
             }
         }
+
+        [Command("Botlist"), Summary("Returns list of bots")]
+        public async Task BotList()
+        {
+            var sb = new StringBuilder();
+            foreach (var bot in Context.Guild.Users)
+                if (bot.IsBot)
+                    sb.AppendLine(Format.Bold(Utils.FullUserName(bot)));
+            await Context.Channel.SendConfirmAsync(sb.ToString(), "Bot List").ConfigureAwait(false);
+        }
     }
 }

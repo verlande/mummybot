@@ -74,8 +74,7 @@ namespace mummybot.Modules.Runescape
             var currentRotation = Math.Floor(((Math.Floor(Math.Floor(epochNow) / (24 * 60 * 60))) - 6) % (7 * rotation.Length) / 7);
             var daysNext = 7 - ((Math.Floor(epochNow / (24 * 60 * 60))) - 6) % (7 * rotation.Length) % 7;
 
-            var eb = new EmbedBuilder();
-            await ReplyAsync(string.Empty, embed: eb
+            await ReplyAsync(string.Empty, embed: new EmbedBuilder()
             .WithTitle("Vorago Roation")
             .AddField("Current Rotation", rotation[(int)currentRotation])
                 .WithColor(Utils.GetRandomColor())
