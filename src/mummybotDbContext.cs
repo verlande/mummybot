@@ -121,14 +121,16 @@ namespace mummybot
                     .IsRequired();
 
                 entity.Property(e => e.Greeting).HasColumnName("greeting")
-                    .IsRequired().HasDefaultValue("%user% has joined");
+                    .IsRequired().HasDefaultValue("**%user% has joined**");
 
                 entity.Property(e => e.Goodbye).HasColumnName("goodbye")
-                    .IsRequired().HasDefaultValue("%user% has left");
+                    .IsRequired().HasDefaultValue("**%user% has left**");
 
                 entity.Property(e => e.GreetChl).HasColumnName("greetchl");
 
 		        entity.Property(e => e.FilterInvites).HasColumnName("filterinvites");
+
+                entity.Property(e => e.Regex).HasColumnName("regex");
             });
 
             modelBuilder.Entity<Blacklist>(entity =>

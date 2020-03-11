@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using mummybot.Extensions;
 using System.Threading.Tasks;
 using mummybot.Modules.Manage.Services;
+using System.Text.RegularExpressions;
+using System;
 
 namespace mummybot.Modules.Manage
 {
@@ -102,6 +104,39 @@ namespace mummybot.Modules.Manage
                     _service.InviteFiltering.Add(Context.Guild.Id);
                     await Context.Channel.SendConfirmAsync("Invite filtering enabled").ConfigureAwait(false);
                 }
+            }
+
+            [Command("FilterRegex"), Summary("Filter messages with regex (Advanced users)"), RequireUserPermission(GuildPermission.Administrator)]
+            public async Task FilterRegex(string Pattern = "")
+            {
+                var conf = await Database.Guilds.SingleAsync(x => x.GuildId.Equals(Context.Guild.Id)).ConfigureAwait(false);
+
+                if (Pattern.Length is 0)
+                {
+                    _service.RegexFiltering.TryRemove(Context.Guild.Id, out _);
+                    conf.Regex = null;
+                    await Context.Channel.SendConfirmAsync("Regex filtering disabled").ConfigureAwait(false);
+                    return;
+                }
+
+                try
+                {
+                    if (new Regex(Pattern) != null)
+                        conf.Regex = Pattern;
+                }
+                catch (ArgumentException ex)
+                {
+                    await Context.Channel.SendErrorAsync(string.Empty, ex.Message).ConfigureAwait(false);
+                    _log.Error(ex);
+                }
+
+                conf.Regex = Pattern;
+                if (_service.RegexFiltering.ContainsKey(Context.Guild.Id))
+                    _service.RegexFiltering[Context.Guild.Id] = Pattern;
+
+                _service.RegexFiltering.TryAdd(Context.Guild.Id, Pattern);
+                Database.Attach(conf);
+                await Context.Channel.SendConfirmAsync($"Regex filtering set to ```{Pattern}```").ConfigureAwait(false);
             }
 
             protected override async void AfterExecute(CommandInfo command)
