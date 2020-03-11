@@ -49,7 +49,7 @@ namespace mummybot
             var provider = services.BuildServiceProvider();
             provider.GetRequiredService<DebugLoggingService>();
 
-            await provider.GetRequiredService<StartupService>().StartAsync();
+            await provider.GetRequiredService<StartupService>().StartAsync().ConfigureAwait(false);
 
             provider.GetRequiredService<ConfigService>();
             provider.GetRequiredService<MessageService>();
@@ -58,6 +58,7 @@ namespace mummybot
             provider.GetRequiredService<CommandService>();
             provider.GetRequiredService<CommandHandlerService>();
             NLogSetup.SetupLogger();
+
             await Task.Delay(-1).ConfigureAwait(false);
         }
     }

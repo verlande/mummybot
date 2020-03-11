@@ -19,6 +19,7 @@ namespace mummybot.Modules
         public CommandHandlerService CmdHandler { get; set; }
         // ReSharper disable once MemberCanBeProtected.Global
         public mummybotDbContext Database { get; set; }
+        public DiscordSocketClient _client { get; set; }
         protected readonly Logger _log;
 
 

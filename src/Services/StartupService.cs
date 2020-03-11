@@ -7,7 +7,6 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using mummybot.Models;
 using NLog;
 
@@ -89,10 +88,11 @@ namespace mummybot.Services
                 $"{_discord.Guilds.Count} guilds",
                 $"Latency: {_discord.Latency}ms",
                 //$"{GC.GetTotalMemory(true) / 1000000} Megabytes used",
-                $"{_discord.Guilds.Sum(guild => guild.MemberCount)} users"
+                $"{_discord.Guilds.Sum(guild => guild.MemberCount)} users",
+                $"{new CommandHandlerService().ProcessedCommands} commands invoked"
                 
             };
-            await _discord.SetGameAsync($"{statuses[r.Next(statuses.Length)]} | £help").ConfigureAwait(false);
+            await _discord.SetGameAsync($"{statuses[r.Next(statuses.Length)]} | {new ConfigService().Config["prefix"]}help").ConfigureAwait(false);
         }
 
         private static async Task RunPeriodically(Action action, TimeSpan interval, CancellationToken token)

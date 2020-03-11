@@ -31,7 +31,10 @@ namespace mummybot.Services
 
         //userid/msg count
         private ConcurrentDictionary<ulong, uint> UserMessagesSent { get; } = new ConcurrentDictionary<ulong, uint>();
+        public uint ProcessedCommands = 0;
         public ConcurrentDictionary<ulong, bool> BlacklistedUsers { get; set; }
+
+        public CommandHandlerService() { }
 
         public CommandHandlerService(DiscordSocketClient discord, CommandService commands, mummybotDbContext context, ConfigService config, IServiceProvider provider)
         {
@@ -73,6 +76,8 @@ namespace mummybot.Services
                     usrMsg.Author.Id,
                     usrMsg.Content);
             }
+
+            ProcessedCommands += 1;
             return Task.CompletedTask;
         }
 
@@ -112,15 +117,6 @@ namespace mummybot.Services
             try
             {
                 if (msg.Source != MessageSource.User || !(msg is SocketUserMessage usrMsg)) return;
-                if (BlacklistedUsers.ContainsKey(usrMsg.Author.Id))
-                {
-                    if (BlacklistedUsers[usrMsg.Author.Id]) return;
-                    var pm = await usrMsg.Author.GetOrCreateDMChannelAsync(RequestOptions.Default).ConfigureAwait(false);
-                    await pm.SendMessageAsync("your blacklisted from using this bot");
-                    await pm.CloseAsync();
-                    BlacklistedUsers.AddOrUpdate(usrMsg.Author.Id, true, (key, old) => true);
-                    return;
-                }
 
                 UserMessagesSent.AddOrUpdate(usrMsg.Author.Id, 1, (key, old) => old + 1);
 
@@ -136,15 +132,26 @@ namespace mummybot.Services
 
         private async Task TryRunCommand(SocketGuild guild, ISocketMessageChannel channel, SocketUserMessage usrMsg)
         {
+            var argPos = 0;
             var execTime = Environment.TickCount;
-
             var messageContent = usrMsg.Content;
-            var isPrefixCommand = messageContent.StartsWith(DefaultPrefix, StringComparison.InvariantCultureIgnoreCase);
             var exec2 = Environment.TickCount - execTime;
+            var isPrefixCommand = usrMsg.HasStringPrefix(DefaultPrefix, ref argPos);
 
-            if (messageContent.StartsWith(DefaultPrefix, StringComparison.InvariantCultureIgnoreCase))
+            if (isPrefixCommand && BlacklistedUsers.ContainsKey(usrMsg.Author.Id))
             {
-                var (success, error, info) = await ExecuteCommandAsync(new SocketCommandContext(_discord, usrMsg), messageContent, isPrefixCommand ? 1 : DefaultPrefix.Length, _provider, MultiMatchHandling.Best).ConfigureAwait(false);
+                _log.Warn($"Blacklisted {usrMsg.Author} blocked on {guild.Name} ({guild.Id})");
+                if (BlacklistedUsers[usrMsg.Author.Id]) return;
+                var pm = await usrMsg.Author.GetOrCreateDMChannelAsync(RequestOptions.Default).ConfigureAwait(false);
+                await pm.SendMessageAsync("your blacklisted from using this bot").ConfigureAwait(false);
+                await pm.CloseAsync().ConfigureAwait(false);
+                BlacklistedUsers.AddOrUpdate(usrMsg.Author.Id, true, (key, old) => true);
+                return;
+            }
+
+            if (isPrefixCommand)
+            {
+                var (success, error, info) = await ExecuteCommandAsync(new SocketCommandContext(_discord, usrMsg), messageContent, isPrefixCommand ? argPos : DefaultPrefix.Length, _provider, MultiMatchHandling.Best).ConfigureAwait(false);
 
                 if (success)
                 {

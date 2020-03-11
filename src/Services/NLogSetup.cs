@@ -21,8 +21,8 @@ namespace mummybot.Services
                 Layout = "${longdate} | ${level:uppercase=True} | ${message}",
             };
 
-            config.AddRule(LogLevel.Debug, LogLevel.Fatal, logConsole);
-            config.AddRule(LogLevel.Debug, LogLevel.Fatal, logFile);
+            config.AddRule(LogLevel.Trace, LogLevel.Fatal, logConsole);
+            config.AddRule(LogLevel.Trace, LogLevel.Fatal, logFile);
 
             LogManager.Configuration = config;
         }

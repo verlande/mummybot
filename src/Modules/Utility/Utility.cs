@@ -4,19 +4,21 @@ using System;
 using System.Text;
 using System.Threading.Tasks;
 using mummybot.Extensions;
+using Discord;
 
 namespace mummybot.Modules.Utility
 {
     [Name("Utility")]
     public partial class Utility : ModuleBase
     {
-        private readonly DiscordSocketClient _client;
         private readonly CommandService _command;
+        private readonly Services.CommandHandlerService _commandHandlerService;
 
-        public Utility(DiscordSocketClient client, CommandService command)
+        public Utility(DiscordSocketClient client, CommandService command, Services.CommandHandlerService commandHandlerService)
         {
             _client = client;
             _command = command;
+            _commandHandlerService = commandHandlerService;
         }
 
         [Command("Ping")]

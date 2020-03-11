@@ -55,6 +55,7 @@ namespace mummybot.Modules.Utility
                     $"- Guilds Served: {Context.Client.Guilds.Count}\n" +
                     $"- Total Commands: {_command.Commands.Count()}\n" +
                     $"- Channels: {Context.Client.Guilds.Sum(g => g.TextChannels.Count)}\n" +
+                    $"- Commands Processed: {_commandHandlerService.ProcessedCommands}\n" +
                     $"- Users: {Context.Client.Guilds.Sum(g => g.Users.Count)}\n", null, "Made with Discord.NET");
         }
 
