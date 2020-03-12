@@ -1,8 +1,21 @@
 ﻿using mummybot.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design;
 
 namespace mummybot
 {
+    public class mummybotContextFactory : IDesignTimeDbContextFactory<mummybotDbContext>
+    {
+        public mummybotDbContext CreateDbContext(string[] args)
+        {
+            var optionsBuilder = new DbContextOptionsBuilder<mummybotDbContext>();
+            var creds = new Services.ConfigService();
+            optionsBuilder.UseNpgsql(creds.Config["dbstring"]);
+            var context = new mummybotDbContext(optionsBuilder.Options);
+            return context;
+        }
+    }
+
     public class mummybotDbContext : DbContext
     {
         public mummybotDbContext(DbContextOptions<mummybotDbContext> options)
@@ -19,6 +32,7 @@ namespace mummybot
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.HasAnnotation("ProductVersion", "2.2.0-rtm-35687");
+            modelBuilder.HasDefaultSchema("public");
 
             modelBuilder.Entity<Tags>(entity =>
             {
@@ -147,6 +161,8 @@ namespace mummybot
                 entity.Property(e => e.CreatedAt).HasColumnName("createdat")
                     .HasDefaultValueSql("CURRENT_TIMESTAMP");
             });
+
+            base.OnModelCreating(modelBuilder);
         }
     }
 }
