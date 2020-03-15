@@ -70,7 +70,7 @@ namespace mummybot.Services
             {
                 try
                 {
-                    await AddUser(guildUser);
+                    await AddUser(guildUser).ConfigureAwait(false);
 
                     var conf = await _context.Guilds.SingleAsync(g => g.GuildId.Equals(guildUser.GuildId));
                     var channel = (await guildUser.Guild.GetTextChannelsAsync().ConfigureAwait(false)).SingleOrDefault(c => c.Id.Equals(conf.GreetChl));
@@ -103,7 +103,7 @@ namespace mummybot.Services
                         if (goodbye.Contains("%user%")) goodbye = goodbye.Replace("%user%", guildUser.Mention);
                         await channel.SendMessageAsync(goodbye).ConfigureAwait(false);
                     }
-                    await RemoveUser(guildUser);
+                    await RemoveUser(guildUser).ConfigureAwait(false);
                 }
                 catch (Exception ex) { _log.Error(ex); }
             });
@@ -130,7 +130,7 @@ namespace mummybot.Services
 
         public async Task AddUser(IGuildUser user)
         {
-            if (await UserExists(user.Id, user.GuildId)) return;
+            if (await UserExists(user.Id, user.GuildId).ConfigureAwait(false)) return;
             try
             {
                 await _context.Users.AddAsync(new Users
@@ -151,7 +151,7 @@ namespace mummybot.Services
 
         private async Task RemoveUser(IGuildUser user)
         {
-            if (await UserExists(user.Id, user.Guild.Id)) return;
+            if (await UserExists(user.Id, user.Guild.Id).ConfigureAwait(false)) return;
             _context.Remove(await _context.Users.SingleAsync(u => u.UserId.Equals(user.Id) && u.GuildId.Equals(user.Guild.Id)));
             await _context.SaveChangesAsync();
         }

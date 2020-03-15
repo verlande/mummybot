@@ -9,7 +9,7 @@ namespace mummybot.Models
         public string Content { get; set; }
         public ulong Author { get; set; }
         public ulong Guild { get; set; }
-        public DateTime? Createdat { get; set; } = DateTime.Now;
+        public DateTime? Createdat { get; set; }
         public bool IsCommand { get; set; } = false;
         public int Uses { get; set; } = 0;
         public ulong? LastUsedBy { get; set; }

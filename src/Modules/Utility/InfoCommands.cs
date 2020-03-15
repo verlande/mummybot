@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using mummybot.Extensions;
+using mummybot.Services;
 
 
 namespace mummybot.Modules.Utility
@@ -28,7 +29,6 @@ namespace mummybot.Modules.Utility
                 .WithThumbnailUrl(user.GetDefaultAvatarUrl())
                 .AddField("Username", user, true)
                 .AddField("Nickname", !string.IsNullOrEmpty(user.Nickname) ? user.Nickname : "None", true)
-                //.AddField("Activity", !string.IsNullOrEmpty(user.Activity.Name) ? user.Activity.Name : "ok", true)
                 .AddField("Status", user.Status, true)
                 .AddField("Joined", user.JoinedAt?.ToString("yyyy-MM-dd hh:mm:ss tt") ?? "-", true)
                 .AddField("Account Created", user.CreatedAt.ToString("yyyy-MM-dd hh:mm:ss tt"), true)
@@ -41,7 +41,7 @@ namespace mummybot.Modules.Utility
         {
             var application = await Context.Client.GetApplicationInfoAsync();
 
-            await Context.Channel.SendConfirmAsync("", $"{Format.Bold("Bot Info")}\n" +
+            await Context.Channel.SendConfirmAsync(string.Empty, $"{Format.Bold("Bot Info")}\n" +
                               $"- Author: {application.Owner}\n" +
                               $"- Library: Discord.Net ({DiscordConfig.Version})\n" +
                               $"- Kernel: {Environment.OSVersion}\n" +
@@ -53,9 +53,9 @@ namespace mummybot.Modules.Utility
                     $"- Heap Size: {Math.Round(GC.GetTotalMemory(true) / (1024.0 * 1024.0), 2)} MB\n" +
                     $"- Used Memory: {Process.GetCurrentProcess().PrivateMemorySize64 / (1024 * 1024)} MB\n" +
                     $"- Guilds Served: {Context.Client.Guilds.Count}\n" +
-                    $"- Total Commands: {_command.Commands.Count()}\n" +
+                    $"- Total Commands: {_commandService.Commands.Count()}\n" +
                     $"- Channels: {Context.Client.Guilds.Sum(g => g.TextChannels.Count)}\n" +
-                    $"- Commands Processed: {_commandHandlerService.ProcessedCommands}\n" +
+                    //$"- Commands Processed: {_commandHandlerService.ProcessedCommands}\n" +
                     $"- Users: {Context.Client.Guilds.Sum(g => g.Users.Count)}\n", null, "Made with Discord.NET");
         }
 
@@ -75,8 +75,6 @@ namespace mummybot.Modules.Utility
         public async Task GuildInfo()
         {
             var online = Context.Guild.Users.Count(x => x.Status != UserStatus.Offline);
-            //var idle = Context.Guild.Users.Count(x => x.Status == UserStatus.Idle);
-            //var dnd = Context.Guild.Users.Count(x => x.Status == UserStatus.DoNotDisturb);
             var offline = Context.Guild.Users.Count(x => x.Status == UserStatus.Offline);
 
             var rolesb = new StringBuilder();

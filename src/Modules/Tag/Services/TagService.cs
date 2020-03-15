@@ -14,7 +14,6 @@ namespace mummybot.Modules.Tag.Services
         private readonly Logger _log;
         private readonly mummybotDbContext _context;
         private readonly DiscordSocketClient _discord;
-        private IServiceProvider _services;
         private readonly UserService _userService;
 
         public TagService(DiscordSocketClient discord, mummybotDbContext context, UserService userService)
@@ -25,8 +24,6 @@ namespace mummybot.Modules.Tag.Services
             _userService = userService;
         }
 
-        public void Initialize(IServiceProvider service)
-            => _services = service;
 
         public TagController GetTag(mummybotDbContext context, string name, SocketGuild guild)
         {
@@ -39,7 +36,6 @@ namespace mummybot.Modules.Tag.Services
             if (!await _userService.UserExists(user.Id, guild.Id))
                 await _userService.AddUser((SocketGuildUser)user);
             
-
             var tag = new Tags
             {
                 Name = name,
@@ -50,6 +46,7 @@ namespace mummybot.Modules.Tag.Services
 
             await _context.Tags.AddAsync(tag);
             await _context.SaveChangesAsync();
+            _log.Info($"Inserted Tag \"{name}\" u: {user.Id} g: {guild.Id}");
 
             return new TagController(context, _discord, tag);
         }

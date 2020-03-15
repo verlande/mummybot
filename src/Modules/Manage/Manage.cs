@@ -29,8 +29,6 @@ namespace mummybot.Modules.Manage
                 guild.Greeting = greeting;
 
                 await Context.Channel.SendConfirmAsync("Greeting message has been set").ConfigureAwait(false);
-
-                //if (greeting.Contains("%user%")) await ReplyAsync(greeting.Replace("%user%", Context.User.Mention));
             }
 
             [Command("ClearGreeting"), Summary("Clears greeting message")]
@@ -107,11 +105,11 @@ namespace mummybot.Modules.Manage
             }
 
             [Command("FilterRegex"), Summary("Filter messages with regex (Advanced users)"), RequireUserPermission(GuildPermission.Administrator)]
-            public async Task FilterRegex(string Pattern = "")
+            public async Task FilterRegex(string pattern = "")
             {
                 var conf = await Database.Guilds.SingleAsync(x => x.GuildId.Equals(Context.Guild.Id)).ConfigureAwait(false);
 
-                if (Pattern.Length is 0)
+                if (pattern.Length is 0)
                 {
                     _service.RegexFiltering.TryRemove(Context.Guild.Id, out _);
                     conf.Regex = null;
@@ -121,8 +119,8 @@ namespace mummybot.Modules.Manage
 
                 try
                 {
-                    if (new Regex(Pattern) != null)
-                        conf.Regex = Pattern;
+                    if (new Regex(pattern) != null)
+                        conf.Regex = pattern;
                 }
                 catch (ArgumentException ex)
                 {
@@ -130,19 +128,19 @@ namespace mummybot.Modules.Manage
                     _log.Error(ex);
                 }
 
-                conf.Regex = Pattern;
+                conf.Regex = pattern;
                 if (_service.RegexFiltering.ContainsKey(Context.Guild.Id))
-                    _service.RegexFiltering[Context.Guild.Id] = Pattern;
+                    _service.RegexFiltering[Context.Guild.Id] = pattern;
 
-                _service.RegexFiltering.TryAdd(Context.Guild.Id, Pattern);
+                _service.RegexFiltering.TryAdd(Context.Guild.Id, pattern);
                 Database.Attach(conf);
-                await Context.Channel.SendConfirmAsync($"Regex filtering set to ```{Pattern}```").ConfigureAwait(false);
+                await Context.Channel.SendConfirmAsync($"Regex filtering set to ```{pattern}```").ConfigureAwait(false);
             }
 
-            protected override async void AfterExecute(CommandInfo command)
+            protected override void AfterExecute(CommandInfo command)
             {
                 base.AfterExecute(command);
-                await Database.SaveChangesAsync();
+                Database.SaveChanges();
                 Database.Dispose();
             }
         }

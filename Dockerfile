@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/core/sdk:3.1-buster AS build
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1-alpine AS build
 
 COPY . /mummybot
 WORKDIR /mummybot
@@ -8,7 +8,8 @@ RUN set -ex; \
     dotnet build -c Release; \
     dotnet publish -c Release -o /app
 
-FROM microsoft/dotnet:3.1-runtime AS runtime
+FROM mcr.microsoft.com/dotnet/core/runtime:3.1 AS runtime
 WORKDIR /app
 COPY --from=build /app /app
+COPY src/_config.json /app
 ENTRYPOINT [ "dotnet", "mummybot.dll" ]

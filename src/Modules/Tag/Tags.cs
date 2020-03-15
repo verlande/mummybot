@@ -37,7 +37,7 @@ namespace mummybot.Modules.Tag
                     tag.LastUsedBy(Context.User);
                 }
             }
-
+            
             [Command("Create"), Summary("Create a tag"), Cooldown(120, true)]
             public async Task CreateTag(string name, [Remainder] string content)
             {
@@ -73,7 +73,7 @@ namespace mummybot.Modules.Tag
                 await Context.Channel.SendConfirmAsync($"{name} created").ConfigureAwait(false);
             }
 
-            [Command("Delete")]
+            [Command("Delete"), Summary("Tag authors or admins can delete tags")]
             public async Task Delete(string name) => await Context.Channel.SendConfirmAsync(_tag.GetTag(Database, name, Context.Guild)
                     .DeleteTag((SocketGuildUser)Context.User)).ConfigureAwait(false);
 
@@ -90,7 +90,8 @@ namespace mummybot.Modules.Tag
 
                 if (!tagList.Any())
                 {
-                    await ReplyAsync("This user or guild does not have any tags").ConfigureAwait(false);
+                    await Context.Channel.SendErrorAsync(string.Empty, "This guild or user does not have any tags")
+                        .ConfigureAwait(false);
                     return;
                 }
 
@@ -128,11 +129,10 @@ namespace mummybot.Modules.Tag
                 await ReplyAsync(string.Empty, embed: tag.TagInfoEmbed()).ConfigureAwait(false);
             }
 
-            protected override async void AfterExecute(CommandInfo command)
+            protected override void AfterExecute(CommandInfo command)
             {
                 base.AfterExecute(command);
-                //Tags.PopulateList();
-                await Database.SaveChangesAsync();
+                Database.SaveChanges();
                 Database.Dispose();
             }
         }

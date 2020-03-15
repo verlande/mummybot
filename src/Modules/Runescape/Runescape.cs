@@ -27,7 +27,7 @@ namespace mummybot.Modules.Runescape
             var daysLeft = 4 - (Math.Floor((epoch / 1000) / (24 * 60 * 60)) + 3) % (4 * rotations.Length) % 4;
             var nextRotation = currentRotation + 1;
 
-            if (nextRotation == rotations.Length) nextRotation = 0;
+            if ((int)nextRotation == rotations.Length) nextRotation = 0;
 
             var top = "OPEN";
             var mid = "OPEN";
@@ -44,6 +44,8 @@ namespace mummybot.Modules.Runescape
                 case 2:
                     bot = "CLOSED";
                     break;
+                default:
+                    throw new InvalidOperationException();
             }
 
             await ReplyAsync(string.Empty, embed: new EmbedBuilder().WithTitle("Araxxi Rotation")
@@ -52,7 +54,7 @@ namespace mummybot.Modules.Runescape
                 .AddField("Top Path (Minions)", top)
                 .AddField("Middle Path (Acid)", mid)
                 .AddField("Bottom Path (Darkness)", bot)
-                .WithFooter(new EmbedFooterBuilder().WithText($"Next path closed will be {rotations[(int)nextRotation]} in {(daysLeft == 1 ? $"{daysLeft} Day" : $"{daysLeft} Days")}"))
+                .WithFooter(new EmbedFooterBuilder().WithText($"Next path closed will be {rotations[(int)nextRotation]} in {((int)daysLeft == 1 ? $"{(int)daysLeft} Day" : $"{(int)daysLeft} Days")}"))
                 .Build()).ConfigureAwait(false);
         }
 
@@ -79,7 +81,7 @@ namespace mummybot.Modules.Runescape
             .AddField("Current Rotation", rotation[(int)currentRotation])
                 .WithColor(Utils.GetRandomColor())
                 .WithThumbnailUrl("http://i.imgur.com/e4WOs8J.png")
-                .WithFooter(new EmbedFooterBuilder().WithText($"Next rotation {rotation[(int)currentRotation + 1]} in {(daysNext == 1 ? $"{daysNext} Day" : $"{daysNext} Days")}"))
+                .WithFooter(new EmbedFooterBuilder().WithText($"Next rotation {rotation[(int)currentRotation + 1]} in {((int)daysNext == 1 ? $"{(int)daysNext} Day" : $"{daysNext} Days")}"))
                 .Build()).ConfigureAwait(false);
         }
 

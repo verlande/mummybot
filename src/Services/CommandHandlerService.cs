@@ -31,7 +31,7 @@ namespace mummybot.Services
 
         //userid/msg count
         private ConcurrentDictionary<ulong, uint> UserMessagesSent { get; } = new ConcurrentDictionary<ulong, uint>();
-        public uint ProcessedCommands = 0;
+        public uint ProcessedCommands;
         public ConcurrentDictionary<ulong, bool> BlacklistedUsers { get; set; }
 
         public CommandHandlerService() { }
@@ -54,29 +54,25 @@ namespace mummybot.Services
 
         private Task LogSuccessfulExecution(IMessage usrMsg, IGuildChannel channel)
         {
-            var normal = true;
-            if (normal)
-            {
-                _log.Info($"" +
-                        "User: {0}\n\t" +
-                        "Server: {1}\n\t" +
-                        "Channel: {2}\n\t" +
-                        "Message: {3}",
-                        usrMsg.Author + " [" + usrMsg.Author.Id + "]", // {0}
-                        (channel == null ? "PRIVATE" : channel.Guild.Name + " [" + channel.Guild.Id + "]"), // {1}
-                        (channel == null ? "PRIVATE" : channel.Name + " [" + channel.Id + "]"), // {2}
-                        usrMsg.Content // {3}
-                        );
-            }
-            else
-            {
-                _log.Info("Succ | g:{0} | c: {1} | u: {2} | msg: {3}",
-                    channel?.Guild.Id.ToString() ?? "-",
-                    channel?.Id.ToString() ?? "-",
-                    usrMsg.Author.Id,
-                    usrMsg.Content);
-            }
-
+            /*_log.Info($"" +
+                "User: {0}\n\t" +
+                "Server: {1}\n\t" +
+                "Channel: {2}\n\t" +
+                "Message: {3}",
+                usrMsg.Author + " [" + usrMsg.Author.Id + "]", // {0}
+                (channel == null ? "PRIVATE" : channel.Guild.Name + " [" + channel.Guild.Id + "]"), // {1}
+                (channel == null ? "PRIVATE" : channel.Name + " [" + channel.Id + "]"), // {2}
+                usrMsg.Content // {3}
+                );*/
+            
+            
+            
+            _log.Info("Executed | g:{0} | c: {1} | u: {2} | msg: {3}",
+                channel?.Guild.Id.ToString() ?? "-",
+                channel?.Id.ToString() ?? "-",
+                usrMsg.Author.Id,
+                usrMsg.Content);
+            
             ProcessedCommands += 1;
             return Task.CompletedTask;
         }
@@ -84,10 +80,7 @@ namespace mummybot.Services
         private async Task LogErroredExecution(string erroredCmd, string errorMessage, IMessage usrMsg, ITextChannel channel)
         {
             await channel.SendErrorAsync($"executing {erroredCmd}", errorMessage);
-            var normal = true;
-            if (normal)
-            {
-                _log.Error($"" +
+            /*_log.Error($"" +
                             "User: {0}\n\t" +
                             "Server: {1}\n\t" +
                             "Channel: {2}\n\t" +
@@ -99,17 +92,13 @@ namespace mummybot.Services
                             usrMsg.Content,// {3}
                             errorMessage
                             //exec.Result.ErrorReason // {4}
-                            );
-            }
-            else
-            {
-                _log.Error("Err | g:{0} | c: {1} | u: {2} | msg: {3}\n\tErr: {4}",
-                    channel?.Guild.Id.ToString() ?? "-",
-                    channel?.Id.ToString() ?? "-",
-                    usrMsg.Author.Id,
-                    usrMsg.Content,
-                    errorMessage);
-            }
+                            );*/
+            _log.Error("Err | g:{0} | c: {1} | u: {2} | msg: {3}\n\tErr: {4}",
+                channel?.Guild.Id.ToString() ?? "-",
+                channel?.Id.ToString() ?? "-",
+                usrMsg.Author.Id,
+                usrMsg.Content,
+                errorMessage);
         }
 
         private async Task MessageReceivedHandler(SocketMessage msg)
@@ -161,7 +150,7 @@ namespace mummybot.Services
 
                 if (error != null)
                 {
-                    await LogErroredExecution(info.Name, error, usrMsg, channel as ITextChannel);
+                    await LogErroredExecution(info.Name, error, usrMsg, channel as ITextChannel).ConfigureAwait(false);
                     if (guild != null)
                         await CommandErrored(info, channel as ITextChannel, error).ConfigureAwait(false);
                 }
@@ -217,6 +206,10 @@ namespace mummybot.Services
                             paramList = parseResult.ParamValues.Select(x => x.Values.OrderByDescending(y => y.Score).First()).ToImmutableArray();
                             parseResult = ParseResult.FromSuccess(argList, paramList);
                             break;
+                        case MultiMatchHandling.Exception:
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException(nameof(multiMatchHandling), multiMatchHandling, null);
                     }
                 }
 
@@ -271,7 +264,7 @@ namespace mummybot.Services
                     $"[{now:HH:mm-yyyy-MM-dd}]" + Environment.NewLine
                                                 + execResult.Exception + Environment.NewLine
                                                 + "------" + Environment.NewLine);
-                Console.WriteLine(execResult.Exception);
+                _log.Error(execResult.Exception);
             }
 
             return (true, null, cmd);

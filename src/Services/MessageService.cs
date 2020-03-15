@@ -17,14 +17,12 @@ namespace mummybot.Services
 
     public class MessageService
     {
-        private readonly DiscordSocketClient _discord;
         private readonly Logger _log;
         public static ConcurrentDictionary<ulong, Snipe> snipeDict = new ConcurrentDictionary<ulong, Snipe>();
 
         public MessageService(DiscordSocketClient discord)
         {
-            _discord = discord;
-            _discord.MessageDeleted += DeletedMessage;
+            discord.MessageDeleted += DeletedMessage;
         }
 
         private Task DeletedMessage(Cacheable<IMessage, ulong> cachedmsg, ISocketMessageChannel msg)

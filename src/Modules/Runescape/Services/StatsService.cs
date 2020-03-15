@@ -9,7 +9,7 @@ namespace mummybot.Modules.Runescape.Services
     {
         private readonly RS3RestClient _rs3 = new RS3RestClient();
 
-        private IServiceProvider _services;
+        public IServiceProvider _services;
 
         public void Initialize(IServiceProvider service)
             => _services = service;

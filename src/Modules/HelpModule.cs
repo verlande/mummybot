@@ -110,18 +110,8 @@ namespace mummybot.Modules
         }
         private string GetPrefix(CommandInfo command)
         {
-            //var output = GetPrefix(command.Module);
             var output = $"{command.Aliases.FirstOrDefault()} ";
             return output;
         }
-
-        /*private string GetPrefix(ModuleInfo module)
-        {
-            string output = "";
-            if (module.Parent != null) output = $"{GetPrefix(module.Parent)}{output}";
-            if (module.Aliases.Any())
-                output += string.Concat(module.Aliases.FirstOrDefault(), "");
-            return output;
-        }*/
     }
 }

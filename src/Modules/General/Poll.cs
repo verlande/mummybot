@@ -63,7 +63,7 @@ namespace mummybot.Modules.General
             foreach (var s in regional)
             {
                 await msg.AddReactionAsync(EnumToUnicode(s)).ConfigureAwait(false);
-                await Task.Delay(250);
+                await Task.Delay(250).ConfigureAwait(false);
             }
         }
     }

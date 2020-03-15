@@ -5,6 +5,7 @@ using mummybot.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading.Tasks;
+using System;
 
 namespace mummybot
 {
@@ -32,8 +33,11 @@ namespace mummybot
                 }))
                 .AddDbContext<mummybotDbContext>(options =>
                     {
-                        options.UseNpgsql(new ConfigService().Config["dbstring"]
-                            );
+                        #if DEBUG
+                            options.UseNpgsql(new ConfigService().Config["dbstring"]);
+                        #else
+                            options.UseNpgsql(Environment.GetEnvironmentVariable("DB_CONNECTION_STRING"));
+                        #endif
                     }, ServiceLifetime.Transient)
                 .AddSingleton<Modules.Tag.Services.TagService>()
                 .AddSingleton<Modules.Manage.Services.FilteringService>()

@@ -46,7 +46,9 @@ namespace mummybot
                     .IsRequired()
                     .HasColumnName("content");
 
-                entity.Property(e => e.Createdat).HasColumnName("createdat");
+                entity.Property(e => e.Createdat).HasColumnName("createdat")
+                    .IsRequired()
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                 entity.Property(e => e.Guild).HasColumnName("guild");
 

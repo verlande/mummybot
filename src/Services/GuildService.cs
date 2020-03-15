@@ -15,7 +15,6 @@ namespace mummybot.Services
         private readonly DiscordSocketClient _discord;
         private readonly mummybotDbContext _context;
         private readonly Logger _log;
-        //public static ConcurrentDictionary<ulong, bool> GuildMsgLogging = new ConcurrentDictionary<ulong, bool>();
 
         public GuildService(DiscordSocketClient discord, mummybotDbContext context)
         {
@@ -41,16 +40,16 @@ namespace mummybot.Services
                         GuildName = guild.Name,
                         OwnerId = guild.OwnerId,
                         Region = guild.VoiceRegionId
-                    });
-                    await _discord.GetGuild(guild.Id).DefaultChannel.SendMessageAsync($"use {new ConfigService().Config["prefix"]}help");
+                    }).ConfigureAwait(false);
+                    await _discord.GetGuild(guild.Id).DefaultChannel.SendMessageAsync($"use {new ConfigService().Config["prefix"]}help").ConfigureAwait(false);
                 }
                 else
                 {
                     guildExists.Active = true;
                     await Save(guildExists);
                 }
-                await _discord.GetGuild(guild.Id).DefaultChannel.SendMessageAsync("ty for adding me back");
-                await SaveUsers(guild.Users.ToList());
+                await _discord.GetGuild(guild.Id).DefaultChannel.SendMessageAsync("ty for adding me back").ConfigureAwait(false);
+                await SaveUsers(guild.Users.ToList()).ConfigureAwait(false);
             });
             return Task.CompletedTask;
         }
@@ -111,7 +110,6 @@ namespace mummybot.Services
                         UserId = users.Id,
                         Username = Utils.FullUserName(users),
                         Nickname = users.Nickname,
-                        //GuildName = users.Guild.Name,
                         GuildId = users.Guild.Id,
                         Avatar = users.GetAvatarUrl(),
                         Joined = users.JoinedAt.Value.UtcDateTime

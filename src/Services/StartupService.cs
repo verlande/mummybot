@@ -36,33 +36,29 @@ namespace mummybot.Services
             _discord.Connected += Connected;
         }
 
-        private Task Connected()
+        private async Task Connected()
         {
-            var _ = Task.Run(async () =>
+            // Loop through guilds added when offline
+            foreach (var guilds in _discord.Guilds)
             {
-                foreach (var guilds in _discord.Guilds)
+                if (await _context.Guilds.AnyAsync(x => x.GuildId.Equals(guilds.Id))) return;
+                await _context.Guilds.AddAsync(new Guilds
                 {
-                    if (_context.Guilds.Any(x => x.GuildId == guilds.Id)) continue;
-                    try
-                    {
-                        await _context.Guilds.AddAsync(new Guilds
-                        {
-                            GuildId = guilds.Id,
-                            GuildName = guilds.Name,
-                            OwnerId = guilds.OwnerId,
-                            Region = guilds.VoiceRegionId
-                        });
-                        await _context.SaveChangesAsync();
-                        _log.Info($"Inserted missing guild {guilds.Name} ({guilds.Id})");
-                    }
-                    catch (Exception ex)
-                    {
-                        _log.Error(ex.InnerException);
-                    }
-                }
-            });
+                    GuildId = guilds.Id,
+                    GuildName = guilds.Name,
+                    OwnerId = guilds.OwnerId,
+                    Region = guilds.VoiceRegionId
+                });
+                _log.Info($"Inserted missing guild {guilds.Name} ({guilds.Id})");
+            }
 
-            return Task.CompletedTask;
+            // Upd-ate inactive guilds
+            _context.Guilds.Where(x => !_discord.Guilds.Select(x => x.Id).Contains(x.GuildId) && x.Active/*!guildIds.Contains(x.GuildId)*/)
+                .ToList()
+                .Select(x => { x.Active = false; Console.WriteLine($"Set guild {x.GuildId} to inactive"); return x; })
+                .ToList();
+            
+            await _context.SaveChangesAsync();
         }
         
         public async Task StartAsync()
@@ -79,7 +75,7 @@ namespace mummybot.Services
         {
             var r = new Random();
 
-            await Task.Delay(2000);
+            await Task.Delay(2000).ConfigureAwait(false);
             
             var statuses = new[]
             {
@@ -89,7 +85,7 @@ namespace mummybot.Services
                 $"Latency: {_discord.Latency}ms",
                 //$"{GC.GetTotalMemory(true) / 1000000} Megabytes used",
                 $"{_discord.Guilds.Sum(guild => guild.MemberCount)} users",
-                $"{new CommandHandlerService().ProcessedCommands} commands invoked"
+                $"{_commands.Commands.Count()} commands"
                 
             };
             await _discord.SetGameAsync($"{statuses[r.Next(statuses.Length)]} | {new ConfigService().Config["prefix"]}help").ConfigureAwait(false);
@@ -100,7 +96,7 @@ namespace mummybot.Services
             while (true)
             {
                 action();
-                await Task.Delay(interval, token);
+                await Task.Delay(interval, token).ConfigureAwait(false);
             }
         }
 

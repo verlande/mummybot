@@ -79,13 +79,12 @@ namespace mummybot.Modules.Moderator
         {
             if (user.Hierarchy < Context.Guild.GetUser(_client.CurrentUser.Id).GetRoles().Max(r => r.Position))
             {
-                Console.WriteLine("true");
                 await user.KickAsync(reason).ConfigureAwait(false);
                 await Context.Channel.SendConfirmAsync($"Kicked {user}").ConfigureAwait(false);
                 return;
             }
             
-            await Context.Channel.SendErrorAsync("kicking user", "Cannot kick a user that has a heigher hierachy than you").ConfigureAwait(false);
+            await Context.Channel.SendErrorAsync("kicking user", "Cannot kick a user that has a higher hierarchy than you").ConfigureAwait(false);
         }
 
         [Command("Clearbots"), Summary("Clears messages from all bots"), RequireUserPermission(GuildPermission.ManageMessages), RequireBotPermission(GuildPermission.ManageMessages)]
@@ -130,10 +129,10 @@ namespace mummybot.Modules.Moderator
             await Context.Channel.SendConfirmAsync($"Deleted {invites.Count} invites").ConfigureAwait(false);
         }
 
-        protected override async void AfterExecute(CommandInfo command)
+        protected override void AfterExecute(CommandInfo command)
         {
             base.AfterExecute(command);
-            await Database.SaveChangesAsync();
+            Database.SaveChanges();
             Database.Dispose();
         }
     }

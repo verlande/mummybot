@@ -26,23 +26,6 @@ namespace mummybot.Modules.General
             Color = Utils.GetRandomColor()
         }.Build()).ConfigureAwait(false);
 
-        //[Command("Timezone")]
-        //public async Task Timezone(int page = 1)
-        //{
-        //    page--;
-        //    if (page < 0 || page > 20) return;
-
-        //    var timezones = TimeZoneInfo.GetSystemTimeZones()
-        //        .OrderBy(x => x.BaseUtcOffset)
-        //        .ToArray();
-        //    var timezonesPerPage = 20;
-
-        //    await Context.SendPaginatedConfirmAsync(page, (currPage) => new EmbedBuilder()
-        //    .WithTitle("Timezones Available")
-        //    .WithDescription(string.Join("\n", timezones.Skip(currPage * timezonesPerPage).Take(timezonesPerPage).Select(x => $"`{x.Id, -25}` {(x.BaseUtcOffset < TimeSpan.Zero ? "-" : "+")}{x.BaseUtcOffset:hhmm}"))),
-        //    timezones.Length, timezonesPerPage).ConfigureAwait(false);
-        //}
-
         [Command("Fame"), Summary("Add a message to the Hall of Fame"),
             RequireBotPermission(GuildPermission.ManageChannels), RequireUserPermission(GuildPermission.ManageMessages)]
         public async Task Fame(IMessage msg = null)

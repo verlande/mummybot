@@ -1,11 +1,9 @@
-﻿// License MIT
-// Source: https://github.com/i3arnon/ConcurrentHashSet
+﻿// Source: https://github.com/i3arnon/ConcurrentHashSet
 
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading;
 
 namespace mummybot.Common
@@ -16,10 +14,10 @@ namespace mummybot.Common
     /// <typeparam name="T">The type of the items in the collection.</typeparam>
     /// <remarks>
     /// All public members of <see cref="ConcurrentHashSet{T}"/> are thread-safe and may be used
-    /// concurrently from multiple threads.
+    /// conc-urrently from multiple threads.
     /// </remarks>
     [DebuggerDisplay("Count = {Count}")]
-    public sealed class ConcurrentHashSet<T> : IReadOnlyCollection<T>, ICollection<T>
+    public class ConcurrentHashSet<T> : IReadOnlyCollection<T>, ICollection<T>
     {
         private const int DefaultCapacity = 31;
         private const int MaxLockNumber = 1024;
@@ -103,7 +101,7 @@ namespace mummybot.Common
         /// uses the default comparer for the item type.
         /// </summary>
         public ConcurrentHashSet()
-            : this(DefaultConcurrencyLevel, DefaultCapacity, true, EqualityComparer<T>.Default)
+            : this(DefaultConcurrencyLevel, DefaultCapacity, true, null)
         {
         }
 
@@ -123,7 +121,7 @@ namespace mummybot.Common
         /// <exception cref="T:System.ArgumentOutOfRangeException"> <paramref name="capacity"/> is less than
         /// 0.</exception>
         public ConcurrentHashSet(int concurrencyLevel, int capacity)
-            : this(concurrencyLevel, capacity, false, EqualityComparer<T>.Default)
+            : this(concurrencyLevel, capacity, false, null)
         {
         }
 
@@ -139,7 +137,7 @@ namespace mummybot.Common
         /// <see cref="ConcurrentHashSet{T}"/>.</param>
         /// <exception cref="T:System.ArgumentNullException"><paramref name="collection"/> is a null reference.</exception>
         public ConcurrentHashSet(IEnumerable<T> collection)
-            : this(collection, EqualityComparer<T>.Default)
+            : this(collection, null)
         {
         }
 
@@ -150,7 +148,6 @@ namespace mummybot.Common
         /// </summary>
         /// <param name="comparer">The <see cref="T:System.Collections.Generic.IEqualityComparer{T}"/>
         /// implementation to use when comparing items.</param>
-        /// <exception cref="T:System.ArgumentNullException"><paramref name="comparer"/> is a null reference.</exception>
         public ConcurrentHashSet(IEqualityComparer<T> comparer)
             : this(DefaultConcurrencyLevel, DefaultCapacity, true, comparer)
         {
@@ -170,8 +167,7 @@ namespace mummybot.Common
         /// <param name="comparer">The <see cref="T:System.Collections.Generic.IEqualityComparer{T}"/>
         /// implementation to use when comparing items.</param>
         /// <exception cref="T:System.ArgumentNullException"><paramref name="collection"/> is a null reference
-        /// (Nothing in Visual Basic). -or-
-        /// <paramref name="comparer"/> is a null reference (Nothing in Visual Basic).
+        /// (Nothing in Visual Basic).
         /// </exception>
         public ConcurrentHashSet(IEnumerable<T> collection, IEqualityComparer<T> comparer)
             : this(comparer)
@@ -196,8 +192,6 @@ namespace mummybot.Common
         /// when comparing items.</param>
         /// <exception cref="T:System.ArgumentNullException">
         /// <paramref name="collection"/> is a null reference.
-        /// -or-
-        /// <paramref name="comparer"/> is a null reference.
         /// </exception>
         /// <exception cref="T:System.ArgumentOutOfRangeException">
         /// <paramref name="concurrencyLevel"/> is less than 1.
@@ -206,7 +200,6 @@ namespace mummybot.Common
             : this(concurrencyLevel, DefaultCapacity, false, comparer)
         {
             if (collection == null) throw new ArgumentNullException(nameof(collection));
-            if (comparer == null) throw new ArgumentNullException(nameof(comparer));
 
             InitializeFromCollection(collection);
         }
@@ -227,7 +220,6 @@ namespace mummybot.Common
         /// <paramref name="concurrencyLevel"/> is less than 1. -or-
         /// <paramref name="capacity"/> is less than 0.
         /// </exception>
-        /// <exception cref="T:System.ArgumentNullException"><paramref name="comparer"/> is a null reference.</exception>
         public ConcurrentHashSet(int concurrencyLevel, int capacity, IEqualityComparer<T> comparer)
             : this(concurrencyLevel, capacity, false, comparer)
         {
@@ -257,7 +249,7 @@ namespace mummybot.Common
 
             _growLockArray = growLockArray;
             _budget = buckets.Length / locks.Length;
-            _comparer = comparer ?? throw new ArgumentNullException(nameof(comparer));
+            _comparer = comparer ?? EqualityComparer<T>.Default;
         }
 
         /// <summary>
@@ -334,7 +326,7 @@ namespace mummybot.Common
             {
                 var tables = _tables;
 
-                GetBucketAndLockNo(hashcode, out var bucketNo, out var lockNo, tables.Buckets.Length, tables.Locks.Length);
+                GetBucketAndLockNo(hashcode, out int bucketNo, out int lockNo, tables.Buckets.Length, tables.Locks.Length);
 
                 lock (tables.Locks[lockNo])
                 {
@@ -454,7 +446,8 @@ namespace mummybot.Common
             while (true)
             {
                 var tables = _tables;
-                GetBucketAndLockNo(hashcode, out var bucketNo, out var lockNo, tables.Buckets.Length, tables.Locks.Length);
+
+                GetBucketAndLockNo(hashcode, out int bucketNo, out int lockNo, tables.Buckets.Length, tables.Locks.Length);
 
                 var resizeDesired = false;
                 var lockTaken = false;
@@ -474,7 +467,7 @@ namespace mummybot.Common
                     Node previous = null;
                     for (var current = tables.Buckets[bucketNo]; current != null; current = current.Next)
                     {
-                        Debug.Assert((previous == null && current == tables.Buckets[bucketNo]) || previous.Next == current);
+                        Debug.Assert(previous == null && current == tables.Buckets[bucketNo] || previous.Next == current);
                         if (hashcode == current.Hashcode && _comparer.Equals(current.Item, item))
                         {
                             return false;
@@ -645,7 +638,7 @@ namespace mummybot.Common
                     while (current != null)
                     {
                         var next = current.Next;
-                        GetBucketAndLockNo(current.Hashcode, out var newBucketNo, out var newLockNo, newBuckets.Length, newLocks.Length);
+                        GetBucketAndLockNo(current.Hashcode, out int newBucketNo, out int newLockNo, newBuckets.Length, newLocks.Length);
 
                         newBuckets[newBucketNo] = new Node(current.Item, current.Hashcode, newBuckets[newBucketNo]);
 
@@ -669,18 +662,6 @@ namespace mummybot.Common
                 // Release all locks that we took earlier
                 ReleaseLocks(0, locksAcquired);
             }
-        }
-
-        public int RemoveWhere(Func<T, bool> predicate)
-        {
-            var elems = this.Where(predicate);
-            var removed = 0;
-            foreach (var elem in elems)
-            {
-                if (this.TryRemove(elem))
-                    removed++;
-            }
-            return removed;
         }
 
         private void AcquireAllLocks(ref int locksAcquired)
@@ -739,7 +720,7 @@ namespace mummybot.Common
             }
         }
 
-        private sealed class Tables
+        private class Tables
         {
             public readonly Node[] Buckets;
             public readonly object[] Locks;
@@ -754,7 +735,7 @@ namespace mummybot.Common
             }
         }
 
-        private sealed class Node
+        private class Node
         {
             public readonly T Item;
             public readonly int Hashcode;

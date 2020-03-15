@@ -84,13 +84,8 @@ namespace mummybot.Modules.Utility
         [Command("Newusers"), Summary("Lists 5 newest users"), Alias("nu")]
         public async Task NewUsers()
         {
-            //var users = Database.Users.Where(u => u.GuildId.Equals(Context.Guild.Id))
-            //    .Select(u => new { u.Username, u.UserId, u.Joined }).Take(5).OrderByDescending(u => u.Joined);
-
             var eb = new EmbedBuilder().WithTitle("New users")
                 .WithColor(Utils.GetRandomColor());
-
-            //await users.ForEachAsync(u => eb.AddField($"{u.Username} ({u.UserId})", u.Joined));
 
             var users = Context.Guild.Users.ToList().Where(u => !u.IsBot).OrderByDescending(u => u.JoinedAt).Take(10);
 

@@ -1,6 +1,5 @@
 ﻿using Discord;
 using Discord.WebSocket;
-//using SixLabors.ImageSharp.Processing.Drawing;
 using System;
 using System.Collections.Generic;
 using System.Linq;

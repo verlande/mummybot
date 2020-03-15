@@ -23,11 +23,9 @@ namespace mummybot.Modules.Tag.Controllers
 
         public void AddUse()
         {
-            if (_tag != null)
-            {
-                _tag.Uses++;
-                _tag.LastUsed = DateTime.Now;
-            }
+            if (_tag == null) return;
+            _tag.Uses++;
+            _tag.LastUsed = DateTime.Now;
         }
 
         public string DeleteTag(SocketGuildUser user)
@@ -39,9 +37,7 @@ namespace mummybot.Modules.Tag.Controllers
             }
             if (_tag == null)
                 return "Tag doesn't exist";
-            if (_tag != null && !user.Id.Equals(_tag.Author))
-                return "Tag doesn't belong to you";
-            return "Can't delete tag";
+            return !user.Id.Equals(_tag.Author) ? "Tag doesn't belong to you" : "Can't delete tag";
         }
 
         public TagController LastUsedBy(SocketUser user)
