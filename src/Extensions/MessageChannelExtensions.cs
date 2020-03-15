@@ -56,7 +56,7 @@ namespace mummybot.Extensions
         {
             var i = 0;
             return ch.SendMessageAsync($@"```css
-{string.Join("\n", items.GroupBy(item => (i++) / columns).Select(ig => string.Concat(ig.Select(el => howToPrint(el)))))}```");
+                {string.Join("\n", items.GroupBy(item => (i++) / columns).Select(ig => string.Concat(ig.Select(el => howToPrint(el)))))}```");
         }
 
         public static Task<IUserMessage> SendTableAsync<T>(this IMessageChannel ch, IEnumerable<T> items, Func<T, string> howToPrint, int columns = 3) =>
@@ -224,7 +224,7 @@ namespace mummybot.Extensions
             return Task.CompletedTask;
         }
 
-        public void UnsubAll()
+        private void UnsubAll()
         {
             _client.ReactionAdded -= Discord_ReactionAdded;
             _client.ReactionRemoved -= Discord_ReactionRemoved;
@@ -234,15 +234,8 @@ namespace mummybot.Extensions
             OnReactionsCleared = null;
         }
 
-        private bool _disposing = false;
         private readonly DiscordSocketClient _client;
 
-        public void Dispose()
-        {
-            if (_disposing)
-                return;
-            _disposing = true;
-            UnsubAll();
-        }
+        public void Dispose() => UnsubAll();
     }
 }

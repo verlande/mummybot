@@ -40,17 +40,20 @@ namespace mummybot.Modules
             {
                 var mod = _commands.Modules.FirstOrDefault(m =>
                     string.Equals(m.Name.Replace("Module", ""), module, StringComparison.CurrentCultureIgnoreCase));
-                if (mod == null) await ReplyAsync("No module could be found");
+                if (mod == null) await ReplyAsync("No module could be found").ConfigureAwait(false);
 
-                embed.Title = mod.Name;
-                embed.Description = $"{mod.Summary}\n" +
-                                    (!string.IsNullOrEmpty(mod.Remarks) ? $"({mod.Remarks}\n)" : string.Empty);
-                AddCommands(mod, ref embed);
+                if (mod != null)
+                {
+                    embed.Title = mod.Name;
+                    embed.Description = $"{mod.Summary}\n" +
+                                        (!string.IsNullOrEmpty(mod.Remarks) ? $"({mod.Remarks}\n)" : string.Empty);
+                    AddCommands(mod, ref embed);
+                }
             }
 
             await ReplyAsync(string.Empty, embed: embed.Build()).ConfigureAwait(false); }
 
-        private void AddHelp(ModuleInfo module, ref EmbedBuilder builder)
+        private static void AddHelp(ModuleInfo module, ref EmbedBuilder builder)
         {
             foreach (var sub in module.Submodules) AddHelp(sub, ref builder);
                 builder.AddField(f =>
@@ -80,7 +83,7 @@ namespace mummybot.Modules
             }
         }
 
-        private void AddCommand(CommandInfo command, ref EmbedBuilder embedBuilder)
+        private static void AddCommand(CommandInfo command, ref EmbedBuilder embedBuilder)
         {
             embedBuilder.AddField(f =>
             {
@@ -91,7 +94,7 @@ namespace mummybot.Modules
             });
         }
 
-        private string GetAliases(CommandInfo command)
+        private static string GetAliases(CommandInfo command)
         {
             var output = new StringBuilder();
             if (!command.Parameters.Any()) return output.ToString();
@@ -107,11 +110,6 @@ namespace mummybot.Modules
                     output.Append($"<{param.Name}> ");
             }
             return output.ToString();
-        }
-        private string GetPrefix(CommandInfo command)
-        {
-            var output = $"{command.Aliases.FirstOrDefault()} ";
-            return output;
         }
     }
 }

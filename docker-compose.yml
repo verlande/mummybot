@@ -1,0 +1,33 @@
+version: "3.4"
+networks:
+  mummybot-network:
+    driver: bridge
+
+services:
+  mummybot:
+    image: mummybot
+    depends_on: 
+      - "postgres_image"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DB_CONNECTION_STRING: "host=postgres_image;port=5432;database=mummybot;username=postgres;password={YOUR_PASSWORD};"
+    networks: 
+      - mummybot-network
+  postgres_image:
+    image: postgres
+    ports:
+      - 5432:5432
+    restart: always
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "{YOUR_PASSWORD}"
+      POSTGRES_DB: "mummybot"
+    networks:
+      - mummybot-network
+volumes: 
+  db_volume:
