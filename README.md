@@ -5,7 +5,7 @@
 Just another Discord Bot
 
 ##### Built With
-   [Discord.NET](https://github.com/RogueException/Discord.Net)
+*   [Discord.NET](https://github.com/RogueException/Discord.Net)
 *  [PostgreSQL](https://www.postgresql.org/)
 *  [EntityFramework Core](https://docs.microsoft.com/en-us/ef/core/)
 *  [Docker](https://docker.com)
