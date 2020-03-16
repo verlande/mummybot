@@ -9,11 +9,6 @@ namespace mummybot.Modules.Runescape.Services
     {
         private readonly RS3RestClient _rs3 = new RS3RestClient();
 
-        public IServiceProvider _services;
-
-        public void Initialize(IServiceProvider service)
-            => _services = service;
-
         public async Task<RS3HiscoreCharacter> GetPlayerStats(string name) 
             => await _rs3.GetCharacterAsync(name).ConfigureAwait(false);
     }

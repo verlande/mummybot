@@ -4,7 +4,7 @@ using Discord.WebSocket;
 
 namespace mummybot
 {
-    public class Utils
+    public static class Utils
     {
         public static Color GetRandomColor()
         {

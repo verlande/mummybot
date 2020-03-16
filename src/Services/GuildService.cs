@@ -29,7 +29,7 @@ namespace mummybot.Services
 
         private Task JoinedGuild(SocketGuild guild)
         {
-            var _ = Task.Run(async () =>
+            Task.Run(async () =>
             {
                 var guildExists = await _context.Guilds.SingleAsync(x => x.GuildId == guild.Id);
                 if (guildExists == null)
@@ -56,7 +56,7 @@ namespace mummybot.Services
 
         private Task LeftGuild(SocketGuild guild)
         {
-            var _ = Task.Run(async () =>
+            Task.Run(async () =>
             {
                 var isActive = await _context.Guilds.SingleAsync(x => x.GuildId.Equals(guild.Id));
                 isActive.Active = false;
@@ -68,7 +68,7 @@ namespace mummybot.Services
 
         private Task GuildUpdated(SocketGuild before, SocketGuild after)
         {
-            var _ = Task.Run(async () =>
+            Task.Run(async () =>
             {
                 var guild = await _context.Guilds.SingleAsync(x => x.GuildId.Equals(before.Id));
 

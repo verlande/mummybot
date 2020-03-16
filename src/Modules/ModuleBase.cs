@@ -45,7 +45,7 @@ namespace mummybot.Modules
             }
             finally
             {
-                var _ = Task.Run(() => msg.DeleteAsync());
+                await Task.Run(() => msg.DeleteAsync());
             }
         }
 
@@ -71,7 +71,7 @@ namespace mummybot.Modules
 
             Task MessageReceived(SocketMessage arg)
             {
-                var _ = Task.Run(() =>
+                Task.Run(() =>
                 {
                     if (!(arg is SocketUserMessage userMsg) ||
                         !(userMsg.Channel is ITextChannel) ||

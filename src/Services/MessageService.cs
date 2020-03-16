@@ -17,27 +17,22 @@ namespace mummybot.Services
 
     public class MessageService
     {
-        private readonly Logger _log;
-        public static ConcurrentDictionary<ulong, Snipe> snipeDict = new ConcurrentDictionary<ulong, Snipe>();
+        private static readonly ConcurrentDictionary<ulong, Snipe> _snipeDict = new ConcurrentDictionary<ulong, Snipe>();
 
         public MessageService(DiscordSocketClient discord)
         {
             discord.MessageDeleted += DeletedMessage;
         }
 
+        public static ConcurrentDictionary<ulong, Snipe> SnipeDict => _snipeDict;
+
         private Task DeletedMessage(Cacheable<IMessage, ulong> cachedmsg, ISocketMessageChannel msg)
         {
-            try
-            {
-                if (cachedmsg.Value.Author.IsBot) return Task.CompletedTask;
-                if (snipeDict.ContainsKey(cachedmsg.Value.Channel.Id))
-                    snipeDict.TryRemove(cachedmsg.Value.Channel.Id, out _);
-                snipeDict.TryAdd(cachedmsg.Value.Channel.Id, new Snipe { AuthorId = cachedmsg.Value.Author.Id, Content = (cachedmsg.Value.Content == string.Empty) ? cachedmsg.Value.Attachments.First().Url : cachedmsg.Value.Content, CreatedAt = DateTime.UtcNow });            
-            }
-            catch (Exception ex)
-            {
-                _log.Error(ex);
-            }
+            if (cachedmsg.Value.Author.IsBot) return Task.CompletedTask;
+            if (SnipeDict.ContainsKey(cachedmsg.Value.Channel.Id))
+                SnipeDict.TryRemove(cachedmsg.Value.Channel.Id, out _);
+            SnipeDict.TryAdd(cachedmsg.Value.Channel.Id, new Snipe { AuthorId = cachedmsg.Value.Author.Id, Content = (cachedmsg.Value.Content == string.Empty) ? cachedmsg.Value.Attachments.First().Url : cachedmsg.Value.Content, CreatedAt = DateTime.UtcNow });
+
             return Task.CompletedTask;
         }
     }
