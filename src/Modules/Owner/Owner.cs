@@ -6,6 +6,7 @@ using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
 using mummybot.Models;
 using mummybot.Services;
+using mummybot.Extensions;
 
 namespace mummybot.Modules.Owner
 {
@@ -49,11 +50,27 @@ namespace mummybot.Modules.Owner
             }
         }
 
-        protected override async void AfterExecute(CommandInfo command)
+        [Command("Sql")]
+        public async Task Sql([Remainder] string sql)
+        {
+            int res;
+            try
+            {
+                res = await Database.Database.ExecuteSqlCommandAsync(sql).ConfigureAwait(false);
+                await ReplyAsync(res.ToString()).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                await Context.Channel.SendErrorAsync(string.Empty, ex.Message ?? ex.InnerException.Message).ConfigureAwait(false);
+                _log.Error(ex);
+            }
+        }
+
+        protected override void AfterExecute(CommandInfo command)
         {
             base.AfterExecute(command);
-            await Database.SaveChangesAsync();
-            await Database.DisposeAsync();
+            Database.SaveChanges();
+            Database.Dispose();
         }
     }
 }
