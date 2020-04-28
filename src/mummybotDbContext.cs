@@ -147,6 +147,9 @@ namespace mummybot
 		        entity.Property(e => e.FilterInvites).HasColumnName("filterinvites");
 
                 entity.Property(e => e.Regex).HasColumnName("regex");
+
+                entity.Property(e => e.BotChannel).HasColumnName("botchannel")
+                    .HasDefaultValue(0);
             });
 
             modelBuilder.Entity<Blacklist>(entity =>

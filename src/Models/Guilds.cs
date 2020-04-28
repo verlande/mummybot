@@ -13,5 +13,6 @@ namespace mummybot.Models
         public ulong? GreetChl { get; set; }
     	public bool FilterInvites { get; set; }
         public string Regex { get; set; }
+        public ulong BotChannel { get; set; }
     }
 }

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using mummybot.Modules.Manage.Services;
 using System.Text.RegularExpressions;
 using System;
+using System.Linq;
 
 namespace mummybot.Modules.Manage
 {
@@ -135,6 +136,22 @@ namespace mummybot.Modules.Manage
                 _service.RegexFiltering.TryAdd(Context.Guild.Id, pattern);
                 Database.Attach(conf);
                 await Context.Channel.SendConfirmAsync($"Regex filtering set to ```{pattern}```").ConfigureAwait(false);
+            }
+
+            [RequireUserPermission(GuildPermission.ManageGuild)]
+            [Command("BotChannel"), Summary("Restrict bot commands to a selected channel")]
+            public async Task BotChannel(SocketChannel channel = null)
+            {
+                var conf = await Database.Guilds.SingleAsync(x => x.GuildId.Equals(Context.Guild.Id));
+
+                if (channel is null)
+                {
+                    conf.BotChannel = 0;
+                    await Context.Channel.SendConfirmAsync("Disabled bot restriction").ConfigureAwait(false);
+                }
+                conf.BotChannel = channel.Id;
+                Database.Attach(conf);
+                await Context.Channel.SendConfirmAsync($"Restricting bot commands to <#{channel.Id}>").ConfigureAwait(false);
             }
 
             protected override void AfterExecute(CommandInfo command)

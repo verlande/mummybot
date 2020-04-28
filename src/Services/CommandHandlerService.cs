@@ -31,6 +31,7 @@ namespace mummybot.Services
 
         //userid/msg count
         private ConcurrentDictionary<ulong, uint> UserMessagesSent { get; } = new ConcurrentDictionary<ulong, uint>();
+        private ConcurrentDictionary<ulong, ulong> BotRestriction { get; set; }
         public uint ProcessedCommands;
         public ConcurrentDictionary<ulong, bool> BlacklistedUsers { get; set; }
 
@@ -49,6 +50,7 @@ namespace mummybot.Services
 
             _discord.MessageReceived += MessageReceivedHandler;
 
+            BotRestriction = new ConcurrentDictionary<ulong, ulong>(_context.Guilds.ToDictionary(x => x.GuildId, x => x.BotChannel));
             BlacklistedUsers = new ConcurrentDictionary<ulong, bool>(_context.Blacklist.ToDictionary(x => x.UserId, x=> false));
         }
 
@@ -126,6 +128,7 @@ namespace mummybot.Services
             var messageContent = usrMsg.Content;
             var exec2 = Environment.TickCount - execTime;
             var isPrefixCommand = usrMsg.HasStringPrefix(DefaultPrefix, ref argPos);
+            var isMentionCommand = usrMsg.HasMentionPrefix(_discord.CurrentUser, ref argPos);
 
             if (isPrefixCommand && BlacklistedUsers.ContainsKey(usrMsg.Author.Id))
             {
@@ -138,9 +141,20 @@ namespace mummybot.Services
                 return;
             }
 
-            if (isPrefixCommand)
+            if (isPrefixCommand || isMentionCommand)
             {
-                var (success, error, info) = await ExecuteCommandAsync(new SocketCommandContext(_discord, usrMsg), messageContent, isPrefixCommand ? argPos : DefaultPrefix.Length, _provider, MultiMatchHandling.Best).ConfigureAwait(false);
+                if (BotRestriction.ContainsKey(guild.Id) && BotRestriction[guild.Id] != channel.Id)
+                {
+                    if (isMentionCommand)
+                    {
+                        var msg = await usrMsg.Channel.SendConfirmAsync($"You can only use me in <#{BotRestriction[guild.Id]}>").ConfigureAwait(false);
+                        msg.DeleteAfter(10);
+                        return;
+                    }
+                    return;
+                }
+
+                var (success, error, info) = await ExecuteCommandAsync(new SocketCommandContext(_discord, usrMsg), messageContent, isMentionCommand ? argPos : DefaultPrefix.Length, _provider, MultiMatchHandling.Best).ConfigureAwait(false);
 
                 if (success)
                 {
@@ -159,6 +173,11 @@ namespace mummybot.Services
             {
                 await OnMessageNoTrigger(usrMsg).ConfigureAwait(false);
             }
+        }
+
+        private Task _commands_CommandExecuted(Optional<CommandInfo> arg1, ICommandContext arg2, IResult arg3)
+        {
+            throw new NotImplementedException();
         }
 
         public Task<(bool Success, string Error, CommandInfo Info)> ExecuteCommandAsync(SocketCommandContext context, string input, int argPos, IServiceProvider serviceProvider, MultiMatchHandling multiMatchHandling = MultiMatchHandling.Exception)

@@ -3,7 +3,9 @@ using Discord.Commands;
 using Discord;
 using System.Threading.Tasks;
 using System.Linq;
+using System.Text;
 using mummybot.Extensions;
+using System;
 
 namespace mummybot.Modules.General
 {
@@ -38,11 +40,11 @@ namespace mummybot.Modules.General
                 _ => null
             };
 
-        [Command("Poll")]
+        [Command("Poll"), Summary("<question|answer|answer>")]
         public async Task Poll([Remainder] string arg)
         {
             var answers = arg.Split("|").Skip(1).ToArray();
-            if (answers.Length > 6) { await Context.Channel.SendErrorAsync(string.Empty, "Max 6 answers"); return; }
+            if (answers.Length > 6) { await Context.Channel.SendErrorAsync(string.Empty, "Max 6 answers").ConfigureAwait(false); return; }
             var question = arg.Split("|")[0];
 
             var regional = new List<Regional>();
@@ -50,21 +52,22 @@ namespace mummybot.Modules.General
             for (var i = 0; i <= answers.Length - 1; i++)
                 regional.Add((Regional)i);
             
-            var tr = string.Empty;
+            var answer = new StringBuilder();
             var num = 0;
             foreach (var s in regional)
             {
-                tr = tr + EnumToEmoji(s) + $" - {answers[num]}\n";
-                num += 1;
+                answer.AppendLine($"{EnumToEmoji(s)} - {answers[num]}");
+                num++;
             }
 
-            var msg = await Context.Channel.SendConfirmAsync(tr, question).ConfigureAwait(false);
+            var msg = await Context.Channel.SendConfirmAsync(text: answer.ToString(), title: question, footer: $"{DateTime.Now.ToLocalTime()}").ConfigureAwait(false);
 
             foreach (var s in regional)
             {
                 await msg.AddReactionAsync(EnumToUnicode(s)).ConfigureAwait(false);
                 await Task.Delay(250).ConfigureAwait(false);
             }
+            await Context.Message.DeleteAsync().ConfigureAwait(false);
         }
     }
 }

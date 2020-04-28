@@ -150,7 +150,7 @@ namespace mummybot.Extensions
         }
 
         private static EmbedBuilder AddPaginatedFooter(this EmbedBuilder embed, int curPage, int? lastPage) 
-            => lastPage != null ? embed.WithFooter(efb => efb.WithText($"{curPage + 1} / {lastPage + 1}")) : embed.WithFooter(efb => efb.WithText(curPage.ToString()));
+            => lastPage != null ? embed.WithFooter(efb => efb.WithText($"Page {curPage + 1} / {lastPage + 1}")) : embed.WithFooter(efb => efb.WithText(curPage.ToString()));
     }
 
     public sealed class ReactionEventWrapper : IDisposable

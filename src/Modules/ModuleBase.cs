@@ -45,7 +45,7 @@ namespace mummybot.Modules
             }
             finally
             {
-                await Task.Run(() => msg.DeleteAsync());
+                await Task.Run(() => msg.DeleteAsync()).ConfigureAwait(false);
             }
         }
 
@@ -71,7 +71,7 @@ namespace mummybot.Modules
 
             Task MessageReceived(SocketMessage arg)
             {
-                Task.Run(() =>
+                Task.Run(async () =>
                 {
                     if (!(arg is SocketUserMessage userMsg) ||
                         !(userMsg.Channel is ITextChannel) ||
@@ -83,7 +83,8 @@ namespace mummybot.Modules
 
                     if (userInputTask.TrySetResult(arg.Content))
                     {
-                        userMsg.DeleteAfter(1);
+                        //userMsg.DeleteAfter(1);
+                        await userMsg.DeleteAsync().ConfigureAwait(false);
                     }
                     return Task.CompletedTask;
                 });
