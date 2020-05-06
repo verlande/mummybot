@@ -1,8 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+
 namespace mummybot.Modules.General.Common
 {
+    public class YoMamma
+    {
+        [JsonProperty("joke")]
+        public string Joke { get; set; }
+    }
+
     public class Xkcd
     {
         public int Num { get; set; }

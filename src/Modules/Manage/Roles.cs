@@ -71,7 +71,7 @@ namespace mummybot.Modules.Manage
                 }
             }
 
-            [Command("Rolemention"), Summary("Set role to metionable"), Remarks("<role>"),
+            [Command("Rolemention"), Summary("Set role to mentionable"), Remarks("<role>"),
                 RequireBotPermission(GuildPermission.ManageRoles), RequireUserPermission(GuildPermission.ManageRoles)]
             public async Task RoleColour([Remainder] IRole role)
             {
@@ -81,7 +81,8 @@ namespace mummybot.Modules.Manage
                     await Context.Channel.SendConfirmAsync(role.Mention + " is now mentionable").ConfigureAwait(false);
                     return;
                 }
-                await Context.Channel.SendConfirmAsync(role.Mention + " is already mentionable").ConfigureAwait(false);
+                await role.ModifyAsync(r => r.Mentionable = false).ConfigureAwait(false);
+                await Context.Channel.SendConfirmAsync($"Removed {role.Mention} as a mentioned role").ConfigureAwait(false);
             }
 
             [Command("Roleinfo"), Alias("ri"), Remarks("<role>")]
@@ -101,24 +102,30 @@ namespace mummybot.Modules.Manage
                 }.WithFooter($"Role ID: {role.Id}").Build()).ConfigureAwait(false);
             }
 
-            [Command("Userroles"), Summary("List roles of a user"), Remarks("<user>")]
-            public async Task InRole(IGuildUser arg = null)
+            //[Command("Userroles"), Summary("List roles of a user"), Remarks("<user>")]
+            //public async Task InRole(IGuildUser arg = null)
+            //{
+            //    var channel = (ITextChannel)Context.Channel;
+            //    var user = arg ?? (IGuildUser)Context.User;
+            //    var roles = user.GetRoles().Except(new[] { channel.Guild.EveryoneRole }).OrderBy(r => r.Position);
+
+            //    await Context.Channel.SendAuthorAsync(user, string.Join("\n", roles.Select(x => x.Mention)), $"User ID: {user.Id}").ConfigureAwait(false);
+            //}
+
+            [Command("Roles"), Summary("Display all user or guild roles"), Remarks("[@user]")]
+            public async Task ListRoles(IGuildUser user =  null)
             {
-                var channel = (ITextChannel)Context.Channel;
-                var user = arg ?? (IGuildUser)Context.User;
-                var roles = user.GetRoles().Except(new[] { channel.Guild.EveryoneRole }).OrderBy(r => r.Position);
+                var page = 1;
+                page--;
+                var currPage = 0;
+                const int rolesPerPage = 25;
+                var eb = new EmbedBuilder().WithColor(Utils.GetRandomColor());
 
-                await Context.Channel.SendAuthorAsync(user, string.Join("\n", roles.Select(x => x.Mention)), $"User ID: {user.Id}").ConfigureAwait(false);
-            }
+                var roles = user == null ? eb.WithTitle($"{Context.Guild.Name} role list").WithDescription(string.Join("\n", Context.Guild.Roles.Skip(currPage * rolesPerPage).Take(rolesPerPage).Select(x => x.Mention)))
+                    : eb.WithTitle($"{user} role list").WithDescription(string.Join("\n", user.GetRoles().Skip(currPage * rolesPerPage).Take(rolesPerPage).Select(x => x.Mention)));
 
-            [Command("ListRoles"), Summary("Display all guild roles")]
-            public async Task ListRoles()
-            {
-                var sb = new StringBuilder();
-
-                foreach (var role in Context.Guild.Roles.OrderBy(x => x.Position))
-                    sb.AppendLine($"{role.Name} ({role.Members.Count()})");
-                await Context.Channel.SendConfirmAsync(sb.ToString(), "List of roles").ConfigureAwait(false);
+                await Context.SendPaginatedConfirmAsync(page, (currPage) => eb,
+                    Context.Guild.Roles.Count, rolesPerPage).ConfigureAwait(false);
             }
 
             [Command("Checkperms"), Summary("View permissions of a user"), Remarks("<user>")]

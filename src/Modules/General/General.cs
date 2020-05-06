@@ -6,11 +6,35 @@ using mummybot.Modules.General.Common;
 using mummybot.Extensions;
 using System.Linq;
 using Discord.WebSocket;
+using System.Net.Http;
+using Newtonsoft.Json;
 
 namespace mummybot.Modules.General
 {
     public partial class General : ModuleBase
     {
+        [Command("Yomamma"), Summary("Send a \"Yomamma\" joke to a user")]
+        public async Task Yomamma(IGuildUser user = null)
+        {
+            if (user is null)
+            {
+                await Context.Channel.SendErrorAsync(string.Empty, "Yomamma <@user>").ConfigureAwait(false);
+                return;
+            }
+
+            try
+            {
+                using var http = new HttpClient();
+                var request = await http.GetStringAsync("https://api.yomomma.info/");
+                var result = JsonConvert.DeserializeObject<YoMamma>(request);
+                await ReplyAsync($"{user.Mention} {result.Joke}").ConfigureAwait(false);
+            }
+            catch (HttpRequestException)
+            {
+                await Context.Channel.SendErrorAsync(string.Empty, "error").ConfigureAwait(false);
+            }
+        }
+
         [Command("Clap"), Summary("Clap between words")]
         public async Task Clap([Remainder] string words)
             => await ReplyAsync(words.Replace(" ", ":clap:")).ConfigureAwait(false);
