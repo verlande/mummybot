@@ -44,17 +44,19 @@ create table if not exists users_audit
 
 create table if not exists guilds
 (
-    id            bigserial                                                   not null,
-    guildid       bigint                                                      not null,
-    guildname     varchar(100)                                                not null,
-    ownerid       bigint                                                      not null,
-    active        boolean      default true                                   not null,
-    region        varchar(25)                                                 not null,
-    greeting      varchar(100) default '%user% has joined'::character varying not null,
-    goodbye       varchar(100) default '%user% has left'::character varying   not null,
-    greetchl      bigint,
-    filterinvites boolean      default false                                  not null,
-    regex         text         default null,
+    id              bigserial                                                   not null,
+    guildid         bigint                                                      not null,
+    guildname       varchar(100)                                                not null,
+    ownerid         bigint                                                      not null,
+    active          boolean      default true                                   not null,
+    region          varchar(25)                                                 not null,
+    greeting        varchar(100) default '%user% has joined'::character varying not null,
+    goodbye         varchar(100) default '%user% has left'::character varying   not null,
+    greetchl        bigint,
+    filterinvites   boolean      default false                                  not null,
+    regex           text         default null,
+    botchannel      bigint       default 0                                      not null,
+    autoassignroles bigint[]     default '{}'                                   not null,
     constraint guilds_pkey
         primary key (id)
 );

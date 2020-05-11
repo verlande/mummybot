@@ -12,8 +12,34 @@ namespace mummybot.Modules.Manage
     public partial class Manage
     {
         [Summary("Role management")]
-        public class Roles : mummybotSubmodule
+        public class Roles : mummybotSubmodule<Services.RoleService>
         {
+            [Command("AutoAssignRole"), Alias("aar"), Summary("Auto assign a role once a user joins"),
+                RequireBotPermission(GuildPermission.ManageRoles), RequireUserPermission(GuildPermission.Administrator)]
+            public async Task AutoAssignRole(IRole role = null)
+            {
+                var user = (IGuildUser)Context.User;
+
+                if (role != null)
+                {
+
+                    if (role.Id == Context.Guild.EveryoneRole.Id) return;
+
+                    if (Context.User.Id != user.Guild.OwnerId && user.GetRoles().Max(x => x.Position) <= role.Position)
+                        return;
+
+                    await _service.EnableAar(Context.Guild.Id, (long)role.Id).ConfigureAwait(false);
+                    await Context.Channel.SendConfirmAsync($"Successfully added {role.Mention} to be auto role assigned")
+                        .ConfigureAwait(false);
+                    return;
+                }
+
+                var msg = await PromptUserConfirmAsync(new EmbedBuilder().WithDescription("Do you want to disable and remove all auto assign roles?")).ConfigureAwait(false);
+                if (!msg) return;
+                await _service.DisableAar(Context.Guild.Id).ConfigureAwait(false);
+                await Context.Channel.SendConfirmAsync("Disabled auto role assign").ConfigureAwait(false);
+            }
+
             [Command("Role"), Summary("Add or remove a role"), Remarks("<user> <role>"),
                 RequireBotPermission(GuildPermission.ManageRoles), RequireUserPermission(GuildPermission.ManageRoles)]
             public async Task Role(IGuildUser usr, [Remainder] IRole role)
@@ -121,7 +147,7 @@ namespace mummybot.Modules.Manage
                 const int rolesPerPage = 25;
                 var eb = new EmbedBuilder().WithColor(Utils.GetRandomColor());
 
-                var roles = user == null ? eb.WithTitle($"{Context.Guild.Name} role list").WithDescription(string.Join("\n", Context.Guild.Roles.Skip(currPage * rolesPerPage).Take(rolesPerPage).Select(x => x.Mention)))
+                _ = user == null ? eb.WithTitle($"{Context.Guild.Name} role list").WithDescription(string.Join("\n", Context.Guild.Roles.Skip(currPage * rolesPerPage).Take(rolesPerPage).Select(x => x.Mention)))
                     : eb.WithTitle($"{user} role list").WithDescription(string.Join("\n", user.GetRoles().Skip(currPage * rolesPerPage).Take(rolesPerPage).Select(x => x.Mention)));
 
                 await Context.SendPaginatedConfirmAsync(page, (currPage) => eb,

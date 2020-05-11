@@ -1,4 +1,4 @@
-﻿using Discord;
+using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
@@ -110,8 +110,12 @@ namespace mummybot.Modules.Manage
             {
                 var conf = await Database.Guilds.SingleAsync(x => x.GuildId.Equals(Context.Guild.Id)).ConfigureAwait(false);
 
-                if (pattern.Length is 0)
+                if (string.IsNullOrEmpty(pattern))
                 {
+                    if (!await PromptUserConfirmAsync(
+                            new EmbedBuilder().WithDescription("Do you want to remove Regex filtering?"))
+                        .ConfigureAwait(false)) return;
+                    
                     _service.RegexFiltering.TryRemove(Context.Guild.Id, out _);
                     conf.Regex = null;
                     await Context.Channel.SendConfirmAsync("Regex filtering disabled").ConfigureAwait(false);
@@ -120,22 +124,24 @@ namespace mummybot.Modules.Manage
 
                 try
                 {
-                    if (new Regex(pattern) != null)
+                    if (Regex.Match("", pattern).Success && pattern.Length < 25)
+                    {
                         conf.Regex = pattern;
+                        
+                        if (_service.RegexFiltering.ContainsKey(Context.Guild.Id))
+                            _service.RegexFiltering[Context.Guild.Id] = pattern;
+
+                        _service.RegexFiltering.TryAdd(Context.Guild.Id, pattern);
+                        Database.Update(conf);
+                        await Context.Channel.SendConfirmAsync($"Regex filtering set to {Format.Code(pattern)}")
+                            .ConfigureAwait(false);
+                    }
                 }
                 catch (ArgumentException ex)
                 {
                     await Context.Channel.SendErrorAsync(string.Empty, ex.Message).ConfigureAwait(false);
                     _log.Error(ex);
                 }
-
-                conf.Regex = pattern;
-                if (_service.RegexFiltering.ContainsKey(Context.Guild.Id))
-                    _service.RegexFiltering[Context.Guild.Id] = pattern;
-
-                _service.RegexFiltering.TryAdd(Context.Guild.Id, pattern);
-                Database.Attach(conf);
-                await Context.Channel.SendConfirmAsync($"Regex filtering set to ```{pattern}```").ConfigureAwait(false);
             }
 
             [RequireUserPermission(GuildPermission.ManageGuild)]

@@ -32,7 +32,13 @@ namespace mummybot.Services
         //userid/msg count
         private ConcurrentDictionary<ulong, uint> UserMessagesSent { get; } = new ConcurrentDictionary<ulong, uint>();
         private ConcurrentDictionary<ulong, ulong> BotRestriction { get; set; }
-        public uint ProcessedCommands;
+        private uint processedCommands = 0;
+
+        public uint ProcessedCommands
+        {
+            get { return processedCommands; }
+            set { processedCommands = value;  }
+        }
         public ConcurrentDictionary<ulong, bool> BlacklistedUsers { get; set; }
 
         public CommandHandlerService() { }

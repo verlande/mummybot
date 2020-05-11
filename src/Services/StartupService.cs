@@ -41,7 +41,17 @@ namespace mummybot.Services
             // Loop through guilds added when offline
             foreach (var guilds in _discord.Guilds)
             {
-                if (await _context.Guilds.AnyAsync(x => x.GuildId.Equals(guilds.Id))) return;
+                if (await _context.Guilds.AnyAsync(x => x.GuildId.Equals(guilds.Id) && x.OwnerId.Equals(guilds.OwnerId))) return;
+                if (await _context.Guilds.AnyAsync(x => x.GuildId.Equals(guilds.Id) && !x.OwnerId.Equals(guilds.OwnerId)))
+                {
+                    var guild = await _context.Guilds.SingleAsync(x => x.GuildId.Equals(guilds.Id));
+                    guild.OwnerId = guilds.OwnerId;
+                    _context.Guilds.Update(guild);
+                    await _context.SaveChangesAsync();
+                    _log.Info($"Updated guild owner {guilds.Name} ({guilds.Id})");
+
+                }
+
                 await _context.Guilds.AddAsync(new Guilds
                 {
                     GuildId = guilds.Id,
@@ -49,16 +59,16 @@ namespace mummybot.Services
                     OwnerId = guilds.OwnerId,
                     Region = guilds.VoiceRegionId
                 });
+
+                await _context.SaveChangesAsync();
                 _log.Info($"Inserted missing guild {guilds.Name} ({guilds.Id})");
             }
 
-            // Upd-ate inactive guilds
-            _context.Guilds.Where(x => !_discord.Guilds.Select(x => x.Id).Contains(x.GuildId) && x.Active/*!guildIds.Contains(x.GuildId)*/)
-                .ToList()
-                .Select(x => { x.Active = false; Console.WriteLine($"Set guild {x.GuildId} to inactive"); return x; })
-                .ToList();
-            
-            await _context.SaveChangesAsync();
+            // Update inactive guilds
+            //_context.Guilds.Where(x => !_discord.Guilds.Select(x => x.Id).Contains(x.GuildId) && x.Active/*!guildIds.Contains(x.GuildId)*/)
+            //    .ToList()
+            //    .Select(x => { x.Active = false; Console.WriteLine($"Set guild {x.GuildId} to inactive"); return x; })
+            //    .ToList();
         }
         
         public async Task StartAsync()

@@ -150,6 +150,9 @@ namespace mummybot
 
                 entity.Property(e => e.BotChannel).HasColumnName("botchannel")
                     .HasDefaultValue(0);
+
+                entity.Property(e => e.AutoAssignRoles).HasColumnName("autoassignroles")
+                    .HasDefaultValueSql("'{}'");
             });
 
             modelBuilder.Entity<Blacklist>(entity =>

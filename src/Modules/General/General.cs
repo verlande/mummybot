@@ -21,17 +21,16 @@ namespace mummybot.Modules.General
                 await Context.Channel.SendErrorAsync(string.Empty, "Yomamma <@user>").ConfigureAwait(false);
                 return;
             }
-
             try
             {
                 using var http = new HttpClient();
-                var request = await http.GetStringAsync("https://api.yomomma.info/");
+                var request = await http.GetStringAsync("https://api.yomamma.info/");
                 var result = JsonConvert.DeserializeObject<YoMamma>(request);
                 await ReplyAsync($"{user.Mention} {result.Joke}").ConfigureAwait(false);
             }
             catch (HttpRequestException)
             {
-                await Context.Channel.SendErrorAsync(string.Empty, "error").ConfigureAwait(false);
+                await Context.Channel.SendErrorAsync("executing command", string.Empty).ConfigureAwait(false);
             }
         }
 

@@ -42,7 +42,7 @@ namespace mummybot.Modules.Utility
             var application = await Context.Client.GetApplicationInfoAsync();
 
             await Context.Channel.SendConfirmAsync(string.Empty, $"{Format.Bold("Bot Info")}\n" +
-                              $"- Author: {application.Owner}\n" +
+                              $"- Author: {application.Owner} ({application.Owner.Id})\n" +
                               $"- Library: Discord.Net ({DiscordConfig.Version})\n" +
                               $"- Kernel: {Environment.OSVersion}\n" +
                               $"- Runtime: {RuntimeInformation.FrameworkDescription} {RuntimeInformation.OSArchitecture}\n" +
@@ -56,7 +56,7 @@ namespace mummybot.Modules.Utility
                     $"- Total Commands: {_commandService.Commands.Count()}\n" +
                     $"- Channels: {Context.Client.Guilds.Sum(g => g.TextChannels.Count)}\n" +
                     //$"- Commands Processed: {_commandHandlerService.ProcessedCommands}\n" +
-                    $"- Users: {Context.Client.Guilds.Sum(g => g.Users.Count)}\n", null, "Made with Discord.NET");
+                    $"- Users: {Context.Client.Guilds.Sum(g => g.Users.Count)}\n", null, "Made with Discord.NET").ConfigureAwait(false);
         }
 
         [Command("Uptime")]
@@ -137,7 +137,7 @@ namespace mummybot.Modules.Utility
                 field.Name = "Statuses";
                 field.Value = $"Online: {online}\nOffline: {offline}";
             });
-            if (guild.Emotes.Count > 1)
+            if (guild.Emotes.Count > 0)
             {
                 eb.AddField(field =>
                 {

@@ -5,7 +5,6 @@ using mummybot.Extensions;
 using System.Linq;
 using Discord.WebSocket;
 using System.Text;
-using Microsoft.EntityFrameworkCore;
 
 namespace mummybot.Modules.Utility
 {
@@ -89,7 +88,7 @@ namespace mummybot.Modules.Utility
 
             var users = Context.Guild.Users.ToList().Where(u => !u.IsBot).OrderByDescending(u => u.JoinedAt).Take(10);
 
-            foreach (var user in users) eb.AddField($"{user.Username} ({user.Id})", user.JoinedAt);
+            foreach (var user in users) eb.AddField($"{user} ({user.Id})", user.JoinedAt);
             await ReplyAsync(string.Empty, embed: eb.Build()).ConfigureAwait(false);
         }
     }

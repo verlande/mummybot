@@ -7,6 +7,8 @@ using Microsoft.EntityFrameworkCore;
 using mummybot.Models;
 using mummybot.Services;
 using mummybot.Extensions;
+using Discord;
+using System.Text;
 
 namespace mummybot.Modules.Owner
 {
@@ -18,6 +20,18 @@ namespace mummybot.Modules.Owner
         public Owner(CommandHandlerService commandHandlerService)
         {
             _commandHandlerService = commandHandlerService;
+        }
+
+        [Command("Listguilds")]
+        public async Task Listguilds()
+        {
+            var sb = new StringBuilder();
+            var guilds = _client.Guilds.Select(x => new { x.Name, x.Users, x.Owner });
+
+            foreach (var guild in guilds)
+                sb.AppendLine($"{guild.Name} ({guild.Users.Count}) Owner: {guild.Owner}");
+
+            await ReplyAsync(Format.Code(sb.ToString())).ConfigureAwait(false);
         }
 
         [Command("Blacklist")]

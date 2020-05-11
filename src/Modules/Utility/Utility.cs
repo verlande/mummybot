@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using mummybot.Extensions;
 using Discord;
 using mummybot.Services;
+using System.Linq;
 
 namespace mummybot.Modules.Utility
 {
@@ -53,9 +54,9 @@ namespace mummybot.Modules.Utility
         public async Task BotList()
         {
             var sb = new StringBuilder();
-            foreach (var bot in Context.Guild.Users)
-                if (bot.IsBot)
-                    sb.AppendLine(Format.Bold(Utils.FullUserName(bot)));
+            foreach (var bot in Context.Guild.Users.Where(x => x.IsBot))
+                    sb.AppendLine(Format.Bold(Utils.FullUserName(bot)) + $" {(string.IsNullOrEmpty(bot.Nickname) ? "" : $"({bot.Nickname})")}");
+
             await Context.Channel.SendConfirmAsync(sb.ToString(), "Bot List").ConfigureAwait(false);
         }
     }

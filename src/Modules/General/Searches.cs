@@ -19,7 +19,7 @@ namespace mummybot.Modules.General
         public async Task Bible(string passage = null, string chapverse = null)
         {
             const string bibleUrl = "https://labs.bible.org/api/?passage=";
-            const string bibleIcon = "https://cdn.iconscout.com/icon/premium/png-256-thumb/bible-1720260-1460821.png";
+            const string bibleIcon = "https://mummybot.blob.core.windows.net/assets/bot/icons/bible.png";
             const string bibleGate = "https://www.biblegateway.com/passage/?search=";
 
             try
@@ -68,7 +68,7 @@ namespace mummybot.Modules.General
 
                 void Action(EmbedAuthorBuilder eab) => eab.WithName(comic.Title)
                     .WithUrl($"{xkcdUrl}/{comic.Num}")
-                    .WithIconUrl("http://xkcd.com/s/919f27.ico");
+                    .WithIconUrl("https://mummybot.blob.core.windows.net/assets/bot/icons/xkcd.ico");
 
                 eb.WithAuthor(Action)
                     .WithColor(Utils.GetRandomColor())
@@ -112,7 +112,7 @@ namespace mummybot.Modules.General
                 .WithTitle($"Urban Dictionary - {word}")
                 .WithUrl(urbanList[currPage].Permalink.ToString())
                 .WithColor(Utils.GetRandomColor())
-                .WithThumbnailUrl("https://storage.googleapis.com/burbcommunity-morethanthecurve/2013/09/urban-dictionary-logo.gif")
+                .WithThumbnailUrl("https://mummybot.blob.core.windows.net/assets/bot/icons/urban-dictionary.gif")
                 .WithDescription(string.Join("\n", urbanList.Skip(currPage * urbanPerPage).Take(urbanPerPage).Select(x => x.Definition)))
                 .AddField("Example", string.Join("\n", string.Join("\n", urbanList.Skip(currPage * urbanPerPage).Take(urbanPerPage).Select(x => x.Example))))
                 .AddField("Thumbs", $"👍{urbanList[currPage].ThumbsUp}\t👎{urbanList[currPage].ThumbsDown}"),
@@ -121,6 +121,6 @@ namespace mummybot.Modules.General
 
         [Command("Cat"), Summary("Random cat"), Cooldown(10, true)]
         public async Task Cat()
-		=> await Context.Channel.SendFileAsync(await new HttpClient().GetStreamAsync("https://cataas.com/cat"), "cat.png").ConfigureAwait(false);
+            => await Context.Channel.SendFileAsync(await new HttpClient().GetStreamAsync("https://cataas.com/cat"), "cat.png").ConfigureAwait(false);
     }
 }

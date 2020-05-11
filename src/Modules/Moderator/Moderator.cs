@@ -6,9 +6,9 @@ using mummybot.Extensions;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System;
-using System.Collections.Generic;
 using mummybot.Services;
 using System.Text;
+using Discord.Net;
 
 namespace mummybot.Modules.Moderator
 {
@@ -66,7 +66,7 @@ namespace mummybot.Modules.Moderator
         [Command("Setnick"), RequireUserPermission(GuildPermission.ManageNicknames), RequireBotPermission(GuildPermission.ManageNicknames)]
         public async Task Nick(IGuildUser arg, [Remainder] string newNick)
         {
-            if (string.IsNullOrWhiteSpace(newNick)) return;
+            if (string.IsNullOrWhiteSpace(newNick) || newNick.Length > 32) return;
 
             await arg.ModifyAsync(u => u.Nickname = newNick).ConfigureAwait(false);
         }
@@ -104,21 +104,28 @@ namespace mummybot.Modules.Moderator
             }
         }
 
-        [Command("Listinvites"), Summary("Returns list of invites")]
+        [Command("ListInvites"), Summary("Returns list of invites")]
         public async Task ListInvites()
         {
             var sb = new StringBuilder();
-            var invites = Context.Guild.GetInvitesAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-
-            if (invites.Count is 0)
+            try
             {
-                await Context.Channel.SendConfirmAsync("No invites to list").ConfigureAwait(false);
-                return;
-            }
+                var invites = Context.Guild.GetInvitesAsync().ConfigureAwait(false).GetAwaiter().GetResult();
 
-            foreach (var inv in invites) 
-                sb.AppendLine($"{Format.Code(inv.Url)} created by {inv.Inviter.Username}#{inv.Inviter.Discriminator} at {Format.Italics(inv.CreatedAt.Value.DateTime.ToString())} used {inv.Uses} times");
-            await Context.Channel.SendConfirmAsync(sb.ToString()).ConfigureAwait(false);
+                if (invites.Count is 0)
+                {
+                    await Context.Channel.SendConfirmAsync("No invites to list").ConfigureAwait(false);
+                    return;
+                }
+
+                foreach (var inv in invites)
+                    sb.AppendLine($"{Format.Code(inv.Url)} created by {inv.Inviter.Username}#{inv.Inviter.Discriminator} at {Format.Italics(inv.CreatedAt.Value.DateTime.ToString())} used {inv.Uses} times");
+                await Context.Channel.SendConfirmAsync(sb.ToString()).ConfigureAwait(false);
+            }
+            catch (HttpException ex)
+            {
+                await Context.Channel.SendErrorAsync(string.Empty, ex.Message).ConfigureAwait(false);
+            }
         }
 
         [Command("Deleteinvites"), Summary("Delete all created invite links"), RequireBotPermission(GuildPermission.Administrator), RequireUserPermission(GuildPermission.Administrator)]

@@ -14,5 +14,6 @@ namespace mummybot.Models
     	public bool FilterInvites { get; set; }
         public string Regex { get; set; }
         public ulong BotChannel { get; set; }
+        public long[] AutoAssignRoles { get; set; }
     }
 }
