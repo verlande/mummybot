@@ -9,19 +9,26 @@ using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using Discord.Net;
 using System.IO;
+using System.Threading;
+using Microsoft.Extensions.DependencyInjection;
+using mummybot.Common;
 using mummybot.Extensions;
 using NLog;
 
 namespace mummybot.Services
 {
-    public class CommandHandlerService
+    public class CommandHandlerService : INService
     {
         private readonly DiscordSocketClient _discord;
         private readonly CommandService _commands;
         private readonly mummybotDbContext _context;
-        private IServiceProvider _provider;
+        private IServiceProvider _services;
         private readonly ConfigService _config;
         private readonly Logger _log;
+        private IEnumerable<IEarlyBehavior> _earlyBehaviors;
+        private IEnumerable<ILateBlocker> _lateBlockers;
+        private IEnumerable<IInputTransformer> _inputTransformers;
+        private IEnumerable<ILateExecutor> _lateExecutors;
 
         private string DefaultPrefix { get; set; }
 
@@ -31,36 +38,69 @@ namespace mummybot.Services
 
         //userid/msg count
         private ConcurrentDictionary<ulong, uint> UserMessagesSent { get; } = new ConcurrentDictionary<ulong, uint>();
-        private ConcurrentDictionary<ulong, ulong> BotRestriction { get; set; }
+        public ConcurrentHashSet<ulong> UsersOnShortCooldown { get; } = new ConcurrentHashSet<ulong>();
+        private readonly Timer _clearUsersOnShortCooldown;
+        public const int GlobalCommandsCooldown = 750;
         private uint processedCommands = 0;
 
         public uint ProcessedCommands
         {
-            get { return processedCommands; }
-            set { processedCommands = value;  }
+            get => processedCommands;
+            set => processedCommands = value;
         }
         public ConcurrentDictionary<ulong, bool> BlacklistedUsers { get; set; }
 
         public CommandHandlerService() { }
 
-        public CommandHandlerService(DiscordSocketClient discord, CommandService commands, mummybotDbContext context, ConfigService config, IServiceProvider provider)
+        public CommandHandlerService(DiscordSocketClient discord, CommandService commands, mummybotDbContext context, ConfigService config, IServiceProvider services)
         {
             _discord = discord;
             _commands = commands;
             _context = context;
-            _provider = provider;
+            _services = services;
             _config = config;
 
             DefaultPrefix = _config.Config["prefix"];
             _log = LogManager.GetCurrentClassLogger();
+            
+            _clearUsersOnShortCooldown = new Timer(_ =>
+            {
+                UsersOnShortCooldown.Clear();
+            }, null, GlobalCommandsCooldown, GlobalCommandsCooldown);
+
 
             _discord.MessageReceived += MessageReceivedHandler;
 
-            BotRestriction = new ConcurrentDictionary<ulong, ulong>(_context.Guilds.ToDictionary(x => x.GuildId, x => x.BotChannel));
             BlacklistedUsers = new ConcurrentDictionary<ulong, bool>(_context.Blacklist.ToDictionary(x => x.UserId, x=> false));
         }
 
-        private Task LogSuccessfulExecution(IMessage usrMsg, IGuildChannel channel)
+        public void AddServices(IServiceCollection services)
+        {
+            _earlyBehaviors = services.Where(x =>
+                    x.ImplementationType?.GetInterfaces().Contains(typeof(IEarlyBehavior)) ?? false)
+                .Select(x => _services.GetService(x.ImplementationType) as IEarlyBehavior)
+                .ToArray();
+            
+            _lateBlockers = services.Where(x =>
+                    x.ImplementationType?.GetInterfaces().Contains(typeof(ILateBlocker)) ?? false)
+                .Select(x => _services.GetService(x.ImplementationType) as ILateBlocker);
+                        
+            _inputTransformers = services.Where(x => x.ImplementationType?.GetInterfaces().Contains(typeof(IInputTransformer)) ?? false)
+                .Select(x => _services.GetService(x.ImplementationType) as IInputTransformer)
+                .ToArray();
+            
+            _lateExecutors = services.Where(x => x.ImplementationType?.GetInterfaces().Contains(typeof(ILateExecutor)) ?? false)
+                .Select(x => _services.GetService(x.ImplementationType) as ILateExecutor)
+                .ToArray();
+        }
+
+        public Task StartHandling()
+        {
+            _discord.MessageReceived += (msg) => { var _ = Task.Run(() => MessageReceivedHandler(msg)); return Task.CompletedTask; };
+            return Task.CompletedTask;
+        }
+
+        private Task LogSuccessfulExecution(IMessage usrMsg, IGuildChannel channel, params int[] execPoints)
         {
             /*_log.Info($"" +
                 "User: {0}\n\t" +
@@ -85,9 +125,9 @@ namespace mummybot.Services
             return Task.CompletedTask;
         }
 
-        private async Task LogErroredExecution(string erroredCmd, string errorMessage, IMessage usrMsg, ITextChannel channel)
+        private async Task LogErroredExecution(string erroredCmd, string errorMessage, IMessage usrMsg, ITextChannel channel, params int[] execPoints)
         {
-            await channel.SendErrorAsync($"executing {erroredCmd}", errorMessage);
+            await channel.SendErrorAsync(string.Empty, erroredCmd);
             /*_log.Error($"" +
                             "User: {0}\n\t" +
                             "Server: {1}\n\t" +
@@ -113,77 +153,96 @@ namespace mummybot.Services
         {
             try
             {
-                if (msg.Source != MessageSource.User || !(msg is SocketUserMessage usrMsg)) return;
+                if (msg.Author.IsBot || !(msg is SocketUserMessage usrMsg)) return;
 
-                UserMessagesSent.AddOrUpdate(usrMsg.Author.Id, 1, (key, old) => old + 1);
+                UserMessagesSent.AddOrUpdate(usrMsg.Author.Id, 1, (key, old) => ++old);
 
+                var channel = msg.Channel as ISocketMessageChannel;
                 var guild = (msg.Channel as SocketTextChannel)?.Guild;
 
                 await TryRunCommand(guild, msg.Channel, usrMsg).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
+                _log.Warn("Error in CommandHandler");
                 _log.Warn(ex);
+                if (ex.InnerException != null)
+                {
+                    _log.Warn(ex.InnerException);
+                }
             }
         }
-
+        
         private async Task TryRunCommand(SocketGuild guild, ISocketMessageChannel channel, SocketUserMessage usrMsg)
         {
-            var argPos = 0;
             var execTime = Environment.TickCount;
-            var messageContent = usrMsg.Content;
-            var exec2 = Environment.TickCount - execTime;
-            var isPrefixCommand = usrMsg.HasStringPrefix(DefaultPrefix, ref argPos);
-            var isMentionCommand = usrMsg.HasMentionPrefix(_discord.CurrentUser, ref argPos);
 
-            if (isPrefixCommand && BlacklistedUsers.ContainsKey(usrMsg.Author.Id))
+            foreach (var beh in _earlyBehaviors)
             {
-                _log.Warn($"Blacklisted {usrMsg.Author} blocked on {guild.Name} ({guild.Id})");
-                if (BlacklistedUsers[usrMsg.Author.Id]) return;
-                var pm = await usrMsg.Author.GetOrCreateDMChannelAsync(RequestOptions.Default).ConfigureAwait(false);
-                await pm.SendMessageAsync("your blacklisted from using this bot").ConfigureAwait(false);
-                await pm.CloseAsync().ConfigureAwait(false);
-                BlacklistedUsers.AddOrUpdate(usrMsg.Author.Id, true, (key, old) => true);
-                return;
-            }
-
-            if (isPrefixCommand || isMentionCommand)
-            {
-                if (BotRestriction.ContainsKey(guild.Id) && BotRestriction[guild.Id] != channel.Id)
+                if (await beh.RunBehavior(_discord, guild, usrMsg).ConfigureAwait(false))
                 {
-                    if (isMentionCommand)
+                    if (beh.BehaviorType == ModuleBehaviorType.Blocker)
                     {
-                        var msg = await usrMsg.Channel.SendConfirmAsync($"You can only use me in <#{BotRestriction[guild.Id]}>").ConfigureAwait(false);
-                        msg.DeleteAfter(10);
+                        _log.Info("Blocked User: [{0}] Message: [{1}] Service: [{2}]", usrMsg.Author,
+                            usrMsg.Content, beh.GetType().Name);
                         return;
                     }
+                    else if (beh.BehaviorType == ModuleBehaviorType.Executor)
+                    {
+                        _log.Info("User [{0}] executed [{1}] in [{2}]", usrMsg.Author, usrMsg.Content,
+                            beh.GetType().Name);
+                    }
+
                     return;
                 }
+            }
 
-                var (success, error, info) = await ExecuteCommandAsync(new SocketCommandContext(_discord, usrMsg), messageContent, isMentionCommand ? argPos : DefaultPrefix.Length, _provider, MultiMatchHandling.Best).ConfigureAwait(false);
+            var exec2 = Environment.TickCount - execTime;
+            var messageContent = usrMsg.Content;
 
-                if (success)
+            if (_inputTransformers != null)
+                foreach (var exec in _inputTransformers)
                 {
-                    await LogSuccessfulExecution(usrMsg, channel as ITextChannel).ConfigureAwait(false);
-                    return;
+                    string newContent;
+                    if ((newContent = await exec.TransformInput(guild, usrMsg.Channel, usrMsg.Author, messageContent)
+                            .ConfigureAwait(false)) != messageContent.ToLowerInvariant())
+                    {
+                        messageContent = newContent;
+                        break;
+                    }
                 }
 
-                if (error != null)
+            var prefix = DefaultPrefix;
+            
+            var isPrefixCommand = messageContent.StartsWith(prefix, StringComparison.InvariantCultureIgnoreCase);
+            // execute the command and measure the time it took
+            if (messageContent.StartsWith(prefix, StringComparison.InvariantCulture) || isPrefixCommand)
+            {
+                var (Success, Error, Info) = await ExecuteCommandAsync(new SocketCommandContext(_discord, usrMsg), messageContent, isPrefixCommand ? 1 : prefix.Length, _services, MultiMatchHandling.Best).ConfigureAwait(false);
+                execTime = Environment.TickCount - execTime;
+
+                if (Success)
                 {
-                    await LogErroredExecution(info.Name, error, usrMsg, channel as ITextChannel).ConfigureAwait(false);
+                    await LogSuccessfulExecution(usrMsg, channel as ITextChannel, exec2, execTime).ConfigureAwait(false);
+                    await CommandExecuted(usrMsg, Info).ConfigureAwait(false);
+                    return;
+                }
+                else if (Error != null)
+                {
+                    await LogErroredExecution(Info.Name, Error, usrMsg, channel as ITextChannel, exec2, execTime).ConfigureAwait(false);
                     if (guild != null)
-                        await CommandErrored(info, channel as ITextChannel, error).ConfigureAwait(false);
+                        await CommandErrored(Info, channel as ITextChannel, Error).ConfigureAwait(false);
                 }
             }
             else
             {
                 await OnMessageNoTrigger(usrMsg).ConfigureAwait(false);
             }
-        }
 
-        private Task _commands_CommandExecuted(Optional<CommandInfo> arg1, ICommandContext arg2, IResult arg3)
-        {
-            throw new NotImplementedException();
+            foreach (var exec in _lateExecutors)
+            {
+                await exec.LateExecute(_discord, guild, usrMsg).ConfigureAwait(false);
+            }
         }
 
         public Task<(bool Success, string Error, CommandInfo Info)> ExecuteCommandAsync(SocketCommandContext context, string input, int argPos, IServiceProvider serviceProvider, MultiMatchHandling multiMatchHandling = MultiMatchHandling.Exception)
@@ -231,10 +290,6 @@ namespace mummybot.Services
                             paramList = parseResult.ParamValues.Select(x => x.Values.OrderByDescending(y => y.Score).First()).ToImmutableArray();
                             parseResult = ParseResult.FromSuccess(argList, paramList);
                             break;
-                        case MultiMatchHandling.Exception:
-                            break;
-                        default:
-                            throw new ArgumentOutOfRangeException(nameof(multiMatchHandling), multiMatchHandling, null);
                     }
                 }
 
@@ -276,24 +331,42 @@ namespace mummybot.Services
 
             var cmd = successfulParses[0].Key.Command;
 
-            //If we get this far, at least one parse was successful. Execute the most likely overload.
-            var (key, value) = successfulParses[0];
-            var execResult = (ExecuteResult)await key.ExecuteAsync(context, value, services).ConfigureAwait(false);
+            // Bot will ignore commands which are ran more often than what specified by
+            // GlobalCommandsCooldown constant (miliseconds)
+            if (!UsersOnShortCooldown.Add(context.Message.Author.Id))
+                return (false, null, cmd);
+            //return SearchResult.FromError(CommandError.Exception, "You are on a global cooldown.");
 
-            if (execResult.Exception == null || (execResult.Exception is HttpException he && he.DiscordCode == 50013))
-                return (true, null, cmd);
-            lock (_errorLogLock)
+            var commandName = cmd.Aliases.First();
+            foreach (var exec in _lateBlockers)
             {
-                var now = DateTime.Now;
-                File.AppendAllText($"./command_errors_{now:yyyy-MM-dd}.txt",
-                    $"[{now:HH:mm-yyyy-MM-dd}]" + Environment.NewLine
-                                                + execResult.Exception + Environment.NewLine
-                                                + "------" + Environment.NewLine);
-                _log.Error(execResult.Exception);
+                if (await exec.TryBlockLate(_discord, context.Message, context.Guild, context.Channel, context.User, cmd.Module.Name, commandName).ConfigureAwait(false))
+                {
+                    _log.Info("Late blocking User [{0}] Command: [{1}] in [{2}]", context.User, commandName, exec.GetType().Name);
+                    return (false, null, cmd);
+                }
+            }
+
+            //If we get this far, at least one parse was successful. Execute the most likely overload.
+            var chosenOverload = successfulParses[0];
+            var execResult = (ExecuteResult)await chosenOverload.Key.ExecuteAsync(context, chosenOverload.Value, services).ConfigureAwait(false);
+
+            if (execResult.Exception != null && (!(execResult.Exception is HttpException he) || he.DiscordCode != 50013))
+            {
+                lock (errorLogLock)
+                {
+                    var now = DateTime.Now;
+                    File.AppendAllText($"./command_errors_{now:yyyy-MM-dd}.txt",
+                        $"[{now:HH:mm-yyyy-MM-dd}]" + Environment.NewLine
+                        + execResult.Exception.ToString() + Environment.NewLine
+                        + "------" + Environment.NewLine);
+                    _log.Warn(execResult.Exception);
+                }
             }
 
             return (true, null, cmd);
         }
-        private readonly object _errorLogLock = new object();
+
+        private readonly object errorLogLock = new object();
     }
 }

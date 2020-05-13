@@ -19,7 +19,7 @@ namespace mummybot.Modules.General
         public async Task Bible(string passage = null, string chapverse = null)
         {
             const string bibleUrl = "https://labs.bible.org/api/?passage=";
-            const string bibleIcon = "https://mummybot.blob.core.windows.net/assets/bot/icons/bible.png";
+            const string bibleIcon = "https://mummybot.blob.core.windows.net/assets/bot/icons/bible.jpg";
             const string bibleGate = "https://www.biblegateway.com/passage/?search=";
 
             try
@@ -68,7 +68,7 @@ namespace mummybot.Modules.General
 
                 void Action(EmbedAuthorBuilder eab) => eab.WithName(comic.Title)
                     .WithUrl($"{xkcdUrl}/{comic.Num}")
-                    .WithIconUrl("https://mummybot.blob.core.windows.net/assets/bot/icons/xkcd.ico");
+                    .WithIconUrl("https://mummybot.blob.core.windows.net/assets/bot/icons/xkcd.jpg");
 
                 eb.WithAuthor(Action)
                     .WithColor(Utils.GetRandomColor())
@@ -112,7 +112,7 @@ namespace mummybot.Modules.General
                 .WithTitle($"Urban Dictionary - {word}")
                 .WithUrl(urbanList[currPage].Permalink.ToString())
                 .WithColor(Utils.GetRandomColor())
-                .WithThumbnailUrl("https://mummybot.blob.core.windows.net/assets/bot/icons/urban-dictionary.gif")
+                .WithThumbnailUrl("https://mummybot.blob.core.windows.net/assets/bot/icons/urban.jpg")
                 .WithDescription(string.Join("\n", urbanList.Skip(currPage * urbanPerPage).Take(urbanPerPage).Select(x => x.Definition)))
                 .AddField("Example", string.Join("\n", string.Join("\n", urbanList.Skip(currPage * urbanPerPage).Take(urbanPerPage).Select(x => x.Example))))
                 .AddField("Thumbs", $"👍{urbanList[currPage].ThumbsUp}\t👎{urbanList[currPage].ThumbsDown}"),

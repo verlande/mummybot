@@ -2,7 +2,6 @@
 using mummybot.Services;
 using mummybot.Modules.Tag.Controllers;
 using NLog;
-using System;
 using System.Threading.Tasks;
 using System.Linq;
 using mummybot.Models;

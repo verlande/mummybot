@@ -24,13 +24,13 @@ namespace mummybot.Modules.General
             try
             {
                 using var http = new HttpClient();
-                var request = await http.GetStringAsync("https://api.yomamma.info/");
+                var request = await http.GetStringAsync("https://api.yomomma.info/");
                 var result = JsonConvert.DeserializeObject<YoMamma>(request);
                 await ReplyAsync($"{user.Mention} {result.Joke}").ConfigureAwait(false);
             }
-            catch (HttpRequestException)
+            catch (HttpRequestException ex)
             {
-                await Context.Channel.SendErrorAsync("executing command", string.Empty).ConfigureAwait(false);
+                await Context.Channel.SendErrorAsync(string.Empty, ex.Message).ConfigureAwait(false);
             }
         }
 

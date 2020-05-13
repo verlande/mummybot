@@ -1,5 +1,4 @@
 ﻿using mummybot.Services;
-using System;
 using System.Threading.Tasks;
 using NRuneScape.RuneScape3;
 

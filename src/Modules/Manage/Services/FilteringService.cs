@@ -10,38 +10,39 @@ using mummybot.Extensions;
 using Discord.Net;
 using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
+using Discord.Commands;
 
 namespace mummybot.Modules.Manage.Services
 {
-    public class FilteringService : INService
+    public class FilteringService : IEarlyBehavior, INService
     {
         private readonly Logger _log;
+        private readonly DiscordSocketClient _discord;
         public ConcurrentHashSet<ulong> InviteFiltering { get; }
         public ConcurrentDictionary<ulong, string> RegexFiltering { get; }
+        public ConcurrentDictionary<ulong, ulong> BotRestriction { get; }
+
+        public int Priority => -50;
+        public ModuleBehaviorType BehaviorType => ModuleBehaviorType.Blocker;
 
         // ReSharper disable once SuggestBaseTypeForParameter
         public FilteringService(DiscordSocketClient discord, mummybotDbContext context)
         {
             _log = LogManager.GetCurrentClassLogger();
+            _discord = discord;
 
             InviteFiltering = new ConcurrentHashSet<ulong>(context.Guilds.Where(x => x.FilterInvites).Select(x => x.GuildId));
             RegexFiltering = new ConcurrentDictionary<ulong, string>(context.Guilds.Where(x => x.Regex != null).ToDictionary(x => x.GuildId, x => x.Regex));
-
-            discord.MessageReceived += (msg) =>
-            {
-                Task.Run(() =>
-                {
-                    var guild = (msg.Channel as ITextChannel)?.Guild;
-                    var usrMsg = (IUserMessage)msg;
-
-                    return guild is null ? Task.CompletedTask : RunBehavior(guild, usrMsg);
-                });
-                return Task.CompletedTask;
-            };
+            BotRestriction = new ConcurrentDictionary<ulong, ulong>(
+                context.Guilds.Where(x => x.BotChannel != 0)
+                    .ToDictionary(k => k.GuildId, v => v.BotChannel));
         }
 
-        private async Task<bool> RunBehavior(IGuild guild, IMessage msg)
-            => msg.Author is IGuildUser gu && (!gu.GuildPermissions.Administrator &&(await FilterInvites(guild, msg).ConfigureAwait(false) || await FilterRegex(guild, msg).ConfigureAwait(false)));
+        public async Task<bool> RunBehavior(DiscordSocketClient _, IGuild guild, IUserMessage msg) 
+            => msg.Author is IGuildUser gu && !gu.IsBot && !gu.GuildPermissions.Administrator &&
+                    await IsBotChannel(guild, msg).ConfigureAwait(false) || 
+                    await FilterInvites(guild, msg).ConfigureAwait(false) ||
+                    await FilterRegex(guild, msg).ConfigureAwait(false);
 
         private async Task<bool> FilterInvites(IGuild guild, IMessage msg)
         {
@@ -77,6 +78,20 @@ namespace mummybot.Modules.Manage.Services
             }
 
             return false;
+        }
+
+        private async Task<bool> IsBotChannel(IGuild guild, IUserMessage usrMsg)
+        {
+            if (guild is null || usrMsg is null) return false;
+
+            var argPos = 0;
+            var isCommand = usrMsg.HasStringPrefix(new ConfigService().Config["prefix"], ref argPos) ||
+                            usrMsg.HasMentionPrefix(_discord.CurrentUser, ref argPos);
+            
+            if (!isCommand || !BotRestriction.TryGetValue(guild.Id, out var channelId) ||
+                usrMsg.Channel.Id == channelId) return false;
+            await usrMsg.Channel.SendConfirmAsync($"My command have been restricted to <#{channelId}>").ConfigureAwait(false);
+            return true;
         }
     }
 }

@@ -8,7 +8,6 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using mummybot.Extensions;
-using mummybot.Services;
 
 
 namespace mummybot.Modules.Utility
@@ -52,11 +51,11 @@ namespace mummybot.Modules.Utility
                     $"{Format.Bold("Stats")}\n" +
                     $"- Heap Size: {Math.Round(GC.GetTotalMemory(true) / (1024.0 * 1024.0), 2)} MB\n" +
                     $"- Used Memory: {Process.GetCurrentProcess().PrivateMemorySize64 / (1024 * 1024)} MB\n" +
-                    $"- Guilds Served: {Context.Client.Guilds.Count}\n" +
                     $"- Total Commands: {_commandService.Commands.Count()}\n" +
+                    $"- Guilds Served: {Context.Client.Guilds.Count}\n" +
                     $"- Channels: {Context.Client.Guilds.Sum(g => g.TextChannels.Count)}\n" +
                     //$"- Commands Processed: {_commandHandlerService.ProcessedCommands}\n" +
-                    $"- Users: {Context.Client.Guilds.Sum(g => g.Users.Count)}\n", null, "Made with Discord.NET").ConfigureAwait(false);
+                    $"- Users: {Context.Client.Guilds.Sum(g => g.Users.Count)}\n", null, "Made with Discord.NET & PostgreSQL").ConfigureAwait(false);
         }
 
         [Command("Uptime")]

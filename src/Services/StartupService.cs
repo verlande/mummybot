@@ -35,7 +35,7 @@ namespace mummybot.Services
             _discord.Disconnected += Disconnected;
             _discord.Connected += Connected;
         }
-
+        
         private async Task Connected()
         {
             // Loop through guilds added when offline
@@ -71,7 +71,7 @@ namespace mummybot.Services
             //    .ToList();
         }
         
-        public async Task StartAsync()
+        public async Task RunAsync()
         {
             var config = new ConfigService();
             

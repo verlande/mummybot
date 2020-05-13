@@ -1,11 +1,10 @@
-using Discord;
+﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using mummybot.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading.Tasks;
-using System;
 using mummybot.Modules.Manage.Services;
 
 namespace mummybot
@@ -37,18 +36,13 @@ namespace mummybot
                     ThrowOnError = false
                 }))
                 .AddDbContext<mummybotDbContext>(options =>
-                    {
-#if DEBUG
-                            options.UseNpgsql(new ConfigService().Config["dbstring"]);
-#else
-                            options.UseNpgsql(Environment.GetEnvironmentVariable("DB_CONNECTION_STRING"));
-#endif
-                    }, ServiceLifetime.Transient)
+                {
+                    options.UseNpgsql(new ConfigService().Config["dbstring"]);
+                }, ServiceLifetime.Transient)
                 .AddSingleton<Modules.Tag.Services.TagService>()
                 .AddSingleton<Modules.Manage.Services.FilteringService>()
                 .AddSingleton<Modules.Runescape.Services.StatsService>()
                 .AddSingleton<RoleService>()
-                .AddSingleton<BotChannelRestriction>()
                 .AddSingleton<MessageService>()
                 .AddSingleton<Services.GuildService>()
                 .AddSingleton<UserService>()
@@ -60,7 +54,8 @@ namespace mummybot
             var provider = services.BuildServiceProvider();
             provider.GetRequiredService<DebugLoggingService>();
 
-            await provider.GetRequiredService<StartupService>().StartAsync().ConfigureAwait(false);
+            await provider.GetRequiredService<StartupService>().RunAsync().ConfigureAwait(false);
+            provider.GetService<CommandHandlerService>().AddServices(services);
 
             provider.GetRequiredService<ConfigService>();
             provider.GetRequiredService<MessageService>();
@@ -69,7 +64,6 @@ namespace mummybot
             provider.GetRequiredService<CommandService>();
             provider.GetRequiredService<CommandHandlerService>();
             provider.GetRequiredService<RoleService>();
-            provider.GetRequiredService<BotChannelRestriction>();
             NLogSetup.SetupLogger();
 
             await Task.Delay(-1).ConfigureAwait(false);

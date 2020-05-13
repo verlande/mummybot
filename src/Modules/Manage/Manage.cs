@@ -1,4 +1,4 @@
-using Discord;
+﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using mummybot.Modules.Manage.Services;
 using System.Text.RegularExpressions;
 using System;
-using System.Linq;
 
 namespace mummybot.Modules.Manage
 {
@@ -146,17 +145,20 @@ namespace mummybot.Modules.Manage
 
             [RequireUserPermission(GuildPermission.ManageGuild)]
             [Command("BotChannel"), Summary("Restrict bot commands to a selected channel")]
-            public async Task BotChannel(SocketChannel channel = null)
+            public async Task BotChannel(ITextChannel channel = null)
             {
                 var conf = await Database.Guilds.SingleAsync(x => x.GuildId.Equals(Context.Guild.Id));
 
                 if (channel is null)
                 {
                     conf.BotChannel = 0;
+                    _service.BotRestriction.TryRemove(Context.Guild.Id, out _);
                     await Context.Channel.SendConfirmAsync("Disabled bot restriction").ConfigureAwait(false);
+                    return;
                 }
                 conf.BotChannel = channel.Id;
-                Database.Attach(conf);
+                Database.Update(conf);
+                _service.BotRestriction.TryAdd(Context.Guild.Id, channel.Id);
                 await Context.Channel.SendConfirmAsync($"Restricting bot commands to <#{channel.Id}>").ConfigureAwait(false);
             }
 
