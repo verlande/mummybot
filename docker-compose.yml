@@ -13,6 +13,8 @@ services:
       dockerfile: Dockerfile
     environment:
       DB_CONNECTION_STRING: "host=postgres_image;port=5432;database=mummybot;username=postgres;password={YOUR_PASSWORD};"
+      TOKEN: "{YOUR_TOKEN}"
+      PREFIX: "{YOUR_PREFIX}"
     networks: 
       - mummybot-network
   postgres_image:

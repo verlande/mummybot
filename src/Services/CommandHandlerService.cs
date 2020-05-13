@@ -60,7 +60,11 @@ namespace mummybot.Services
             _services = services;
             _config = config;
 
+#if DEBUG
             DefaultPrefix = _config.Config["prefix"];
+#else
+            DefaultPrefix = Environment.GetEnvironmentVariable("PREFIX");
+#endif
             _log = LogManager.GetCurrentClassLogger();
             
             _clearUsersOnShortCooldown = new Timer(_ =>

@@ -74,8 +74,11 @@ namespace mummybot.Services
         public async Task RunAsync()
         {
             var config = new ConfigService();
-            
+#if DEBUG
             await _discord.LoginAsync(TokenType.Bot, config.Config["token"]).ConfigureAwait(false);
+#else
+            await _discord.LoginAsync(TokenType.Bot, Environment.GetEnvironmentVariable("TOKEN")).ConfigureAwait(false);
+#endif
             await _discord.StartAsync().ConfigureAwait(false);
             await _discord.SetStatusAsync(UserStatus.Online).ConfigureAwait(false);
             await _commands.AddModulesAsync(this.GetType().GetTypeInfo().Assembly, _provider);
