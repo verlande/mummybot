@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using mummybot.Services;
 
 namespace mummybot.Modules
 {
@@ -22,10 +23,15 @@ namespace mummybot.Modules
         [Command, Summary("List this bots commands")]
         public async Task Help([Summary("<module>")] string module = "")
         {
+#if DEBUG
+            var prefix = new ConfigService().Config["prefix"];
+#else
+            var prefix = Environment.GetEnvironmentVariable("PREFIX");
+#endif
             var embed = new EmbedBuilder
             {
                 Title = "mummybot Help",
-                Description = $"{new Services.ConfigService().Config["Prefix"]}help <module>\n{_commands.Commands.Count()} total commands",
+                Description = $"{prefix}help <module>\n{_commands.Commands.Count(x => x.Name != "ModuleBase" && x.Name != "Help" && x.Name != "Owner")} total commands",
                 Color = Color.Magenta,
                 Footer = new EmbedFooterBuilder()
                 .WithText("All commands are case insensitive")

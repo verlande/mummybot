@@ -129,9 +129,9 @@ namespace mummybot.Services
             return Task.CompletedTask;
         }
 
-        private async Task LogErroredExecution(string erroredCmd, string errorMessage, IMessage usrMsg, ITextChannel channel, params int[] execPoints)
+        private async Task LogErroredExecution(string errorMessage, string erroredCmd, IMessage usrMsg, ITextChannel channel, params int[] execPoints)
         {
-            await channel.SendErrorAsync(string.Empty, erroredCmd);
+            await channel.SendErrorAsync($"executing {erroredCmd}", errorMessage);
             /*_log.Error($"" +
                             "User: {0}\n\t" +
                             "Server: {1}\n\t" +
@@ -216,15 +216,14 @@ namespace mummybot.Services
                     }
                 }
 
-            var prefix = DefaultPrefix;
             var argPos = 0;
 
-            var isPrefixCommand = usrMsg.HasStringPrefix(prefix, ref argPos);
-	    var isMentionCommand = usrMsg.HasMentionPrefix(_discord.CurrentUser, ref argPos);
+            var isPrefixCommand = usrMsg.HasStringPrefix(DefaultPrefix, ref argPos);
+	        var isMentionCommand = usrMsg.HasMentionPrefix(_discord.CurrentUser, ref argPos);
 	    
             if (isPrefixCommand ||isMentionCommand)
 	    {
-                var (Success, Error, Info) = await ExecuteCommandAsync(new SocketCommandContext(_discord, usrMsg), messageContent, isMentionCommand ? argPos : prefix.Length, _services, MultiMatchHandling.Best).ConfigureAwait(false);
+                var (Success, Error, Info) = await ExecuteCommandAsync(new SocketCommandContext(_discord, usrMsg), messageContent, isMentionCommand ? argPos : DefaultPrefix.Length, _services, MultiMatchHandling.Best).ConfigureAwait(false);
                 execTime = Environment.TickCount - execTime;
 
                 if (Success)
@@ -235,7 +234,7 @@ namespace mummybot.Services
                 }
                 else if (Error != null)
                 {
-                    await LogErroredExecution(Info.Name, Error, usrMsg, channel as ITextChannel, exec2, execTime).ConfigureAwait(false);
+                    await LogErroredExecution(Error, Info.Name, usrMsg, channel as ITextChannel, exec2, execTime).ConfigureAwait(false);
                     if (guild != null)
                         await CommandErrored(Info, channel as ITextChannel, Error).ConfigureAwait(false);
                 }

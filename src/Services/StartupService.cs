@@ -19,6 +19,7 @@ namespace mummybot.Services
         private readonly mummybotDbContext _context;
         private readonly IServiceProvider _provider;
         private readonly Logger _log;
+        private string DefaultPrefix { get; set; }
 
         public StartupService(DiscordSocketClient discord, CommandService commands, IServiceProvider provider, mummybotDbContext context)
         {
@@ -27,7 +28,12 @@ namespace mummybot.Services
             _provider = provider;
             _context = context;
             _log = LogManager.GetCurrentClassLogger();
-            
+
+#if DEBUG
+            DefaultPrefix = new ConfigService().Config["prefix"];
+#else
+            DefaultPrefix = Environment.GetVariable("PREFIX");
+#endif
             var cancellationToken = new CancellationToken();
             // ReSharper disable once UnusedVariable
             var timerTask = RunPeriodically(Status, TimeSpan.FromSeconds(25), cancellationToken);
@@ -86,6 +92,7 @@ namespace mummybot.Services
 
         private async void Status()
         {
+            var index = 0;
             var r = new Random();
 
             await Task.Delay(2000).ConfigureAwait(false);
@@ -101,7 +108,10 @@ namespace mummybot.Services
                 $"{_commands.Commands.Count()} commands"
                 
             };
-            await _discord.SetGameAsync($"{statuses[r.Next(statuses.Length)]} | {new ConfigService().Config["prefix"]}help").ConfigureAwait(false);
+            if (index > statuses.Length) index = 0;
+
+            await _discord.SetGameAsync($"{statuses[index]} | {DefaultPrefix}help").ConfigureAwait(false);
+            index++;
         }
 
         private static async Task RunPeriodically(Action action, TimeSpan interval, CancellationToken token)

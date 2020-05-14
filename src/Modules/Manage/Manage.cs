@@ -162,6 +162,13 @@ namespace mummybot.Modules.Manage
                 await Context.Channel.SendConfirmAsync($"Restricting bot commands to <#{channel.Id}>").ConfigureAwait(false);
             }
 
+            [Command("Botnick"), Summary("Sets this bots nickname"), RequireUserPermission(GuildPermission.ManageNicknames)]
+            public async Task Nick([Remainder] string nickname)
+            {
+                if (nickname.Length > 32) return;
+                await Context.Guild.GetUser(Context.Client.CurrentUser.Id).ModifyAsync(x => x.Nickname = nickname);
+            }
+
             protected override void AfterExecute(CommandInfo command)
             {
                 base.AfterExecute(command);

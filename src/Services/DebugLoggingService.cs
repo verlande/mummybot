@@ -11,7 +11,7 @@ namespace mummybot.Services
     public class DebugLoggingService
     {
         private string LogDirectory { get; }
-        private string LogFile => Path.Combine(LogDirectory, $"{DateTime.UtcNow:yyyy-MM-dd}.log");
+        //private string LogFile => Path.Combine(LogDirectory, $"{DateTime.UtcNow:yyyy-MM-dd}.log");
         private readonly Logger _log;
 
         // ReSharper disable once SuggestBaseTypeForParameter
@@ -29,8 +29,8 @@ namespace mummybot.Services
         {
             if (!Directory.Exists(LogDirectory))
                 Directory.CreateDirectory(LogDirectory);
-            if (!File.Exists(LogFile))
-                File.Create(LogFile).Dispose();
+            //if (!File.Exists(LogFile))
+            //    File.Create(LogFile).Dispose();
 
             switch (msg.Severity)
             {

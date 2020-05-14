@@ -60,9 +60,6 @@ namespace mummybot.Modules.Moderator
             }
         }
 
-        [Command("Botnick"), Summary("Sets this bots nickname"), RequireUserPermission(GuildPermission.ManageNicknames)]
-        public async Task Nick([Remainder] string nickname) => await Context.Guild.GetUser(Context.Client.CurrentUser.Id).ModifyAsync(x => x.Nickname = nickname);
-
         [Command("Setnick"), RequireUserPermission(GuildPermission.ManageNicknames), RequireBotPermission(GuildPermission.ManageNicknames)]
         public async Task Nick(IGuildUser arg, [Remainder] string newNick)
         {
@@ -72,7 +69,14 @@ namespace mummybot.Modules.Moderator
         }
 
         [Command("Ban"), RequireBotPermission(GuildPermission.BanMembers), RequireUserPermission(GuildPermission.BanMembers)]
-        public async Task Ban(IGuildUser user, string reason = null) => await user.BanAsync(0, reason).ConfigureAwait(false);
+        public async Task Ban(IGuildUser user, string reason = null) => await user.BanAsync(7, reason).ConfigureAwait(false);
+
+        [Command("Softban"), Summary("Ban then unban removing 7 days of messages"), RequireBotPermission(GuildPermission.BanMembers), RequireUserPermission(GuildPermission.BanMembers)]
+        public async Task SoftBan(IGuildUser user, string reason = null)
+        {
+            await user.BanAsync(7, reason).ConfigureAwait(false);
+            await Context.Guild.RemoveBanAsync(user).ConfigureAwait(false);
+        }
 
         [Command("Kick"), RequireBotPermission(GuildPermission.KickMembers), RequireUserPermission(GuildPermission.KickMembers)]
         public async Task Kick(SocketGuildUser user, string reason = null)

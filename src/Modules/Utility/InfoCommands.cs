@@ -8,13 +8,13 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using mummybot.Extensions;
-
+using mummybot.Attributes;
 
 namespace mummybot.Modules.Utility
 {
     public partial class Utility
     {
-        [Command("Userinfo")]
+        [Command("Userinfo"), Cooldown(5, false)]
         public async Task UserInfo(SocketGuildUser user = null)
         {
             user ??= (SocketGuildUser)Context.User;
@@ -22,16 +22,20 @@ namespace mummybot.Modules.Utility
             var userRoles = user.Roles.Where(x => x.Id != Context.Guild!.EveryoneRole.Id)
                 .OrderByDescending(x => x.Position)
                 .ToList();
+            var pastNames = Database.UsersAudit.Where(x => x.UserId.Equals(user.Id)).ToList();
 
             var eb = new EmbedBuilder()
+                .WithTitle($"{user} {(!string.IsNullOrEmpty(user.Nickname) ? $"({user.Nickname})" : "")}")
                 .WithColor(Utils.GetRandomColor())
-                .WithThumbnailUrl(user.GetDefaultAvatarUrl())
-                .AddField("Username", user, true)
-                .AddField("Nickname", !string.IsNullOrEmpty(user.Nickname) ? user.Nickname : "None", true)
+                .WithThumbnailUrl(user.GetAvatarUrl())
+                .AddField("ID", user.Id, true)
                 .AddField("Status", user.Status, true)
                 .AddField("Joined", user.JoinedAt?.ToString("yyyy-MM-dd hh:mm:ss tt") ?? "-", true)
                 .AddField("Account Created", user.CreatedAt.ToString("yyyy-MM-dd hh:mm:ss tt"), true)
-                .AddField($"Roles ({userRoles.Count})", userRoles.Count != 0 ? string.Join("\n", userRoles.Take(10)) : "-", true);
+                .AddField($"Roles ({userRoles.Count})", userRoles.Count != 0 ? string.Join("\n", userRoles.Take(10)) : "-", true)
+                .AddField("Past Usernames", Format.Code(pastNames.Count != 0 ? string.Join("\n", pastNames.Select(x => x.Username).Take(5)) : "None"), false)
+                .AddField("Past Nicknames", Format.Code(pastNames.Count != 0 ? string.Join("\n", pastNames.Select(x => x.Nickname).Take(5)) : "None"), false)
+                .WithFooter(new EmbedFooterBuilder().WithText($"• Requested by {Context.User}"));
             await ReplyAsync(string.Empty, embed: eb.Build()).ConfigureAwait(false);
         }
 
@@ -75,16 +79,13 @@ namespace mummybot.Modules.Utility
         {
             var online = Context.Guild.Users.Count(x => x.Status != UserStatus.Offline);
             var offline = Context.Guild.Users.Count(x => x.Status == UserStatus.Offline);
+            var roles = Context.Guild.Roles;
 
             var rolesb = new StringBuilder();
-            var emotesb = new StringBuilder();
 
-            foreach (var rolenames in Context.Guild.Roles)
-                if (rolenames.Members.Count(x => x.IsBot) != 1)
+            foreach (var rolenames in roles)
+                if (rolenames.Members.Count(x => x.IsBot) != 1 && roles.Count < 20)
                     rolesb.Append($"{rolenames.Mention}, ");
-
-            foreach (var emotes in Context.Guild.Emotes)
-                emotesb.Append($"{emotes} ");
 
             var guild = Context.Guild;
 
@@ -141,14 +142,16 @@ namespace mummybot.Modules.Utility
                 eb.AddField(field =>
                 {
                     field.IsInline = true;
-                    field.Name = $"Emojis ({guild.Emotes.Count})";
-                    field.Value = emotesb;
+                    field.Name = $"Emojis";
+                    field.Value = guild.Emotes.Count;
                 });
             }
             eb.AddField(field =>
             {
                 field.IsInline = true;
                 field.Name = $"Roles";
+                if (roles.Count > 20)
+                    field.Value = roles.Count;
                 field.Value = rolesb;
             });
             eb.AddField(field =>
