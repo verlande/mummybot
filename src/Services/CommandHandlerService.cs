@@ -217,12 +217,14 @@ namespace mummybot.Services
                 }
 
             var prefix = DefaultPrefix;
-            
-            var isPrefixCommand = messageContent.StartsWith(prefix, StringComparison.InvariantCultureIgnoreCase);
-            // execute the command and measure the time it took
-            if (messageContent.StartsWith(prefix, StringComparison.InvariantCulture) || isPrefixCommand)
-            {
-                var (Success, Error, Info) = await ExecuteCommandAsync(new SocketCommandContext(_discord, usrMsg), messageContent, isPrefixCommand ? 1 : prefix.Length, _services, MultiMatchHandling.Best).ConfigureAwait(false);
+            var argPos = 0;
+
+            var isPrefixCommand = usrMsg.HasStringPrefix(prefix, ref argPos);
+	    var isMentionCommand = usrMsg.HasMentionPrefix(_discord.CurrentUser, ref argPos);
+	    
+            if (isPrefixCommand ||isMentionCommand)
+	    {
+                var (Success, Error, Info) = await ExecuteCommandAsync(new SocketCommandContext(_discord, usrMsg), messageContent, isMentionCommand ? argPos : prefix.Length, _services, MultiMatchHandling.Best).ConfigureAwait(false);
                 execTime = Environment.TickCount - execTime;
 
                 if (Success)
