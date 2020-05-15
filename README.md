@@ -10,7 +10,7 @@ Just another Discord Bot
 *  [EntityFramework Core](https://docs.microsoft.com/en-us/ef/core/)
 *  [Docker](https://docker.com)
 
-## Self Hosting With Docker
+## Self hosting with docker
 ```bash
 # Clone repository
 git clone https://gitlab.com/mummy603/mummybot.git
@@ -18,16 +18,19 @@ git clone https://gitlab.com/mummy603/mummybot.git
 # Enter directory
 cd mummybot
 
-# Edit src/_config.json with your bot token and prefix
+# For debugging edit src/_config.json with your bot token and prefix
 {
   "token": "{YOUR_BOT_TOKEN}",
-  "prefix": "£",
+  "prefix": "",
+  "dbstring": ""
 }
 
 # Edit docker-compose.yml environment variables
 DB_CONNECTION_STRING: "host=postgres_image;port=5432;database=mummybot;username=postgres;password={YOUR_PASSWORD};"
-POSTGRES_PASSWORD: {YOUR_PASSWORD}
+TOKEN: ""
+PREFIX: ""
+POSTGRES_PASSWORD: ""
 
-# Docker compose and daemon
-docker-compose up -d
+# Docker build, compose and daemon
+docker-compose build; docker-compose up -d
 ```

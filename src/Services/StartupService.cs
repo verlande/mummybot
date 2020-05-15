@@ -32,7 +32,7 @@ namespace mummybot.Services
 #if DEBUG
             DefaultPrefix = new ConfigService().Config["prefix"];
 #else
-            DefaultPrefix = Environment.GetVariable("PREFIX");
+            DefaultPrefix = Environment.GetEnvironmentVariable("PREFIX");
 #endif
             var cancellationToken = new CancellationToken();
             // ReSharper disable once UnusedVariable
@@ -68,6 +68,22 @@ namespace mummybot.Services
 
                 await _context.SaveChangesAsync();
                 _log.Info($"Inserted missing guild {guilds.Name} ({guilds.Id})");
+            }
+
+            var clientReady = new TaskCompletionSource<bool>();
+            Task SetClientReady()
+            {
+                Task.Run(async () =>
+                {
+                    clientReady.TrySetResult(true);
+                    try
+                    {
+                        foreach (var chan in (await _discord.GetDMChannelsAsync().ConfigureAwait(false)))
+                            await chan.CloseAsync().ConfigureAwait(false);
+                    }
+                    catch {}
+                });
+                return Task.CompletedTask;
             }
 
             // Update inactive guilds
