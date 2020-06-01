@@ -30,7 +30,7 @@ namespace mummybot.Services
         private IEnumerable<IInputTransformer> _inputTransformers;
         private IEnumerable<ILateExecutor> _lateExecutors;
 
-        private string DefaultPrefix { get; set; }
+        public static string DefaultPrefix { get; set; }
 
         public event Func<IUserMessage, CommandInfo, Task> CommandExecuted = delegate { return Task.CompletedTask; };
         public event Func<CommandInfo, ITextChannel, string, Task> CommandErrored = delegate { return Task.CompletedTask; };

@@ -57,12 +57,12 @@ namespace mummybot.Modules.Utility
                 var sb = new StringBuilder();
                 foreach (var res in result)
                     if (!string.IsNullOrEmpty(res.Nickname))
-                        sb.AppendLine($"{res.Nickname} `{res.ChangedOn}`");
-                await Context.Channel.SendAuthorAsync((IGuildUser)user, sb.ToString(), $"User ID: {user.Id.ToString()}").ConfigureAwait(false);
+                        sb.AppendLine($"{Format.Bold(res.Nickname)} `{res.ChangedOn}`");
+                await Context.Channel.SendAuthorAsync((IGuildUser)user, sb.ToString(), $"User ID: {user.Id}\n• Requested by {Context.User}").ConfigureAwait(false);
             }
         }
 
-        [Command("Pastusername"), Summary("Show past usernames"), Alias("pu")]
+        [Command("Pastusername"), Summary("Show past usernames limited to 10"), Alias("pu")]
         public async Task Usernames(SocketGuildUser arg)
         {
             var user = arg ?? Context.User;
@@ -76,7 +76,7 @@ namespace mummybot.Modules.Utility
                 var sb = new StringBuilder();
                 foreach (var res in result.Distinct())
                     if (!string.IsNullOrEmpty(res.Username)) sb.AppendLine(Format.Bold(res.Username));
-                await Context.Channel.SendAuthorAsync((IGuildUser)user, sb.ToString(), $"User ID: {user.Id.ToString()}").ConfigureAwait(false);
+                await Context.Channel.SendAuthorAsync((IGuildUser)user, sb.ToString(), $"User ID: {user.Id}\n• Requested by {Context.User}").ConfigureAwait(false);
             }
         }
 

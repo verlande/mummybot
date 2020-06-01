@@ -23,15 +23,10 @@ namespace mummybot.Modules
         [Command, Summary("List this bots commands")]
         public async Task Help([Summary("<module>")] string module = "")
         {
-#if DEBUG
-            var prefix = new ConfigService().Config["prefix"];
-#else
-            var prefix = Environment.GetEnvironmentVariable("PREFIX");
-#endif
             var embed = new EmbedBuilder
             {
                 Title = "mummybot Help",
-                Description = $"{prefix}help <module>\n{_commands.Commands.Count(x => x.Name != "ModuleBase" && x.Name != "Help" && x.Name != "Owner")} total commands",
+                Description = $"{CommandHandlerService.DefaultPrefix}help <module>\n{_commands.Commands.Count(x => x.Name != "ModuleBase" && x.Name != "Help" && x.Name != "Owner")} total commands",
                 Color = Color.Magenta,
                 Footer = new EmbedFooterBuilder()
                 .WithText("All commands are case insensitive")
@@ -64,7 +59,7 @@ namespace mummybot.Modules
             foreach (var sub in module.Submodules) AddHelp(sub, ref builder);
                 builder.AddField(f =>
                 {
-                    f.Name = $"**{module.Name} module**";
+                    f.Name = $"**{module.Name} module** ({module.Commands.Count})";
 
                 if (module.Submodules.Count < 0)
                     f.Value = $"submodules: {string.Join(", ", module.Submodules.Select(m => m))}" + "\n" + $"commands: {string.Join(", ", module.Commands.Select(x => $"`{x.Name}`"))}";
@@ -89,16 +84,14 @@ namespace mummybot.Modules
             }
         }
 
-        private static void AddCommand(CommandInfo command, ref EmbedBuilder embedBuilder)
-        {
+        private static void AddCommand(CommandInfo command, ref EmbedBuilder embedBuilder) => 
             embedBuilder.AddField(f =>
             {
                 f.Name = $"**{command.Name}**";
                 f.Value = $"{command.Summary}\n" +
-                    (!string.IsNullOrEmpty(command.Remarks) ? $"({command.Remarks})\n" : string.Empty) + 
+                    (!string.IsNullOrEmpty(command.Remarks) ? $"({command.Remarks})\n" : string.Empty) +
                     (command.Aliases.Any() ? $"**Aliases:** {string.Join(", ", command.Aliases.Select(x => $"`{x}`"))}\n" : string.Empty);
             });
-        }
 
         private static string GetAliases(CommandInfo command)
         {

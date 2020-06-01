@@ -1,56 +1,69 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 using mummybot.Models;
 using NLog;
+using NLog.Fluent;
 
 namespace mummybot.Services
 {
-    public class GuildService
+    public class GuildService : INService
     {
         private readonly DiscordSocketClient _discord;
         private readonly mummybotDbContext _context;
         private readonly Logger _log;
 
+        private ConcurrentDictionary<ulong, Guilds> AllGuildConfigs { get; set; }
+
         public GuildService(DiscordSocketClient discord, mummybotDbContext context)
-        {
+        {   
             _discord = discord;
             _context = context;
             _discord.JoinedGuild += JoinedGuild;
             _discord.LeftGuild += LeftGuild;
-            _discord.GuildUpdated += GuildUpdated;
-            
+            _discord.UserJoined += UserJoined;
+
             _log = LogManager.GetCurrentClassLogger();
+
+            AllGuildConfigs = new ConcurrentDictionary<ulong, Guilds>(
+                _context.Guilds.ToDictionary(k => k.GuildId, v => v)
+            );
         }
 
         private Task JoinedGuild(SocketGuild guild)
         {
             Task.Run(async () =>
             {
-                var guildExists = await _context.Guilds.SingleAsync(x => x.GuildId == guild.Id);
-                if (guildExists == null)
+                if (!AllGuildConfigs.ContainsKey(guild.Id))
                 {
-                    await Save(new Guilds
+                    await AddGuild(new Guilds
                     {
                         GuildId = guild.Id,
                         GuildName = guild.Name,
                         OwnerId = guild.OwnerId,
                         Region = guild.VoiceRegionId
                     }).ConfigureAwait(false);
-                    await _discord.GetGuild(guild.Id).DefaultChannel.SendMessageAsync($"use {new ConfigService().Config["prefix"]}help").ConfigureAwait(false);
                 }
-                else
+                try
                 {
-                    guildExists.Active = true;
-                    await Save(guildExists);
+                    await guild.DefaultChannel.SendMessageAsync(
+                            $"Thanks for inviting me, use `{CommandHandlerService.DefaultPrefix}help` for my commands")
+                        .ConfigureAwait(false);
                 }
-                await _discord.GetGuild(guild.Id).DefaultChannel.SendMessageAsync("ty for adding me back").ConfigureAwait(false);
-                await SaveUsers(guild.Users.ToList()).ConfigureAwait(false);
+                catch (Exception ex)
+                {
+                    _log.Error(ex.Message);
+                }
             });
+            
             return Task.CompletedTask;
         }
 
@@ -58,15 +71,41 @@ namespace mummybot.Services
         {
             Task.Run(async () =>
             {
+                AllGuildConfigs.TryRemove(guild.Id, out _);
                 var isActive = await _context.Guilds.SingleAsync(x => x.GuildId.Equals(guild.Id));
                 isActive.Active = false;
-                _context.Guilds.Attach(isActive);
+                _context.Guilds.Update(isActive);
                 await _context.SaveChangesAsync();
+
             });
             return Task.CompletedTask;
         }
 
-        private Task GuildUpdated(SocketGuild before, SocketGuild after)
+        private Task UserJoined(IGuildUser user)
+        {
+            Task.Run(async () =>
+            {
+                try
+                {
+                    if (AllGuildConfigs.TryGetValue(user.GuildId, out var cfg))
+                    {
+                        var channel = await user.Guild.GetTextChannelAsync(cfg.BotChannel).ConfigureAwait(false);
+                        if (channel != null)
+                        {
+                            var greeting = cfg.Greeting.Replace("%user%", user.Mention);
+                            await channel.SendMessageAsync(greeting).ConfigureAwait(false);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _log.Warn(ex.Message);
+                }
+            });
+            return Task.CompletedTask;
+        }
+
+        private Task GuildUpdated(IGuild before, IGuild after)
         {
             Task.Run(async () =>
             {
@@ -85,12 +124,24 @@ namespace mummybot.Services
             return Task.CompletedTask;
         }
 
-        private async Task Save(Guilds guild)
+        private async Task AddGuild(Guilds guild)
         {
+            var exists = await _context.Guilds.AnyAsync(x => x.GuildId == guild.GuildId);
             try
             {
-                _context.Guilds.Attach(guild);
-                await _context.SaveChangesAsync();
+                if (exists)
+                {
+                    var gc = await _context.Guilds.SingleAsync(x => x.GuildId == guild.GuildId);
+                    gc.Active = true;
+                    _context.Guilds.Update(guild);
+                    await _context.SaveChangesAsync();
+                }
+                else
+                {
+                    AllGuildConfigs.TryAdd(guild.GuildId, guild);
+                    _context.Guilds.Update(guild);
+                    await _context.SaveChangesAsync();
+                }
             }
             catch (Exception ex)
             {
@@ -104,7 +155,8 @@ namespace mummybot.Services
             {
                 foreach (var users in guildUsers)
                 {
-                    if (await _context.Users.AnyAsync(u => u.UserId.Equals(users.Id) && u.GuildId.Equals(users.Guild.Id))) return;
+                    if (await _context.Users.AnyAsync(u =>
+                        u.UserId.Equals(users.Id) && u.GuildId.Equals(users.Guild.Id))) return;
                     await _context.Users.AddAsync(new Users
                     {
                         UserId = users.Id,
@@ -115,6 +167,7 @@ namespace mummybot.Services
                         Joined = users.JoinedAt.Value.UtcDateTime
                     });
                 }
+
                 await _context.SaveChangesAsync();
             }
             catch (Exception ex)

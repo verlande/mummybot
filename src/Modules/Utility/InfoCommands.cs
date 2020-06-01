@@ -91,7 +91,7 @@ namespace mummybot.Modules.Utility
 
             var eb = new EmbedBuilder
             {
-                Title = guild.Name,
+                Title = $"{guild.Name} ({guild.Id})",
                 ThumbnailUrl = guild.IconUrl,
                 Color = Utils.GetRandomColor()
             };
@@ -106,6 +106,12 @@ namespace mummybot.Modules.Utility
                 field.IsInline = true;
                 field.Name = "Total users";
                 field.Value = guild.MemberCount;
+            });
+            eb.AddField(field =>
+            {
+                field.IsInline = true;
+                field.Name = "Total bots";
+                field.Value = guild.Users.Count(x => x.IsBot);
             });
             eb.AddField(field =>
             {

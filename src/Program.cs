@@ -6,7 +6,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading.Tasks;
 using mummybot.Modules.Manage.Services;
-using System;
 
 namespace mummybot
 {
@@ -20,7 +19,11 @@ namespace mummybot
             var services = new ServiceCollection()
                 .AddSingleton(new DiscordSocketClient(new DiscordSocketConfig
                 {
+#if DEBUG
                     LogLevel = LogSeverity.Debug,
+#else
+                    LogLevel = LogSeverity.Info,
+#endif
                     MessageCacheSize = 500,
                     TotalShards = 1,
                     AlwaysDownloadUsers = true
@@ -38,7 +41,7 @@ namespace mummybot
                 }))
                 .AddDbContext<mummybotDbContext>(options =>
                 {
-#if DEBUG                    
+#if DEBUG
                     options.UseNpgsql(new ConfigService().Config["dbstring"]);
 #else
                     options.UseNpgsql(Environment.GetEnvironmentVariable("DB_CONNECTION_STRING"));

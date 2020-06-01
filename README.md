@@ -5,7 +5,7 @@
 Just another Discord Bot
 
 ##### Built With
-*   [Discord.NET](https://github.com/RogueException/Discord.Net)
+*  [Discord.NET](https://github.com/RogueException/Discord.Net)
 *  [PostgreSQL](https://www.postgresql.org/)
 *  [EntityFramework Core](https://docs.microsoft.com/en-us/ef/core/)
 *  [Docker](https://docker.com)
@@ -32,5 +32,5 @@ PREFIX: ""
 POSTGRES_PASSWORD: ""
 
 # Docker build, compose and daemon
-docker-compose build; docker-compose up -d
+docker-compose up -d --build
 ```

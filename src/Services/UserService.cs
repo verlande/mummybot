@@ -1,12 +1,9 @@
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using mummybot.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
-using mummybot.Extensions;
 using NLog;
 
 namespace mummybot.Services
@@ -22,17 +19,14 @@ namespace mummybot.Services
             _discord = discord;
             _context = context;
             _discord.GuildMemberUpdated += UserUpdated;
-            _discord.UserJoined += UserJoin;
-            _discord.UserLeft += UserLeft;
             _discord.GuildUpdated += GuildUpdated;
 
             _log = LogManager.GetCurrentClassLogger();
         }
 
-        //TODO: Scrap method make a SQL function & trigger
         private Task UserUpdated(SocketGuildUser before, SocketGuildUser after)
         {
-            var _ = Task.Run(async () =>
+            Task.Run(async () =>
             {
                 if (before.IsBot) return;
                 
@@ -58,58 +52,12 @@ namespace mummybot.Services
                 }
                 catch (Exception ex)
                 {
-                    _log.Info(ex);
+                    _log.Error(ex);
                 }
             });
             return Task.CompletedTask;
         }
 
-        private Task UserJoin(IGuildUser guildUser)
-        {
-            var _ = Task.Run(async () =>
-            {
-                try
-                {
-                    await AddUser(guildUser).ConfigureAwait(false);
-
-                    var conf = await _context.Guilds.SingleAsync(g => g.GuildId.Equals(guildUser.GuildId));
-                    var channel = (await guildUser.Guild.GetTextChannelsAsync().ConfigureAwait(false)).SingleOrDefault(c => c.Id.Equals(conf.GreetChl));
-
-                    if (!string.IsNullOrWhiteSpace(conf.Greeting) && channel != null)//&& conf.GreetChl != null)
-                    {
-                        var greeting = conf.Greeting;
-                        if (greeting.Contains("%user%")) greeting = greeting.Replace("%user%", guildUser.Mention);
-                        await channel.SendMessageAsync(greeting).ConfigureAwait(false);
-                    }
-                }
-                catch (Exception ex) { _log.Error(ex); }
-            });
-
-            return Task.CompletedTask;
-        }
-
-        private Task UserLeft(IGuildUser guildUser)
-        {
-            var _ = Task.Run(async () =>
-            {
-                try
-                {
-                    var conf = await _context.Guilds.SingleAsync(g => g.GuildId.Equals(guildUser.Guild.Id));
-                    var channel = (await guildUser.Guild.GetTextChannelsAsync().ConfigureAwait(false)).SingleOrDefault(c => c.Id.Equals(conf.GreetChl));
-
-                    if (!string.IsNullOrWhiteSpace(conf.Goodbye) && channel != null)
-                    {
-                        var goodbye = conf.Goodbye;
-                        if (goodbye.Contains("%user%")) goodbye = goodbye.Replace("%user%", guildUser.Mention);
-                        await channel.SendMessageAsync(goodbye).ConfigureAwait(false);
-                    }
-                    await RemoveUser(guildUser).ConfigureAwait(false);
-                }
-                catch (Exception ex) { _log.Error(ex); }
-            });
-
-            return Task.CompletedTask;
-        }
 
         private async Task GuildUpdated(SocketGuild before, SocketGuild after)
         {
