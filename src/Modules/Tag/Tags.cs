@@ -59,8 +59,8 @@ namespace mummybot.Modules.Tag
 
                 if (name.Length > 12 || content.Length > 255)
                 {
-                    await Context.Channel.SendErrorAsync("creating tag", "Tag name should be less than 12 chars" +
-                        "\nTag content should be less than 255 chars").ConfigureAwait(false);
+                    await Context.Channel.SendErrorAsync("creating tag", "Tag name should be less than 12 in length" +
+                        "\nTag content should be less than 255 in length").ConfigureAwait(false);
                     return;
                 }
 

@@ -107,10 +107,9 @@ namespace mummybot.Services
         }
 
         private async void Status()
-        {
-            var index = 0;
+        {   
             var r = new Random();
-
+            
             await Task.Delay(2000).ConfigureAwait(false);
             
             var statuses = new[]
@@ -124,10 +123,8 @@ namespace mummybot.Services
                 $"{_commands.Commands.Count()} commands"
                 
             };
-            if (index > statuses.Length) index = 0;
-
-            await _discord.SetGameAsync($"{statuses[index]} | {DefaultPrefix}help").ConfigureAwait(false);
-            index++;
+            
+            await _discord.SetGameAsync($"{statuses[r.Next(statuses.Length)]} | {DefaultPrefix}help").ConfigureAwait(false);
         }
 
         private static async Task RunPeriodically(Action action, TimeSpan interval, CancellationToken token)

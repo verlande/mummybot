@@ -31,7 +31,7 @@ namespace mummybot.Services
                 if (before.IsBot) return;
                 
                 try
-                {
+                {   
                     if (!before.Nickname.Equals(after.Nickname) && !string.IsNullOrEmpty(after.Nickname))
                         await _context.UsersAudit.AddAsync(new UsersAudit
                         {

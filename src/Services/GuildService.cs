@@ -1,17 +1,13 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Internal;
 using mummybot.Models;
 using NLog;
-using NLog.Fluent;
 
 namespace mummybot.Services
 {
@@ -30,6 +26,7 @@ namespace mummybot.Services
             _discord.JoinedGuild += JoinedGuild;
             _discord.LeftGuild += LeftGuild;
             _discord.UserJoined += UserJoined;
+            _discord.UserLeft += UserLeft;
 
             _log = LogManager.GetCurrentClassLogger();
 
@@ -99,7 +96,31 @@ namespace mummybot.Services
                 }
                 catch (Exception ex)
                 {
-                    _log.Warn(ex.Message);
+                    _log.Error(ex.Message);
+                }
+            });
+            return Task.CompletedTask;
+        }
+
+        private Task UserLeft(IGuildUser user)
+        {
+            Task.Run(async () =>
+            {
+                try
+                {
+                    if (AllGuildConfigs.TryGetValue(user.GuildId, out var cfg))
+                    {
+                        var channel = await user.Guild.GetTextChannelAsync(cfg.BotChannel).ConfigureAwait(false);
+                        if (channel != null)
+                        {
+                            var goodbye = cfg.Goodbye.Replace("%user%", user.Mention);
+                            await channel.SendMessageAsync(goodbye).ConfigureAwait(false);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _log.Error(ex.Message);
                 }
             });
             return Task.CompletedTask;
@@ -118,7 +139,7 @@ namespace mummybot.Services
                 if (!before.VoiceRegionId.Equals(after.VoiceRegionId))
                     guild.Region = after.VoiceRegionId;
 
-                _context.Attach(guild);
+                _context.Update(guild);
                 await _context.SaveChangesAsync();
             });
             return Task.CompletedTask;

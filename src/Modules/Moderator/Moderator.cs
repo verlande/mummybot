@@ -9,6 +9,7 @@ using System;
 using mummybot.Services;
 using System.Text;
 using Discord.Net;
+using System.Globalization;
 
 namespace mummybot.Modules.Moderator
 {
@@ -23,8 +24,8 @@ namespace mummybot.Modules.Moderator
 
         [Command("Tagban"), Summary("Ban/Unban a user from creating tags in your guild"), RequireUserPermission(GuildPermission.Administrator)]
         public async Task TagBan(SocketGuildUser user)
-        {
-            if (user.IsBot) return;
+        {   
+            if (user.IsBot || user.GuildPermissions.Administrator) return;
 
             if (!await _userService.UserExists(user.Id, user.Guild.Id)) await _userService.AddUser(user);
 
@@ -123,8 +124,10 @@ namespace mummybot.Modules.Moderator
                 }
 
                 foreach (var inv in invites)
-                    sb.AppendLine($"{Format.Code(inv.Url)} created by {inv.Inviter.Username}#{inv.Inviter.Discriminator} at {Format.Italics(inv.CreatedAt.Value.DateTime.ToString())} used {inv.Uses} times");
-                await Context.Channel.SendConfirmAsync(sb.ToString()).ConfigureAwait(false);
+                    sb.AppendLine($"{Format.Code(inv.Url)} by {Format.Bold($"{inv.Inviter.Username}#{inv.Inviter.Discriminator}")} at" + 
+                                  $" {Format.Italics(inv.CreatedAt.Value.DateTime.ToString("g"))} used {inv.Uses} times");
+
+                await Context.Channel.SendConfirmAsync(sb.ToString(), "Current Invite List").ConfigureAwait(false);
             }
             catch (HttpException ex)
             {

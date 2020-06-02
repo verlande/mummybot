@@ -33,7 +33,7 @@ namespace mummybot.Modules.Tag.Controllers
             if (_tag != null && user.Id.Equals(_tag.Author) || user.GuildPermissions.Administrator)
             {
                 _context.Remove(_tag);
-                return $"``{_tag.Name}`` deleted";
+                return $"Successfully deleted ``{_tag.Name}``";
             }
             if (_tag == null)
                 return "Tag doesn't exist";

@@ -14,7 +14,7 @@ namespace mummybot.Modules.Utility
 {
     public partial class Utility
     {
-        [Command("Userinfo"), Cooldown(5, false)]
+        [Command("Userinfo"), Cooldown(5)]
         public async Task UserInfo(SocketGuildUser user = null)
         {
             user ??= (SocketGuildUser)Context.User;
@@ -30,11 +30,11 @@ namespace mummybot.Modules.Utility
                 .WithThumbnailUrl(user.GetAvatarUrl())
                 .AddField("ID", user.Id, true)
                 .AddField("Status", user.Status, true)
-                .AddField("Joined", user.JoinedAt?.ToString("yyyy-MM-dd hh:mm:ss tt") ?? "-", true)
-                .AddField("Account Created", user.CreatedAt.ToString("yyyy-MM-dd hh:mm:ss tt"), true)
+                .AddField("Joined", user.JoinedAt?.ToString("g") ?? "-", true)
+                .AddField("Account Created", user.CreatedAt.ToString("g"), true)
                 .AddField($"Roles ({userRoles.Count})", userRoles.Count != 0 ? string.Join("\n", userRoles.Take(10)) : "-", true)
-                .AddField("Past Usernames", Format.Code(pastNames.Count != 0 ? string.Join("\n", pastNames.Select(x => x.Username).Take(5)) : "None"), false)
-                .AddField("Past Nicknames", Format.Code(pastNames.Count != 0 ? string.Join("\n", pastNames.Select(x => x.Nickname).Take(5)) : "None"), false)
+                .AddField("Past Usernames", Format.Code(pastNames.Count != 0 ? string.Join("\n", pastNames.Select(x => x.Username).Take(5)) : "None"))
+                .AddField("Past Nicknames", Format.Code(pastNames.Count != 0 ? string.Join("\n", pastNames.Select(x => x.Nickname).Take(5)) : "None"))
                 .WithFooter(new EmbedFooterBuilder().WithText($"• Requested by {Context.User}"));
             await ReplyAsync(string.Empty, embed: eb.Build()).ConfigureAwait(false);
         }

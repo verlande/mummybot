@@ -90,7 +90,7 @@ namespace mummybot.Modules.Manage.Services
             
             if (!isCommand || !BotRestriction.TryGetValue(guild.Id, out var channelId) ||
                 usrMsg.Channel.Id == channelId) return false;
-            await usrMsg.Channel.SendConfirmAsync($"My command have been restricted to <#{channelId}>").ConfigureAwait(false);
+            await usrMsg.Channel.SendConfirmAsync($"My commands have been restricted to <#{channelId}>").ConfigureAwait(false);
             return true;
         }
     }

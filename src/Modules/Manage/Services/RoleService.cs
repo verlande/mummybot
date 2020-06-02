@@ -57,6 +57,9 @@ namespace mummybot.Modules.Manage.Services
                         foreach (var item in x)
                         {
                             var (user, roleId) = item;
+                            
+                            if (user.IsBot) return;
+                            
                             try
                             {
 //                                var roles = new List<IRole>();
@@ -123,7 +126,7 @@ namespace mummybot.Modules.Manage.Services
         {
             var gc = await _context.Guilds.SingleAsync(x => x.GuildId.Equals(guildId));
 
-            gc.AutoAssignRoles = new long[0] { };
+            gc.AutoAssignRoles = new long[] { };
             _context.Guilds.Update(gc);
             await _context.SaveChangesAsync();
 
