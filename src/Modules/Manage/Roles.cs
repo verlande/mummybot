@@ -154,8 +154,8 @@ namespace mummybot.Modules.Manage
                     Context.Guild.Roles.Count, rolesPerPage).ConfigureAwait(false);
             }
 
-            [Command("Checkperms"), Summary("View permissions of a user"), Remarks("<user>")]
-            public async Task Perms(IGuildUser arg = null)
+            [Command("Permissions"), Alias("Perms"), Summary("View permissions of a user"), Remarks("<user>")]
+            public async Task Permissions(IGuildUser arg = null)
             {
                 var sb = new StringBuilder();
                 var user = arg ?? (IGuildUser)Context.User;

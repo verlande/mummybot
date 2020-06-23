@@ -181,7 +181,7 @@ namespace mummybot.Modules.Utility
             sb.AppendLine($"Offline {Context.Guild.Users.Count(x => x.Status == UserStatus.Offline)}");
             sb.AppendLine($"Bot {Context.Guild.Users.Count(x => x.IsBot)}");
 
-            await Context.Channel.SendConfirmAsync(sb.ToString()).ConfigureAwait(false);
+            await Context.Channel.SendConfirmAsync(sb.ToString(), $"{Context.Guild.Name} memeber count").ConfigureAwait(false);
         }
     }
 }

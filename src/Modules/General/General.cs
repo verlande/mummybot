@@ -4,6 +4,7 @@ using Discord;
 using Discord.Commands;
 using mummybot.Modules.General.Common;
 using mummybot.Extensions;
+using mummybot.Services;
 using System.Linq;
 using Discord.WebSocket;
 using System.Net.Http;
@@ -95,6 +96,19 @@ namespace mummybot.Modules.General
             var options = args.Split(" ");
             var r = new Random();
             await ReplyAsync(options[r.Next(options.Length)]).ConfigureAwait(false);
+        }
+
+        [Command("Snipe"), Summary("Display last deleted message")]
+        public async Task Snipe()
+        {
+            if (MessageService.SnipeDict.ContainsKey(Context.Channel.Id))
+            {
+                var dict = MessageService.SnipeDict[Context.Channel.Id];
+                // ReSharper disable once SpecifyACultureInStringConversionExplicitly
+                await Context.Channel.SendAuthorAsync(Context.Guild.GetUser(dict.AuthorId), dict.Content, $"Sent at {dict.CreatedAt}\n• Requested by {Context.User}").ConfigureAwait(false);
+                return;
+            }
+            await Context.Channel.SendErrorAsync(string.Empty, "Nothing to snipe", $"• Requested by {Context.User}").ConfigureAwait(false);
         }
     }
 }

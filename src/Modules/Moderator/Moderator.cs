@@ -22,6 +22,29 @@ namespace mummybot.Modules.Moderator
             _userService = userService;
         }
 
+        [Command("Listbans"), Summary("Display list of banned users"), RequireUserPermission(GuildPermission.Administrator)]
+        public async Task Bans()
+        {
+            var banList = Context.Guild.GetBansAsync().Result;
+            var sb = new StringBuilder();
+
+            try
+            {
+                if (banList.Count > 0)
+                {
+                    foreach (var bans in banList) sb.Append($"{bans.User} - {bans.Reason}");
+
+                    await Context.Channel.SendConfirmAsync(sb.ToString(), "List of bans").ConfigureAwait(false);
+                    return;
+                }
+                await Context.Channel.SendConfirmAsync("No bans to display").ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                await Context.Channel.SendErrorAsync("Error fetching ban list", ex.Message).ConfigureAwait(false);
+            }
+        }
+
         [Command("Tagban"), Summary("Ban/Unban a user from creating tags in your guild"), RequireUserPermission(GuildPermission.Administrator)]
         public async Task TagBan(SocketGuildUser user)
         {   

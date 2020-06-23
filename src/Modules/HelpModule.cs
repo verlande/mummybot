@@ -26,7 +26,7 @@ namespace mummybot.Modules
             var embed = new EmbedBuilder
             {
                 Title = "mummybot Help",
-                Description = $"{CommandHandlerService.DefaultPrefix}help <module>\n{_commands.Commands.Count(x => x.Name != "ModuleBase" && x.Name != "Help" && x.Name != "Owner")} total commands",
+                Description = $"{CommandHandlerService.DefaultPrefix}help <module>\n{_commands.Commands.Count(x => x.Module.Name != "ModuleBase" && x.Module.Name != "Owner" && x.Module.Name != "Help")} total commands",
                 Color = Color.Magenta,
                 Footer = new EmbedFooterBuilder()
                 .WithText("All commands are case insensitive")
@@ -39,6 +39,12 @@ namespace mummybot.Modules
                 }
             else
             {
+                if ("Owner".Equals(module, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    var application = await _client.GetApplicationInfoAsync().ConfigureAwait(false);
+                    if (!application.Owner.Id.Equals(Context.User.Id))
+                        return;
+                }
                 var mod = _commands.Modules.FirstOrDefault(m =>
                     string.Equals(m.Name.Replace("Module", ""), module, StringComparison.CurrentCultureIgnoreCase));
                 if (mod == null) await ReplyAsync("No module could be found").ConfigureAwait(false);
