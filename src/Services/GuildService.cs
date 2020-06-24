@@ -184,7 +184,6 @@ namespace mummybot.Services
                         Username = Utils.FullUserName(users),
                         Nickname = users.Nickname,
                         GuildId = users.Guild.Id,
-                        Avatar = users.GetAvatarUrl(),
                         Joined = users.JoinedAt.Value.UtcDateTime
                     });
                 }

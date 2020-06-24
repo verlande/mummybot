@@ -76,8 +76,6 @@ namespace mummybot
 
                 entity.Property(e => e.Id).HasColumnName("id");
 
-                entity.Property(e => e.Avatar).HasColumnName("avatar");
-
                 entity.Property(e => e.GuildId).HasColumnName("guildid");
 
                 entity.Property(e => e.Joined).HasColumnName("joined");

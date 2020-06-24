@@ -87,7 +87,6 @@ namespace mummybot.Services
                     Username = Utils.FullUserName((SocketUser)user),
                     Nickname = user.Nickname,
                     GuildId = user.Guild.Id,
-                    Avatar = user.GetAvatarUrl(),
                     Joined = user.JoinedAt.Value.UtcDateTime
                 });
                 

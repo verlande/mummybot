@@ -23,7 +23,6 @@ create table if not exists users
     username  varchar(32) not null,
     nickname  varchar(32),
     guildid   bigint      not null,
-    avatar    text,
     tagbanned boolean default false,
     joined    timestamp,
     constraint users_pkey
