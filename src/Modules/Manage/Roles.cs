@@ -72,7 +72,7 @@ namespace mummybot.Modules.Manage
 
             [Command("Rolerename"), Summary("Rename a role"), Remarks("<role> <rolename>"),
                 RequireBotPermission(GuildPermission.ManageRoles), RequireUserPermission(GuildPermission.ManageRoles)]
-            public async Task RoleRemove(IRole role, [Remainder] string newName)
+            public async Task Rolerename(IRole role, [Remainder] string newName)
             {
                 var guser = (IGuildUser)Context.User;
                 if (Context.User.Id != guser.Guild.OwnerId && guser.GetRoles().Max(x => x.Position) <= role.Position)

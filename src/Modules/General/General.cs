@@ -17,22 +17,15 @@ namespace mummybot.Modules.General
         [Command("Yomamma"), Summary("Send a \"Yomamma\" joke to a user")]
         public async Task Yomamma(IGuildUser user = null)
         {
+                _log.Info("hi there just testing"); return;
             if (user is null)
             {
                 await Context.Channel.SendErrorAsync(string.Empty, "Yomamma <@user>").ConfigureAwait(false);
                 return;
             }
-            try
-            {
-                using var http = new HttpClient();
-                var request = await http.GetStringAsync("https://api.yomomma.info/");
-                var result = JsonConvert.DeserializeObject<YoMamma>(request);
-                await ReplyAsync($"{user.Mention} {result.Joke}").ConfigureAwait(false);
-            }
-            catch (HttpRequestException ex)
-            {
-                await Context.Channel.SendErrorAsync(string.Empty, ex.Message).ConfigureAwait(false);
-            }
+            var r = new Random();
+            var yomammaList = new Yomamma().YomammaList;
+            await Context.Channel.ReplyAsync($"{user.Mention} {yomammaList[r.Next(yomammaList.Length)]}").ConfigureAwait(false);
         }
 
         [Command("Clap"), Summary("Clap between words")]

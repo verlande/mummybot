@@ -42,53 +42,16 @@ namespace mummybot.Modules.Utility
             await Context.Channel.SendConfirmAsync(sb.ToString(), "Duplicate nicknames").ConfigureAwait(false);
         }
 
-        [Command("Pastnicks"), Summary("Show past nicknames limited to 10"), Alias("pn")]
-        public async Task LastNicks(SocketGuildUser arg)
-        {
-            var user = arg ?? Context.User;
-
-            var result = Database.UsersAudit.Where(u => u.UserId.Equals(user.Id)
-                && u.GuildId.Equals(Context.Guild.Id)).OrderByDescending(u => u.Id).Take(10);
-
-            if (!result.Any())
-                await Context.Channel.SendErrorAsync(string.Empty, $"No nickname history for {Utils.FullUserName(user)}").ConfigureAwait(false);
-            else
-            {
-                var sb = new StringBuilder();
-                foreach (var res in result)
-                    if (!string.IsNullOrEmpty(res.Nickname))
-                        sb.AppendLine($"{Format.Bold(res.Nickname)} `{res.ChangedOn}`");
-                await Context.Channel.SendAuthorAsync((IGuildUser)user, sb.ToString(), $"User ID: {user.Id}\n• Requested by {Context.User}").ConfigureAwait(false);
-            }
-        }
-
-        [Command("Pastusername"), Summary("Show past usernames limited to 10"), Alias("pu")]
-        public async Task Usernames(SocketGuildUser arg)
-        {
-            var user = arg ?? Context.User;
-
-            var result = Database.UsersAudit.Where(u => u.UserId.Equals(user.Id)).Select(x => new { x.Username }).Take(10);
-
-            if (!result.Any())
-                await Context.Channel.SendErrorAsync(string.Empty, $"No username history for {Utils.FullUserName(user)}").ConfigureAwait(false);
-            else
-            {
-                var sb = new StringBuilder();
-                foreach (var res in result.Distinct())
-                    if (!string.IsNullOrEmpty(res.Username)) sb.AppendLine(Format.Bold(res.Username));
-                await Context.Channel.SendAuthorAsync((IGuildUser)user, sb.ToString(), $"User ID: {user.Id}\n• Requested by {Context.User}").ConfigureAwait(false);
-            }
-        }
-
-        [Command("Newusers"), Summary("Lists 5 newest users"), Alias("nu")]
+        [Command("Newusers"), Summary("Lists 10 newest users"), Alias("nu")]
         public async Task NewUsers()
         {
             var eb = new EmbedBuilder().WithTitle("New users")
-                .WithColor(Utils.GetRandomColor());
+                .WithColor(Utils.GetRandomColor())
+                .WithFooter($"• Requested by {Context.User}");
 
             var users = Context.Guild.Users.ToList().Where(u => !u.IsBot).OrderByDescending(u => u.JoinedAt).Take(10);
 
-            foreach (var user in users) eb.AddField($"{user} ({user.Id})", user.JoinedAt);
+            foreach (var user in users) eb.AddField($"{user} ({user.Id})", user.JoinedAt.Value.ToString("g"));
             await ReplyAsync(string.Empty, embed: eb.Build()).ConfigureAwait(false);
         }
     }

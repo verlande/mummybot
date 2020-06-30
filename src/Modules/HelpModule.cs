@@ -28,6 +28,7 @@ namespace mummybot.Modules
                 Title = "mummybot Help",
                 Description = $"{CommandHandlerService.DefaultPrefix}help <module>\n{_commands.Commands.Count(x => x.Module.Name != "ModuleBase" && x.Module.Name != "Owner" && x.Module.Name != "Help")} total commands",
                 Color = Color.Magenta,
+                ThumbnailUrl = Context.Client.CurrentUser.GetAvatarUrl(size: 512),
                 Footer = new EmbedFooterBuilder()
                 .WithText("All commands are case insensitive")
             };

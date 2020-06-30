@@ -22,5 +22,8 @@ namespace mummybot.Extensions
 
         public static async Task<IEnumerable<IGuildUser>> GetMembersAsync(this IRole role) =>
             (await role.Guild.GetUsersAsync(CacheMode.AllowDownload).ConfigureAwait(false)).Where(u => u.RoleIds.Contains(role.Id)) ?? Enumerable.Empty<IGuildUser>();
+
+        public static IRole HightestRole(this IGuildUser user) 
+            => user.RoleIds.Select(x => user.Guild.GetRole(x)).OrderByDescending(x => x.Position).FirstOrDefault();
     }
 }

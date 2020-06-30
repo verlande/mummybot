@@ -9,6 +9,9 @@ using System.Text;
 using System.Threading.Tasks;
 using mummybot.Extensions;
 using mummybot.Attributes;
+using mummybot.Modules.General.Common;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace mummybot.Modules.Utility
 {
@@ -72,6 +75,21 @@ namespace mummybot.Modules.Utility
             if (user.GuildPermissions.Administrator)
                 await Context.Channel.SendConfirmAsync($"{Utils.FullUserName(user)} is an admin").ConfigureAwait(false);
             else await Context.Channel.SendConfirmAsync($"{Utils.FullUserName(user)} is not an admin").ConfigureAwait(false);
+        }
+
+        [Command("Mods"), Summary("List moderators")]
+        public async Task Mods()
+        {
+            var guild = (IGuild)Context.Guild;
+            var users = new List<IGuildUser>();
+            await guild.DownloadUsersAsync().ConfigureAwait(false);
+            var usrs = await guild.GetUsersAsync().ConfigureAwait(false);
+            var sb = new StringBuilder();
+
+            foreach (SocketGuildUser user in usrs)
+                if (user.Roles.Any(x => x.Permissions.ManageMessages && x.Permissions.KickMembers && x.Permissions.ManageRoles && x.Permissions.Administrator) && !user.IsBot)
+                    sb.AppendLine($"{user}");
+            await Context.Channel.SendConfirmAsync(sb.ToString(), "List of Moderators").ConfigureAwait(false);
         }
 
         [Command("Guildinfo")]
