@@ -21,5 +21,8 @@ namespace mummybot.Extensions
             str.Replace("@everyone", "@everyοne", StringComparison.InvariantCultureIgnoreCase)
             .Replace("@here", "@һere", StringComparison.InvariantCultureIgnoreCase);
 
+        public static string MentionChannel(this string str) =>
+            $"<#{str}>";
+
     }
 }

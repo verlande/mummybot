@@ -105,42 +105,51 @@ namespace mummybot.Modules.Manage
             }
 
             [Command("FilterRegex"), Summary("Filter messages with regex (Advanced users)"), RequireUserPermission(GuildPermission.Administrator)]
-            public async Task FilterRegex(string pattern = "")
+            public async Task FilterRegex([Remainder] string pattern = "")
             {
                 var conf = await Database.Guilds.SingleAsync(x => x.GuildId.Equals(Context.Guild.Id)).ConfigureAwait(false);
 
-                if (string.IsNullOrEmpty(pattern))
+                if (string.IsNullOrEmpty(conf.Regex) && string.IsNullOrEmpty(pattern))
+                {
+                    await Context.Channel.SendErrorAsync(string.Empty, "FilterRegex <regex>\n\nUsing this command is limited to advanced users\n" +
+                        $"Test your pattern on {Format.Code("https://www.regextester.com/")}").ConfigureAwait(false);
+                    return;
+                }
+
+                if (string.IsNullOrEmpty(pattern) && !string.IsNullOrEmpty(conf.Regex))
                 {
                     if (!await PromptUserConfirmAsync(
-                            new EmbedBuilder().WithDescription("Do you want to remove Regex filtering?"))
+                            new EmbedBuilder().WithDescription("Do you want to remove Regex filtering?\n\n" + 
+                            $"Current Regex {Format.Code(conf.Regex)}"))
                         .ConfigureAwait(false)) return;
                     
                     _service.RegexFiltering.TryRemove(Context.Guild.Id, out _);
                     conf.Regex = null;
-                    await Context.Channel.SendConfirmAsync("Regex filtering disabled").ConfigureAwait(false);
+                    await Context.Channel.SendConfirmAsync("Regex filtering removed and disabled").ConfigureAwait(false);
                     return;
                 }
 
-                try
-                {
-                    if (Regex.Match("", pattern).Success && pattern.Length < 25)
+                if (!string.IsNullOrEmpty(pattern))
+                    try
                     {
-                        conf.Regex = pattern;
+                        if (pattern.Length < 25)
+                        {
+                            conf.Regex = pattern;
                         
-                        if (_service.RegexFiltering.ContainsKey(Context.Guild.Id))
-                            _service.RegexFiltering[Context.Guild.Id] = pattern;
+                            if (_service.RegexFiltering.ContainsKey(Context.Guild.Id))
+                                _service.RegexFiltering[Context.Guild.Id] = pattern;
 
-                        _service.RegexFiltering.TryAdd(Context.Guild.Id, pattern);
-                        Database.Update(conf);
-                        await Context.Channel.SendConfirmAsync($"Regex filtering set to {Format.Code(pattern)}")
-                            .ConfigureAwait(false);
+                            _service.RegexFiltering.TryAdd(Context.Guild.Id, pattern);
+                            Database.Update(conf);
+                            await Context.Channel.SendConfirmAsync($"Regex filtering set to {Format.Code(pattern)}")
+                                .ConfigureAwait(false);
+                        }
                     }
-                }
-                catch (ArgumentException ex)
-                {
-                    await Context.Channel.SendErrorAsync(string.Empty, ex.Message).ConfigureAwait(false);
-                    _log.Error(ex);
-                }
+                    catch (ArgumentException ex)
+                    {
+                        await Context.Channel.SendErrorAsync(string.Empty, ex.Message).ConfigureAwait(false);
+                        _log.Error(ex);
+                    }
             }
 
             [RequireUserPermission(GuildPermission.ManageGuild)]

@@ -49,7 +49,6 @@ namespace mummybot.Services
             get => processedCommands;
             set => processedCommands = value;
         }
-        public ConcurrentDictionary<ulong, bool> BlacklistedUsers { get; set; }
 
         public CommandHandlerService() { }
 
@@ -73,8 +72,6 @@ namespace mummybot.Services
 
 
             _discord.MessageReceived += MessageReceivedHandler;
-
-            BlacklistedUsers = new ConcurrentDictionary<ulong, bool>(_context.Blacklist.ToDictionary(x => x.UserId, x=> false));
         }
 
         public void AddServices(IServiceCollection services)

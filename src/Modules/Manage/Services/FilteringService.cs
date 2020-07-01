@@ -66,6 +66,7 @@ namespace mummybot.Modules.Manage.Services
 
             if (!RegexFiltering.ContainsKey(guild.Id) ||
                 !Regex.Match(msg.Content, RegexFiltering[guild.Id], RegexOptions.IgnoreCase).Success) return false;
+
             try
             {
                 await msg.DeleteAsync().ConfigureAwait(false);
@@ -84,12 +85,19 @@ namespace mummybot.Modules.Manage.Services
             if (guild is null || usrMsg is null) return false;
 
             var argPos = 0;
-            var isCommand = usrMsg.HasStringPrefix(new ConfigService().Config["prefix"], ref argPos) ||
+            var isCommand = usrMsg.HasStringPrefix(CommandHandlerService.DefaultPrefix, ref argPos) ||
                             usrMsg.HasMentionPrefix(_discord.CurrentUser, ref argPos);
-            
+
             if (!isCommand || !BotRestriction.TryGetValue(guild.Id, out var channelId) ||
                 usrMsg.Channel.Id == channelId) return false;
-            await usrMsg.Channel.SendConfirmAsync($"My commands have been restricted to <#{channelId}>").ConfigureAwait(false);
+            
+            await usrMsg.DeleteAsync().ConfigureAwait(false);
+            var msg = await usrMsg.Channel.SendConfirmAsync($"My commands have been restricted to {channelId.ToString().MentionChannel()}").ConfigureAwait(false);
+            
+            await Task.Delay(3500).ContinueWith(async x =>
+            {
+                await msg.DeleteAsync().ConfigureAwait(false);
+            });
             return true;
         }
     }

@@ -56,6 +56,7 @@ create table if not exists guilds
     regex           text         default null,
     botchannel      bigint       default 0                                      not null,
     autoassignroles bigint[]     default '{}'                                   not null,
+    blacklisted     boolean      default false                                  not null,
     constraint guilds_pkey
         primary key (id)
 );

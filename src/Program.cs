@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Threading.Tasks;
 using mummybot.Modules.Manage.Services;
 using System;
+using mummybot.Modules.Owner.Services;
 
 namespace mummybot
 {
@@ -48,6 +49,7 @@ namespace mummybot
                 .AddSingleton<Modules.Manage.Services.FilteringService>()
                 .AddSingleton<Modules.Runescape.Services.StatsService>()
                 .AddSingleton<RoleService>()
+                .AddSingleton<BlacklistService>()
                 .AddSingleton<MessageService>()
                 .AddSingleton<Services.GuildService>()
                 .AddSingleton<UserService>()
