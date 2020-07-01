@@ -17,7 +17,6 @@ namespace mummybot.Modules.General
         [Command("Yomamma"), Summary("Send a \"Yomamma\" joke to a user")]
         public async Task Yomamma(IGuildUser user = null)
         {
-                _log.Info("hi there just testing"); return;
             if (user is null)
             {
                 await Context.Channel.SendErrorAsync(string.Empty, "Yomamma <@user>").ConfigureAwait(false);
