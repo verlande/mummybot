@@ -69,27 +69,26 @@ namespace mummybot.Modules.Utility
         public async Task Uptime() => await Context.Channel.SendConfirmAsync($"``{DateTime.Now - Process.GetCurrentProcess().StartTime:g}``")
             .ConfigureAwait(false);
 
-        [Command("Isadmin"), Summary("Check is a user is an admin")]
-        public async Task IsAdmin(SocketGuildUser user)
-        {
-            if (user.GuildPermissions.Administrator)
-                await Context.Channel.SendConfirmAsync($"{Utils.FullUserName(user)} is an admin").ConfigureAwait(false);
-            else await Context.Channel.SendConfirmAsync($"{Utils.FullUserName(user)} is not an admin").ConfigureAwait(false);
-        }
-
         [Command("Mods"), Summary("List moderators")]
         public async Task Mods()
         {
             var guild = (IGuild)Context.Guild;
-            var users = new List<IGuildUser>();
             await guild.DownloadUsersAsync().ConfigureAwait(false);
             var usrs = await guild.GetUsersAsync().ConfigureAwait(false);
             var sb = new StringBuilder();
 
             foreach (SocketGuildUser user in usrs)
-                if (user.Roles.Any(x => x.Permissions.ManageMessages && x.Permissions.KickMembers && x.Permissions.ManageRoles && x.Permissions.Administrator) && !user.IsBot)
-                    sb.AppendLine($"{user}");
-            await Context.Channel.SendConfirmAsync(sb.ToString(), "List of Moderators").ConfigureAwait(false);
+                if (user.Roles.Any(x => x.Permissions.ManageMessages && x.Permissions.KickMembers && x.Permissions.ManageRoles && x.Permissions.Administrator))
+                    _ = (user.Status switch
+                    {
+                        UserStatus.Online => sb.AppendLine($"{user.Mention} - Online"),
+                        UserStatus.Idle | UserStatus.AFK => sb.AppendLine($"{user.Mention} - Idle"),
+                        UserStatus.DoNotDisturb => sb.AppendLine($"{user.Mention} - Do Not Disturb"),
+                        UserStatus.Invisible | UserStatus.Offline => sb.AppendLine($"{user.Mention} - Offline"),
+                        _ => throw new NotImplementedException(),
+                    });
+
+            await Context.Channel.SendConfirmAsync("List of Moderators", sb.ToString(), footer: $"• Requested by {Context.User}").ConfigureAwait(false);
         }
 
         [Command("Guildinfo")]
