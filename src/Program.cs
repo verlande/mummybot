@@ -23,7 +23,7 @@ namespace mummybot
 #if DEBUG
                     LogLevel = LogSeverity.Debug,
 #else
-                    LogLevel = LogSeverity.Info,
+                    LogLevel = LogSeverity.Verbose,
 #endif
                     MessageCacheSize = 500,
                     TotalShards = 1,
@@ -32,11 +32,7 @@ namespace mummybot
                 .AddSingleton(new CommandService(new CommandServiceConfig
                 {
                     DefaultRunMode = RunMode.Async,
-#if DEBUG
                     LogLevel = LogSeverity.Debug,
-#else
-                    LogLevel = LogSeverity.Info,
-#endif
                     CaseSensitiveCommands = false,
                     ThrowOnError = false
                 }))
@@ -56,12 +52,14 @@ namespace mummybot
                 .AddSingleton<Services.GuildService>()
                 .AddSingleton<UserService>()
                 .AddSingleton<CommandHandlerService>()
-                .AddSingleton<DebugLoggingService>()
+                .AddSingleton<LoggingService>()
+                .AddSingleton<CommandLogging>()
                 .AddSingleton<ConfigService>()
                 .AddSingleton<StartupService>();
 
             var provider = services.BuildServiceProvider();
-            provider.GetRequiredService<DebugLoggingService>();
+            provider.GetRequiredService<LoggingService>();
+            provider.GetRequiredService<CommandLogging>();
 
             await provider.GetRequiredService<StartupService>().RunAsync().ConfigureAwait(false);
             provider.GetService<CommandHandlerService>().AddServices(services);
@@ -73,7 +71,7 @@ namespace mummybot
             provider.GetRequiredService<CommandService>();
             provider.GetRequiredService<CommandHandlerService>();
             provider.GetRequiredService<RoleService>();
-            NLogSetup.SetupLogger();
+            provider.GetRequiredService<BlacklistService>();
 
             await Task.Delay(-1).ConfigureAwait(false);
         }

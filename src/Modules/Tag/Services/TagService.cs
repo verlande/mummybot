@@ -10,14 +10,13 @@ namespace mummybot.Modules.Tag.Services
 {
     public class TagService : INService
     {
-        private readonly Logger _log;
+        protected readonly Logger _log = LogManager.GetLogger("tagfile");
         private readonly mummybotDbContext _context;
         private readonly DiscordSocketClient _discord;
         private readonly UserService _userService;
 
         public TagService(DiscordSocketClient discord, mummybotDbContext context, UserService userService)
         {
-            _log = LogManager.GetCurrentClassLogger();
             _discord = discord;
             _context = context;
             _userService = userService;
@@ -45,7 +44,7 @@ namespace mummybot.Modules.Tag.Services
 
             await _context.Tags.AddAsync(tag);
             await _context.SaveChangesAsync();
-            _log.Info($"Inserted Tag \"{name}\" u: {user.Id} g: {guild.Id}");
+            _log.Info($"Created \"{name}\" for {user} ({user.Id}) in {guild.Name} ({guild.Id})");
 
             return new TagController(context, _discord, tag);
         }

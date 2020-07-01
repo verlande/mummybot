@@ -12,7 +12,7 @@ namespace mummybot.Services
     {
         private readonly DiscordSocketClient _discord;
         private readonly mummybotDbContext _context;
-        private readonly Logger _log;
+        protected readonly Logger _log = LogManager.GetLogger("logfile");
 
         public UserService(DiscordSocketClient discord, mummybotDbContext context)
         {
@@ -20,8 +20,6 @@ namespace mummybot.Services
             _context = context;
             _discord.GuildMemberUpdated += UserUpdated;
             _discord.GuildUpdated += GuildUpdated;
-
-            _log = LogManager.GetCurrentClassLogger();
         }
 
         private Task UserUpdated(SocketGuildUser before, SocketGuildUser after)
@@ -91,7 +89,7 @@ namespace mummybot.Services
                 });
                 
                 await _context.SaveChangesAsync();
-                _log.Info($"Inserted User {Utils.FullUserName((SocketUser)user)} ({user.Id})");
+                //_log.Info($"Inserted User {Utils.FullUserName((SocketUser)user)} ({user.Id})");
             }
             catch (Exception ex) { _log.Error(ex); }
         }

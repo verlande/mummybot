@@ -13,9 +13,9 @@ namespace mummybot.Modules.Manage.Services
 {
     public class RoleService : INService
     {
-        private readonly Logger _log;
         private readonly DiscordSocketClient _discord;
         private readonly mummybotDbContext _context;
+        protected readonly Logger _log = LogManager.GetLogger("logfile");
 
         public ConcurrentDictionary<ulong, long[]> AutoAssignRoles { get; }
 
@@ -24,7 +24,6 @@ namespace mummybot.Modules.Manage.Services
 
         public RoleService(DiscordSocketClient discord, mummybotDbContext context)
         {
-            _log = LogManager.GetCurrentClassLogger();
             _discord = discord;
             _context = context;
 

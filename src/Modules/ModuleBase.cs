@@ -20,14 +20,12 @@ namespace mummybot.Modules
         // ReSharper disable once MemberCanBeProtected.Global
         public mummybotDbContext Database { get; set; }
         public DiscordSocketClient _client { get; set; }
-        protected readonly Logger _log;
-
+        protected readonly Logger _log = LogManager.GetCurrentClassLogger();
 
         protected ModuleBase(bool isTopLevelModule = true)
         {
             ModuleTypeName = isTopLevelModule ? this.GetType().Name : this.GetType().DeclaringType.Name;
             LowerModuleTypeName = ModuleTypeName.ToLowerInvariant();
-            _log = LogManager.GetCurrentClassLogger();
         }
 
         protected async Task<bool> PromptUserConfirmAsync(EmbedBuilder embed)

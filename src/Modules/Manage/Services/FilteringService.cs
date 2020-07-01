@@ -16,7 +16,7 @@ namespace mummybot.Modules.Manage.Services
 {
     public class FilteringService : IEarlyBehavior, INService
     {
-        private readonly Logger _log;
+        protected readonly Logger _log = LogManager.GetLogger("logfile");
         private readonly DiscordSocketClient _discord;
         public ConcurrentHashSet<ulong> InviteFiltering { get; }
         public ConcurrentDictionary<ulong, string> RegexFiltering { get; }
@@ -28,7 +28,6 @@ namespace mummybot.Modules.Manage.Services
         // ReSharper disable once SuggestBaseTypeForParameter
         public FilteringService(DiscordSocketClient discord, mummybotDbContext context)
         {
-            _log = LogManager.GetCurrentClassLogger();
             _discord = discord;
 
             InviteFiltering = new ConcurrentHashSet<ulong>(context.Guilds.Where(x => x.FilterInvites).Select(x => x.GuildId));

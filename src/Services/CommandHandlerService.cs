@@ -24,7 +24,8 @@ namespace mummybot.Services
         private readonly mummybotDbContext _context;
         private IServiceProvider _services;
         private readonly ConfigService _config;
-        private readonly Logger _log;
+        protected readonly Logger _log = LogManager.GetLogger("logfile");
+        protected readonly Logger _blog = LogManager.GetLogger("blockfile");
         private IEnumerable<IEarlyBehavior> _earlyBehaviors;
         private IEnumerable<ILateBlocker> _lateBlockers;
         private IEnumerable<IInputTransformer> _inputTransformers;
@@ -65,8 +66,6 @@ namespace mummybot.Services
 #else
             DefaultPrefix = Environment.GetEnvironmentVariable("PREFIX");
 #endif
-            _log = LogManager.GetCurrentClassLogger();
-            
             _clearUsersOnShortCooldown = new Timer(_ =>
             {
                 UsersOnShortCooldown.Clear();
@@ -119,11 +118,11 @@ namespace mummybot.Services
             
             
             
-            _log.Info("Executed | g:{0} | c: {1} | u: {2} | msg: {3}",
-                channel?.Guild.Id.ToString() ?? "-",
-                channel?.Id.ToString() ?? "-",
-                usrMsg.Author.Id,
-                usrMsg.Content);
+            //_log.Info("Executed | g:{0} | c: {1} | u: {2} | msg: {3}",
+            //    channel?.Guild.Id.ToString() ?? "-",
+            //    channel?.Id.ToString() ?? "-",
+            //    usrMsg.Author.Id,
+            //    usrMsg.Content);
             
             ProcessedCommands += 1;
             return Task.CompletedTask;
@@ -145,12 +144,12 @@ namespace mummybot.Services
                             errorMessage
                             //exec.Result.ErrorReason // {4}
                             );*/
-            _log.Error("Err | g:{0} | c: {1} | u: {2} | msg: {3}\n\tErr: {4}",
-                channel?.Guild.Id.ToString() ?? "-",
-                channel?.Id.ToString() ?? "-",
-                usrMsg.Author.Id,
-                usrMsg.Content,
-                errorMessage);
+            //_log.Error("Err | g:{0} | c: {1} | u: {2} | msg: {3}\n\tErr: {4}",
+            //    channel?.Guild.Id.ToString() ?? "-",
+            //    channel?.Id.ToString() ?? "-",
+            //    usrMsg.Author.Id,
+            //    usrMsg.Content,
+            //    errorMessage);
         }
 
         private async Task MessageReceivedHandler(SocketMessage msg)
@@ -168,12 +167,9 @@ namespace mummybot.Services
             }
             catch (Exception ex)
             {
-                _log.Warn("Error in CommandHandler");
-                _log.Warn(ex);
+                _log.Error(ex);
                 if (ex.InnerException != null)
-                {
-                    _log.Warn(ex.InnerException);
-                }
+                    _log.Error(ex.InnerException);
             }
         }
         
@@ -187,13 +183,13 @@ namespace mummybot.Services
                 {
                     if (beh.BehaviorType == ModuleBehaviorType.Blocker)
                     {
-                        _log.Info("Blocked User: [{0}] Message: [{1}] Service: [{2}]", usrMsg.Author,
+                        _blog.Info("Blocked User: [{0}] Message: [{1}] Service: [{2}]", usrMsg.Author,
                             usrMsg.Content, beh.GetType().Name);
                         return;
                     }
                     else if (beh.BehaviorType == ModuleBehaviorType.Executor)
                     {
-                        _log.Info("User [{0}] executed [{1}] in [{2}]", usrMsg.Author, usrMsg.Content,
+                        _blog.Info("User [{0}] executed [{1}] in [{2}]", usrMsg.Author, usrMsg.Content,
                             beh.GetType().Name);
                     }
 
