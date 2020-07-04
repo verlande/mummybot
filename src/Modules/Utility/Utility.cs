@@ -1,6 +1,5 @@
 ﻿using Discord.Commands;
 using Discord.WebSocket;
-using System;
 using System.Text;
 using System.Threading.Tasks;
 using mummybot.Extensions;

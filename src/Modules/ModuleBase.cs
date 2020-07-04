@@ -5,6 +5,7 @@ using mummybot.Extensions;
 using mummybot.Services;
 using NLog;
 using System.Threading.Tasks;
+using mummybot.Attributes;
 // ReSharper disable UnusedAutoPropertyAccessor.Local
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 // ReSharper disable InconsistentNaming

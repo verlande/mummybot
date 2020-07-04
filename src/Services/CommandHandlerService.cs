@@ -23,7 +23,6 @@ namespace mummybot.Services
         private readonly CommandService _commands;
         private readonly mummybotDbContext _context;
         private IServiceProvider _services;
-        private readonly ConfigService _config;
         protected readonly Logger _log = LogManager.GetLogger("logfile");
         protected readonly Logger _blog = LogManager.GetLogger("blockfile");
         private IEnumerable<IEarlyBehavior> _earlyBehaviors;
@@ -58,10 +57,9 @@ namespace mummybot.Services
             _commands = commands;
             _context = context;
             _services = services;
-            _config = config;
 
 #if DEBUG
-            DefaultPrefix = _config.Config["prefix"];
+            DefaultPrefix = config.Config["prefix"];
 #else
             DefaultPrefix = Environment.GetEnvironmentVariable("PREFIX");
 #endif

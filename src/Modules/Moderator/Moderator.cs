@@ -9,7 +9,6 @@ using System;
 using mummybot.Services;
 using System.Text;
 using Discord.Net;
-using System.Globalization;
 
 namespace mummybot.Modules.Moderator
 {

@@ -2,6 +2,7 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using mummybot.Extensions;
+using mummybot.Modules.Manage.Services;
 using System;
 using System.Linq;
 using System.Text;
@@ -12,7 +13,7 @@ namespace mummybot.Modules.Manage
     public partial class Manage
     {
         [Summary("Role management")]
-        public class Roles : mummybotSubmodule<Services.RoleService>
+        public class Roles : mummybotSubmodule<RoleService>
         {
             [Command("AutoAssignRole"), Alias("aar"), Summary("Auto assign a role once a user joins"),
                 RequireBotPermission(GuildPermission.ManageRoles), RequireUserPermission(GuildPermission.Administrator)]

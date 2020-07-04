@@ -3,7 +3,6 @@ using Discord;
 using Discord.Commands;
 using mummybot.Extensions;
 using System.Linq;
-using Discord.WebSocket;
 using System.Text;
 
 namespace mummybot.Modules.Utility

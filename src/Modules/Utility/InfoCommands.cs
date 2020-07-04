@@ -9,9 +9,6 @@ using System.Text;
 using System.Threading.Tasks;
 using mummybot.Extensions;
 using mummybot.Attributes;
-using mummybot.Modules.General.Common;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 
 namespace mummybot.Modules.Utility
 {
