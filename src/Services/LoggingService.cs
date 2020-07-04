@@ -17,7 +17,7 @@ namespace mummybot.Services
             commands.CommandExecuted += Executed;
         }
 
-        private async Task Executed(Optional<CommandInfo> command, ICommandContext context, IResult result)
+        private Task Executed(Optional<CommandInfo> command, ICommandContext context, IResult result)
         {
             _log.Info($"Executing \"{command.Value.Name}\" for {context.User} ({context.User.Id}) in {context.Guild.Name} ({context.Guild.Id})/{context.Channel.Name}");
             if (result.IsSuccess)
@@ -25,6 +25,7 @@ namespace mummybot.Services
             if (!string.IsNullOrEmpty(result?.ErrorReason))
                 _log.Error(result.ErrorReason);
                 //await context.Channel.SendErrorAsync(string.Empty, result.ErrorReason).ConfigureAwait(false);
+            return Task.CompletedTask;
         }
 
         private Task OnLog(LogMessage msg)
