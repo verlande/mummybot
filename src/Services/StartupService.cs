@@ -14,20 +14,17 @@ namespace mummybot.Services
 {
     public class StartupService
     {
-        private readonly DiscordSocketClient _discord;
+        private DiscordSocketClient _discord { get; }
         private readonly CommandService _commands;
-        private readonly mummybotDbContext _context;
         private readonly IServiceProvider _provider;
-        private readonly Logger _log;
-        private string DefaultPrefix { get; set; }
+        protected readonly Logger _log = LogManager.GetCurrentClassLogger();
+        private string DefaultPrefix { get; }
 
-        public StartupService(DiscordSocketClient discord, CommandService commands, IServiceProvider provider, mummybotDbContext context)
+        public StartupService(DiscordSocketClient discord, CommandService commands, GuildService guildService, IServiceProvider provider, mummybotDbContext context)
         {
             _discord = discord;
             _commands = commands;
             _provider = provider;
-            _context = context;
-            _log = LogManager.GetCurrentClassLogger();
 
 #if DEBUG
             DefaultPrefix = new ConfigService().Config["prefix"];
@@ -39,60 +36,8 @@ namespace mummybot.Services
             var timerTask = RunPeriodically(Status, TimeSpan.FromSeconds(25), cancellationToken);
 
             _discord.Disconnected += Disconnected;
-            _discord.Connected += Connected;
         }
-        
-        private async Task Connected()
-        {
-            // Loop through guilds added when offline
-            foreach (var guilds in _discord.Guilds)
-            {
-                if (await _context.Guilds.AnyAsync(x => x.GuildId.Equals(guilds.Id) && x.OwnerId.Equals(guilds.OwnerId))) return;
-                if (await _context.Guilds.AnyAsync(x => x.GuildId.Equals(guilds.Id) && !x.OwnerId.Equals(guilds.OwnerId)))
-                {
-                    var guild = await _context.Guilds.SingleAsync(x => x.GuildId.Equals(guilds.Id));
-                    guild.OwnerId = guilds.OwnerId;
-                    _context.Guilds.Update(guild);
-                    await _context.SaveChangesAsync();
-                    _log.Info($"Updated guild owner {guilds.Name} ({guilds.Id})");
 
-                }
-
-                await _context.Guilds.AddAsync(new Guilds
-                {
-                    GuildId = guilds.Id,
-                    GuildName = guilds.Name,
-                    OwnerId = guilds.OwnerId,
-                    Region = guilds.VoiceRegionId
-                });
-
-                await _context.SaveChangesAsync();
-                _log.Info($"Inserted missing guild {guilds.Name} ({guilds.Id})");
-            }
-
-            var clientReady = new TaskCompletionSource<bool>();
-            Task SetClientReady()
-            {
-                Task.Run(async () =>
-                {
-                    clientReady.TrySetResult(true);
-                    try
-                    {
-                        foreach (var chan in (await _discord.GetDMChannelsAsync().ConfigureAwait(false)))
-                            await chan.CloseAsync().ConfigureAwait(false);
-                    }
-                    catch {}
-                });
-                return Task.CompletedTask;
-            }
-
-            // Update inactive guilds
-            //_context.Guilds.Where(x => !_discord.Guilds.Select(x => x.Id).Contains(x.GuildId) && x.Active/*!guildIds.Contains(x.GuildId)*/)
-            //    .ToList()
-            //    .Select(x => { x.Active = false; Console.WriteLine($"Set guild {x.GuildId} to inactive"); return x; })
-            //    .ToList();
-        }
-        
         public async Task RunAsync()
         {
             var config = new ConfigService();
@@ -103,7 +48,7 @@ namespace mummybot.Services
 #endif
             await _discord.StartAsync().ConfigureAwait(false);
             await _discord.SetStatusAsync(UserStatus.Online).ConfigureAwait(false);
-            await _commands.AddModulesAsync(this.GetType().GetTypeInfo().Assembly, _provider);
+            await _commands.AddModulesAsync(GetType().GetTypeInfo().Assembly, _provider);
         }
 
         private async void Status()

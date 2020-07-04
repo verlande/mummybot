@@ -5,57 +5,51 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
 using mummybot.Models;
-using mummybot.Services;
 using mummybot.Extensions;
+using mummybot.Modules.Owner.Services;
 using Discord;
 using System.Text;
 
 namespace mummybot.Modules.Owner
 {
     [Name("Owner"), RequireOwner]
-    public class Owner : ModuleBase
+    public class Owner : ModuleBase<BlacklistService>
     {
-        private readonly CommandHandlerService _commandHandlerService;
-
-        public Owner(CommandHandlerService commandHandlerService)
-        {
-            _commandHandlerService = commandHandlerService;
-        }
-
         [Command("Listguilds")]
         public async Task Listguilds()
         {
             var sb = new StringBuilder();
-            var guilds = _client.Guilds.Select(x => new { x.Name, x.Users, x.Owner });
+            var guilds = _client.Guilds.Select(x => new { x.Name, x.Users, x.Owner, x.Id });
 
             foreach (var guild in guilds)
-                sb.AppendLine($"{guild.Name} ({guild.Users.Count}) Owner: {guild.Owner}");
+                sb.AppendLine($"{guild.Name} ({guild.Id}) [{guild.Users.Count}] Owner: {guild.Owner}");
 
             await ReplyAsync(Format.Code(sb.ToString())).ConfigureAwait(false);
         }
 
-        [Command("Blacklist")]
+        [Command("ublacklist")]
         public async Task Blacklist(SocketUser user, [Remainder] string reason = "")
         {
             try
             {
-                if (!await Database.Blacklist.AnyAsync(x => x.UserId.Equals(user.Id)))
+                if (!await Database.UserBlacklist.AnyAsync(x => x.UserId.Equals(user.Id)))
                 {
-                    await Database.Blacklist.AddAsync(new Blacklist
+                    await Database.UserBlacklist.AddAsync(new UserBlacklist
                     {
                         UserId = user.Id,
                         Reason = reason
                     });
 
-                    _commandHandlerService.BlacklistedUsers.AddOrUpdate(user.Id, false, (key, old) => false);
-                    _log.Info($"User {user} ({user.Id}) blacklisted");
+                    _service.UserBlacklist.Add(user.Id);
+                    await Context.Channel.SendConfirmAsync("User blacklisted").ConfigureAwait(false);
+                    return;
                 }
 
-                if (await Database.Blacklist.AnyAsync(x => x.UserId.Equals(user.Id)))
+                if (await Database.UserBlacklist.AnyAsync(x => x.UserId.Equals(user.Id)))
                 {
-                    Database.Blacklist.Remove(Database.Blacklist.Single(x => x.UserId.Equals(user.Id)));
-                    _commandHandlerService.BlacklistedUsers.TryRemove(user.Id, out _);
-                    _log.Info($"User {user} ({user.Id}) removed from blacklist");
+                    Database.UserBlacklist.Remove(Database.UserBlacklist.Single(x => x.UserId.Equals(user.Id)));
+                    _service.UserBlacklist.TryRemove(user.Id);
+                    await Context.Channel.SendConfirmAsync($"User un-blacklisted").ConfigureAwait(false);
                 }
             }
             catch (Exception ex)
@@ -64,18 +58,41 @@ namespace mummybot.Modules.Owner
             }
         }
 
+        [Command("gblacklist")]
+        public async Task GuildBlackList(ulong guildId, [Remainder] string reason = "")
+        {
+            try
+            {
+                var guild = _client.GetGuild(guildId);
+                guild?.LeaveAsync().ConfigureAwait(false);
+
+                _service.GuildBlacklist.Add(guildId);
+                await Database.GuildBlacklist.AddAsync(new GuildBlacklist
+                {
+                    GuildId = guildId,
+                    Reason = reason
+                }).ConfigureAwait(false);
+                await Database.SaveChangesAsync().ConfigureAwait(false);
+
+                await Context.Channel.SendConfirmAsync("Guild has been blacklisted").ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                _log.Error(e);
+            }
+        }
+
         [Command("Sql")]
         public async Task Sql([Remainder] string sql)
         {
-            int res;
             try
             {
-                res = await Database.Database.ExecuteSqlCommandAsync(sql).ConfigureAwait(false);
+                var res = await Database.Database.ExecuteSqlRawAsync(sql).ConfigureAwait(false);
                 await ReplyAsync(res.ToString()).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
-                await Context.Channel.SendErrorAsync(string.Empty, ex.Message ?? ex.InnerException.Message).ConfigureAwait(false);
+                await Context.Channel.SendErrorAsync(string.Empty, ex.Message ?? ex.InnerException?.Message).ConfigureAwait(false);
                 _log.Error(ex);
             }
         }

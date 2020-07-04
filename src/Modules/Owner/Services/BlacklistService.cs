@@ -22,35 +22,37 @@ namespace mummybot.Modules.Owner.Services
         public BlacklistService(DiscordSocketClient discord, mummybotDbContext context)
         {
             _discord = discord;
-
+            
             GuildBlacklist = new ConcurrentHashSet<ulong>(
-                context.Guilds.Where(x => x.Blacklisted).Select(x => x.GuildId));
-			
-			UserBlacklist = new ConcurrentHashSet<ulong>(
-				context.Blacklist.Select(x => x.UserId));
+                context.GuildBlacklist.Select(x => x.GuildId));
 
-            _discord.JoinedGuild += async (guild) =>
+            UserBlacklist = new ConcurrentHashSet<ulong>(
+				context.UserBlacklist.Select(x => x.UserId));
+
+            _discord.Ready += async () =>
             {
-                if (GuildBlacklist.Contains(guild.Id))
+                var guilds = _discord.Guilds.Select(x => x.Id).ToList();
+                foreach (var guild in guilds.Where(guild => GuildBlacklist.Contains(guild)))
                 {
-                    await guild.LeaveAsync().ConfigureAwait(false);
-                    _log.Info($"Blocked guild {guild.Name} ({guild.Id})");
+                    await _discord.GetGuild(guild).LeaveAsync().ConfigureAwait(false);
+                    _log.Info($"Dropped guild {guild}");
                 }
-                return;
+            };
+
+            _discord.JoinedGuild += async guild =>
+            {
+                if (!GuildBlacklist.Contains(guild.Id)) return;
+                await guild.LeaveAsync().ConfigureAwait(false);
+                _log.Info($"Blocked guild {guild.Name} ({guild.Id})");
             };
         }
 
         public Task<bool> RunBehavior(DiscordSocketClient _, IGuild guild, IUserMessage msg)
         {
-            if (UserBlacklist.Contains(msg.Author.Id))
-            {
-                var argPos = 0;
-                var usrMsg = (IUserMessage)msg;
-                if (usrMsg.HasStringPrefix(CommandHandlerService.DefaultPrefix, ref argPos) ||
-                    usrMsg.HasMentionPrefix(_discord.CurrentUser, ref argPos))
-                    return Task.FromResult(true);
-            }
-            return Task.FromResult(false);
+            if (!UserBlacklist.Contains(msg.Author.Id)) return Task.FromResult(false);
+            var argPos = 0;
+            return Task.FromResult(msg.HasStringPrefix(CommandHandlerService.DefaultPrefix, ref argPos) ||
+                                   msg.HasMentionPrefix(_discord.CurrentUser, ref argPos));
         }
     }
 }

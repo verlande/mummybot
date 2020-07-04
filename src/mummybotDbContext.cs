@@ -27,7 +27,8 @@ namespace mummybot
         public virtual DbSet<Users> Users { get; set; }
         public virtual DbSet<UsersAudit> UsersAudit { get; set; }
         public virtual DbSet<Guilds> Guilds { get; set; }
-        public virtual DbSet<Blacklist> Blacklist { get; set; }
+        public virtual DbSet<UserBlacklist> UserBlacklist { get; set; }
+        public virtual DbSet<GuildBlacklist> GuildBlacklist { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -124,9 +125,6 @@ namespace mummybot
                 entity.Property(e => e.GuildName).HasColumnName("guildname")
                     .IsRequired();
 
-                entity.Property(e => e.OwnerId).HasColumnName("ownerid")
-                    .IsRequired();
-
                 entity.Property(e => e.Active).HasColumnName("active")
                     .IsRequired()
                     .HasDefaultValue("true");
@@ -153,14 +151,28 @@ namespace mummybot
                     .HasDefaultValueSql("'{}'");
             });
 
-            modelBuilder.Entity<Blacklist>(entity =>
+            modelBuilder.Entity<UserBlacklist>(entity =>
             {
-                entity.ToTable("blacklist");
+                entity.ToTable("user_blacklist");
 
                 entity.Property(e => e.Id).HasColumnName("id");
                 
                 entity.Property(e => e.UserId).HasColumnName("userid")
                     .IsRequired();
+                
+                entity.Property(e => e.Reason).HasColumnName("reason");
+                
+                entity.Property(e => e.CreatedAt).HasColumnName("createdat")
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            });
+            
+            modelBuilder.Entity<GuildBlacklist>(entity =>
+            {
+                entity.ToTable("guild_blacklist");
+
+                entity.Property(e => e.Id).HasColumnName("id");
+
+                entity.Property(e => e.GuildId).HasColumnName("guildid");
                 
                 entity.Property(e => e.Reason).HasColumnName("reason");
                 

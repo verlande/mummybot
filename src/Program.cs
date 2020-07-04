@@ -6,7 +6,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading.Tasks;
 using mummybot.Modules.Manage.Services;
-using System;
 using mummybot.Modules.Owner.Services;
 
 namespace mummybot
@@ -46,12 +45,13 @@ namespace mummybot
 #endif
                 }, ServiceLifetime.Transient)
                 .AddSingleton<Modules.Tag.Services.TagService>()
-                .AddSingleton<Modules.Manage.Services.FilteringService>()
+                .AddSingleton<FilteringService>()
                 .AddSingleton<Modules.Runescape.Services.StatsService>()
                 .AddSingleton<RoleService>()
                 .AddSingleton<BlacklistService>()
+                .AddSingleton<GreetingService>()
                 .AddSingleton<MessageService>()
-                .AddSingleton<Services.GuildService>()
+                .AddSingleton<GuildService>()
                 .AddSingleton<UserService>()
                 .AddSingleton<CommandHandlerService>()
                 .AddSingleton<LoggingService>()
@@ -68,12 +68,13 @@ namespace mummybot
 
             provider.GetRequiredService<ConfigService>();
             provider.GetRequiredService<MessageService>();
-            provider.GetRequiredService<Services.GuildService>();
+            provider.GetRequiredService<GuildService>();
             provider.GetRequiredService<UserService>();
             provider.GetRequiredService<CommandService>();
             provider.GetRequiredService<CommandHandlerService>();
             provider.GetRequiredService<RoleService>();
             provider.GetRequiredService<BlacklistService>();
+            provider.GetRequiredService<GreetingService>();
 
             await Task.Delay(-1).ConfigureAwait(false);
         }

@@ -19,7 +19,6 @@ namespace mummybot.Services
             _discord = discord;
             _context = context;
             _discord.GuildMemberUpdated += UserUpdated;
-            _discord.GuildUpdated += GuildUpdated;
         }
 
         private Task UserUpdated(SocketGuildUser before, SocketGuildUser after)
@@ -54,21 +53,6 @@ namespace mummybot.Services
                 }
             });
             return Task.CompletedTask;
-        }
-
-
-        private async Task GuildUpdated(SocketGuild before, SocketGuild after)
-        {
-            if (before.Name.Equals(after.Name) || before.OwnerId.Equals(after.OwnerId)) return;
-
-            var ownerId = await _context.Guilds.SingleAsync(g => g.OwnerId.Equals(after.OwnerId));
-            if (ownerId == null)
-            {
-                ownerId.OwnerId = after.OwnerId;
-                ownerId.GuildName = after.Name;
-                _context.Update(ownerId);
-                await _context.SaveChangesAsync();
-            }
         }
 
         public async Task<bool> UserExists(ulong userId, ulong guildId) 

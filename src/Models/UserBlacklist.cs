@@ -2,7 +2,7 @@
 
 namespace mummybot.Models
 {
-    public class Blacklist
+    public class UserBlacklist
     {
         public int Id { get; }
         public ulong UserId { get; set; }

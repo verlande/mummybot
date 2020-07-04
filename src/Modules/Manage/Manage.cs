@@ -5,8 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using mummybot.Extensions;
 using System.Threading.Tasks;
 using mummybot.Modules.Manage.Services;
-using System.Text.RegularExpressions;
 using System;
+using mummybot.Services;
 
 namespace mummybot.Modules.Manage
 {
@@ -15,74 +15,143 @@ namespace mummybot.Modules.Manage
         [Name("Manage")]
         public class ManageCommands : mummybotSubmodule<FilteringService>
         {
-            [Command("SetGreeting"), Summary("Sets a greeting for new members. Use %user% to include new user's name in the message")]
-            [RequireUserPermission(GuildPermission.ManageGuild)]
-            public async Task SetGreeting([Remainder] string greeting)
+            private readonly GreetingService _greeting;
+            private readonly GuildService _guildService;
+
+            public ManageCommands(GreetingService greeting, GuildService guildService)
             {
-                if (greeting.Length > 100)
+                _greeting = greeting;
+                _guildService = guildService;
+            }
+
+            [Command("SetJoinMessage"), Remarks("<join message>"), Summary("Set a message whenever a user joins")]
+            [RequireUserPermission(GuildPermission.ManageGuild)]
+            public async Task SetJoinMessage([Remainder] string message = "")
+            {
+                if (message.Length > 255)
                 {
-                    await Context.Channel.SendErrorAsync(string.Empty, "Greeting message length over 100 chars")
+                    await Context.Channel.SendErrorAsync(string.Empty, "Message must be lower than 255 in length")
                         .ConfigureAwait(false);
                     return;
                 }
-                var guild = await Database.Guilds.SingleOrDefaultAsync(g => g.GuildId.Equals(Context.Guild.Id));
-                guild.Greeting = greeting;
 
-                await Context.Channel.SendConfirmAsync("Greeting message has been set").ConfigureAwait(false);
-            }
-
-            [Command("ClearGreeting"), Summary("Clears greeting message")]
-            [RequireUserPermission(GuildPermission.ManageGuild)]
-            public async Task Cleargreeting()
-            {
-                var guild = await Database.Guilds.SingleOrDefaultAsync(g => g.GuildId.Equals(Context.Guild.Id));
-                if (string.IsNullOrWhiteSpace(guild.Greeting))
-                    await Context.Channel.SendErrorAsync(string.Empty, "Can't clear a greeting if you haven't set one").ConfigureAwait(false);
-                else
+                if (!string.IsNullOrEmpty(message))
                 {
-                    guild.Greeting = string.Empty;
-                    await Context.Channel.SendConfirmAsync("Cleared greeting message").ConfigureAwait(false);
+                    if (await _greeting.SetUserJoinLeaveMessage(GreetingService.JoinLeave.Join, Context.Guild.Id, message).ConfigureAwait(false))
+                    {
+                        await Context.Channel.SendConfirmAsync("User join message has been set").ConfigureAwait(false);
+                        return;
+                    }
+
+                    await Context.Channel.SendErrorAsync(string.Empty, "Something happened").ConfigureAwait(false);
+                    return;
+                }
+
+                if (_guildService.AllGuildConfigs.TryGetValue(Context.Guild.Id, out var conf))
+                {
+                    if (conf.Greeting == "**%user% has joined**")
+                    {
+                        await Context.Channel.SendConfirmAsync("Set a user join message\n" +
+                                                               "Using `%user%` will transform into @user")
+                            .ConfigureAwait(false);
+                        return;
+                    }
+                    
+                    var prompt = await PromptUserConfirmAsync(new EmbedBuilder()
+                        .WithDescription("Do you want to clear user join message?")).ConfigureAwait(false);
+
+                    if (prompt)
+                    {
+                        if (await _greeting.ClearUserJoinLeaveMessage(GreetingService.JoinLeave.Join, Context.Guild.Id).ConfigureAwait(false))
+                        {
+                            await Context.Channel.SendConfirmAsync(string.Empty, "User join message has been cleared")
+                                .ConfigureAwait(false);
+                            return;
+                        }
+
+                        await Context.Channel.SendErrorAsync(string.Empty, "Something happened").ConfigureAwait(false);
+                    }
                 }
             }
 
-            [Command("SetGoodbye"), Summary("Set goodbye when a user leaves. Use %user% to include new user's name in the message")]
+            [Command("SetLeaveMessage"), Remarks("<leave message>"), Summary("Set a message whenever a user leaves")]
             [RequireUserPermission(GuildPermission.ManageGuild)]
-            public async Task Setgoodbye([Remainder] string goodbye)
+            public async Task SetLeaveMessage([Remainder] string message = "")
             {
-                if (goodbye.Length > 100)
+                if (message.Length > 255)
                 {
-                    await Context.Channel.SendErrorAsync(string.Empty, "Goodbye message length over 100 chars")
+                    await Context.Channel.SendErrorAsync(string.Empty, "Message must be lower than 255 in length")
                         .ConfigureAwait(false);
                     return;
                 }
-                var guild = await Database.Guilds.SingleOrDefaultAsync(g => g.GuildId.Equals(Context.Guild.Id));
-                guild.Goodbye = goodbye;
 
-                await Context.Channel.SendConfirmAsync("Goodbye message has been set").ConfigureAwait(false);
-            }
-
-            [Command("ClearGoodbye"), Summary("Clears goodbye message")]
-            [RequireUserPermission(GuildPermission.ManageGuild)]
-            public async Task Cleargoodbye()
-            {
-                var guild = await Database.Guilds.SingleOrDefaultAsync(g => g.GuildId.Equals(Context.Guild.Id));
-                if (string.IsNullOrWhiteSpace(guild.Goodbye))
-                    await Context.Channel.SendErrorAsync(string.Empty, "Can't clear a goodbye message if you haven't set one")
-                        .ConfigureAwait(false);
-                else
+                if (!string.IsNullOrEmpty(message))
                 {
-                    guild.Goodbye = string.Empty;
-                    await Context.Channel.SendConfirmAsync("Cleared goodbye message").ConfigureAwait(false);
+
+                    if (await _greeting.SetUserJoinLeaveMessage(GreetingService.JoinLeave.Leave, Context.Guild.Id, message).ConfigureAwait(false))
+                    {
+                        await Context.Channel.SendConfirmAsync("User leave message has been set").ConfigureAwait(false);
+                        return;
+                    }
+
+                    await Context.Channel.SendErrorAsync(string.Empty, "Something happened").ConfigureAwait(false);
+                    return;
+                }
+
+                if (_guildService.AllGuildConfigs.TryGetValue(Context.Guild.Id, out var conf))
+                {
+                    if (conf.Greeting == "**%user% has left**")
+                    {
+                        await Context.Channel.SendConfirmAsync("Set a user leave message\n" +
+                                                               "Using `%user%` will transform into @user")
+                            .ConfigureAwait(false);
+                        return;
+                    }
+                    
+                    var prompt = await PromptUserConfirmAsync(new EmbedBuilder()
+                        .WithDescription("Do you want to clear user leave message?")).ConfigureAwait(false);
+
+                    if (prompt)
+                    {
+                        if (await _greeting.ClearUserJoinLeaveMessage(GreetingService.JoinLeave.Leave, Context.Guild.Id).ConfigureAwait(false))
+                        {
+                            await Context.Channel.SendConfirmAsync(string.Empty, "User leave message has been cleared")
+                                .ConfigureAwait(false);
+                            return;
+                        }
+
+                        await Context.Channel.SendErrorAsync(string.Empty, "Something happened").ConfigureAwait(false);
+                    }
                 }
             }
 
-            [Command("SetGreetchl"), Summary("Set channel to send greeting and goodbye messages")]
+            [Command("SetJoinLeaveChannel"), Summary("Set channel to send join and leave message")]
             [RequireUserPermission(GuildPermission.ManageGuild)]
-            public async Task Setgreetchl(SocketTextChannel channel)
+            public async Task SetJoinLeaveChannel(SocketTextChannel channel = null)
             {
-                var guild = await Database.Guilds.SingleOrDefaultAsync(g => g.GuildId.Equals(Context.Guild.Id));
-                guild.GreetChl = channel.Id;
-                await Context.Channel.SendConfirmAsync($"Set greeting channel to {channel.Mention}").ConfigureAwait(false);
+                if (channel is null && _guildService.AllGuildConfigs.TryGetValue(Context.Guild.Id, out var conf))
+                {
+                    if (conf.GreetChl == 0)
+                    {
+                        await Context.Channel.SendErrorAsync(string.Empty, "Specify a channel").ConfigureAwait(false);
+                        return;
+                    }
+
+                    if (await PromptUserConfirmAsync(
+                        new EmbedBuilder().WithDescription("Do you want to disable join/leave messages?")
+                    ).ConfigureAwait(false))
+                    {
+
+                        await _greeting.SetChannel(Context.Guild.Id, 0).ConfigureAwait(false);
+                        await Context.Channel.SendConfirmAsync("Cleared and disabled join/leave messages")
+                            .ConfigureAwait(false);
+                        return;
+                    }
+                }
+                
+                await _greeting.SetChannel(Context.Guild.Id, channel.Id).ConfigureAwait(false);
+                await Context.Channel.SendConfirmAsync($"Set Join/Leave channel to {channel.Mention}")
+                    .ConfigureAwait(false);
             }
 
             [Command("FilterInv"), Summary("Toggle invite link filtering"), RequireUserPermission(GuildPermission.ManageGuild | GuildPermission.Administrator)]
@@ -158,6 +227,12 @@ namespace mummybot.Modules.Manage
             {
                 var conf = await Database.Guilds.SingleAsync(x => x.GuildId.Equals(Context.Guild.Id));
 
+                if (conf.BotChannel is 0 && channel is null)
+                {
+                    await Context.Channel.SendConfirmAsync("Choose a channel to restrict this bots commands to").ConfigureAwait(false);
+                    return;
+                }
+
                 if (channel is null)
                 {
                     conf.BotChannel = 0;
@@ -171,7 +246,7 @@ namespace mummybot.Modules.Manage
                 await Context.Channel.SendConfirmAsync($"Restricting bot commands to <#{channel.Id}>").ConfigureAwait(false);
             }
 
-            [Command("Botnick"), Summary("Sets this bots nickname"), RequireUserPermission(GuildPermission.ManageNicknames)]
+            [Command("BotNick"), Summary("Sets this bots nickname"), RequireUserPermission(GuildPermission.ManageNicknames)]
             public async Task Nick([Remainder] string nickname)
             {
                 if (nickname.Length > 32) return;

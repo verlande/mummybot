@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
@@ -15,9 +14,9 @@ namespace mummybot.Services
     {
         private readonly DiscordSocketClient _discord;
         private readonly mummybotDbContext _context;
-        private readonly Logger _log;
+        private readonly Logger _log = LogManager.GetLogger("logfile");
 
-        private ConcurrentDictionary<ulong, Guilds> AllGuildConfigs { get; set; }
+        public ConcurrentDictionary<ulong, Guilds> AllGuildConfigs { get; }
 
         public GuildService(DiscordSocketClient discord, mummybotDbContext context)
         {   
@@ -25,42 +24,34 @@ namespace mummybot.Services
             _context = context;
             _discord.JoinedGuild += JoinedGuild;
             _discord.LeftGuild += LeftGuild;
-            _discord.UserJoined += UserJoined;
-            _discord.UserLeft += UserLeft;
-
-            _log = LogManager.GetCurrentClassLogger();
+            _discord.GuildUpdated += GuildUpdated;
+            _discord.Ready += Ready;
 
             AllGuildConfigs = new ConcurrentDictionary<ulong, Guilds>(
-                _context.Guilds.ToDictionary(k => k.GuildId, v => v)
+                _context.Guilds.Where(x => x.Active).ToDictionary(k => k.GuildId, v => v)
             );
+            _log.Info($"Loaded {AllGuildConfigs.Count} guild configs");
         }
 
         private Task JoinedGuild(SocketGuild guild)
         {
             Task.Run(async () =>
             {
-                if (!AllGuildConfigs.ContainsKey(guild.Id))
+                try
                 {
                     await AddGuild(new Guilds
                     {
                         GuildId = guild.Id,
                         GuildName = guild.Name,
-                        OwnerId = guild.OwnerId,
-                        Region = guild.VoiceRegionId
-                    }).ConfigureAwait(false);
+                        Region = guild.VoiceRegionId,
+                        GreetChl = 0
+                    });
                 }
-                try
+                catch (Exception e)
                 {
-                    await guild.DefaultChannel.SendMessageAsync(
-                            $"Thanks for inviting me, use `{CommandHandlerService.DefaultPrefix}help` for my commands")
-                        .ConfigureAwait(false);
-                }
-                catch (Exception ex)
-                {
-                    _log.Error(ex.Message);
+                    _log.Error(e);
                 }
             });
-            
             return Task.CompletedTask;
         }
 
@@ -68,131 +59,113 @@ namespace mummybot.Services
         {
             Task.Run(async () =>
             {
-                AllGuildConfigs.TryRemove(guild.Id, out _);
-                var isActive = await _context.Guilds.SingleAsync(x => x.GuildId.Equals(guild.Id));
-                isActive.Active = false;
-                _context.Guilds.Update(isActive);
-                await _context.SaveChangesAsync();
-
-            });
-            return Task.CompletedTask;
-        }
-
-        private Task UserJoined(IGuildUser user)
-        {
-            Task.Run(async () =>
-            {
                 try
                 {
-                    if (AllGuildConfigs.TryGetValue(user.GuildId, out var cfg))
+                    if (AllGuildConfigs.TryGetValue(guild.Id, out var conf) != null)
                     {
-                        var channel = await user.Guild.GetTextChannelAsync(cfg.BotChannel).ConfigureAwait(false);
-                        if (channel != null)
-                        {
-                            var greeting = cfg.Greeting.Replace("%user%", user.Mention);
-                            await channel.SendMessageAsync(greeting).ConfigureAwait(false);
-                        }
+                        var gc = await _context.Guilds.SingleAsync(x => x.GuildId.Equals(guild.Id))
+                            .ConfigureAwait(false);
+                        gc.Active = false;
+                        AllGuildConfigs.TryRemove(guild.Id, out _);
+                        //AllGuildConfigs.AddOrUpdate(guild.Id, gc, (key, old) => gc);
+                        _context.Guilds.Update(gc);
+                        await _context.SaveChangesAsync().ConfigureAwait(false);
                     }
                 }
-                catch (Exception ex)
+                catch (Exception e)
                 {
-                    _log.Error(ex.Message);
+                    _log.Error(e);
                 }
             });
             return Task.CompletedTask;
         }
-
-        private Task UserLeft(IGuildUser user)
-        {
-            Task.Run(async () =>
-            {
-                try
-                {
-                    if (AllGuildConfigs.TryGetValue(user.GuildId, out var cfg))
-                    {
-                        var channel = await user.Guild.GetTextChannelAsync(cfg.BotChannel).ConfigureAwait(false);
-                        if (channel != null)
-                        {
-                            var goodbye = cfg.Goodbye.Replace("%user%", user.Mention);
-                            await channel.SendMessageAsync(goodbye).ConfigureAwait(false);
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _log.Error(ex.Message);
-                }
-            });
-            return Task.CompletedTask;
-        }
-
         private Task GuildUpdated(IGuild before, IGuild after)
         {
             Task.Run(async () =>
             {
-                var guild = await _context.Guilds.SingleAsync(x => x.GuildId.Equals(before.Id));
+                var gc = await _context.Guilds.SingleAsync(x => x.GuildId.Equals(before.Id));
 
                 if (!before.Name.Equals(after.Name))
-                    guild.GuildName = after.Name;
-                if (!before.OwnerId.Equals(after.OwnerId))
-                    guild.OwnerId = after.OwnerId;
+                    gc.GuildName = after.Name;
                 if (!before.VoiceRegionId.Equals(after.VoiceRegionId))
-                    guild.Region = after.VoiceRegionId;
+                    gc.Region = after.VoiceRegionId;
 
-                _context.Update(guild);
-                await _context.SaveChangesAsync();
+                _context.Update(gc);
+                AllGuildConfigs.AddOrUpdate(after.Id, gc, (key, old) => gc);
+                await _context.SaveChangesAsync().ConfigureAwait(false);
             });
             return Task.CompletedTask;
         }
 
         private async Task AddGuild(Guilds guild)
         {
-            var exists = await _context.Guilds.AnyAsync(x => x.GuildId == guild.GuildId);
             try
             {
-                if (exists)
-                {
-                    var gc = await _context.Guilds.SingleAsync(x => x.GuildId == guild.GuildId);
-                    gc.Active = true;
-                    _context.Guilds.Update(guild);
-                    await _context.SaveChangesAsync();
-                }
-                else
+                var gc = await _context.Guilds.SingleOrDefaultAsync(x => x.GuildId.Equals(guild.GuildId));
+
+                if (gc == null)
                 {
                     AllGuildConfigs.TryAdd(guild.GuildId, guild);
-                    _context.Guilds.Update(guild);
-                    await _context.SaveChangesAsync();
+                    await _context.Guilds.AddAsync(guild).ConfigureAwait(false);
+                    await _context.SaveChangesAsync().ConfigureAwait(false);
+                    return;
+                }
+                
+                if (!gc.Active)
+                {
+                    gc.Active = true;
+                    AllGuildConfigs.TryAdd(guild.GuildId, guild);
+                    //AllGuildConfigs.AddOrUpdate(gc.GuildId, gc, (key, old) => gc);
+                    _context.Guilds.Update(gc);
+                    await _context.SaveChangesAsync().ConfigureAwait(false);
                 }
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                _log.Error(ex.InnerException);
+                _log.Error(e);
             }
         }
 
-        private async Task SaveUsers(IEnumerable<SocketGuildUser> guildUsers)
+        private async Task Ready()
         {
-            try
+            foreach (var guild in _discord.Guilds)
             {
-                foreach (var users in guildUsers)
+                try
                 {
-                    if (await _context.Users.AnyAsync(u =>
-                        u.UserId.Equals(users.Id) && u.GuildId.Equals(users.Guild.Id))) return;
-                    await _context.Users.AddAsync(new Users
-                    {
-                        UserId = users.Id,
-                        Username = Utils.FullUserName(users),
-                        Nickname = users.Nickname,
-                        GuildId = users.Guild.Id,
-                        Joined = users.JoinedAt.Value.UtcDateTime
-                    });
-                }
+                    //Inactive guild active
 
-                await _context.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                _log.Error(ex.InnerException);
+                    if (await _context.Guilds.AnyAsync(x => x.GuildId.Equals(guild.Id) && !x.Active)
+                        .ConfigureAwait(false))
+                    {
+                        await AddGuild(new Guilds
+                        {
+                            GuildId = guild.Id,
+                            GuildName = guild.Name,
+                            Region = guild.VoiceRegionId,
+                            GreetChl = 0,
+
+                        }).ConfigureAwait(false);
+                        _log.Info($"Inactive guild updated {guild.Name} ({guild.Id})");
+                    }
+                
+                    // Missing guild
+                    if (await _context.Guilds.AnyAsync(x => x.GuildId.Equals(guild.Id))
+                        .ConfigureAwait(false)) continue;
+
+                    await AddGuild(new Guilds
+                    {
+                        GuildId = guild.Id,
+                        GuildName = guild.Name,
+                        Region = guild.VoiceRegionId,
+                        GreetChl = 0,
+
+                    }).ConfigureAwait(false);
+                    _log.Info($"Missing guild inserted {guild.Name} ({guild.Id})");
+                }
+                catch (Exception e)
+                {
+                    _log.Error(e);
+                }
             }
         }
     }

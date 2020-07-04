@@ -7,8 +7,6 @@ using mummybot.Extensions;
 using mummybot.Services;
 using System.Linq;
 using Discord.WebSocket;
-using System.Net.Http;
-using Newtonsoft.Json;
 
 namespace mummybot.Modules.General
 {
@@ -23,8 +21,8 @@ namespace mummybot.Modules.General
                 return;
             }
             var r = new Random();
-            var yomammaList = new Yomamma().YomammaList;
-            await Context.Channel.ReplyAsync($"{user.Mention} {yomammaList[r.Next(yomammaList.Length)]}").ConfigureAwait(false);
+            var arr = new Yomamma().YomammaList;
+            await ReplyAsync($"{user.Mention} {arr[r.Next(arr.Length)]}").ConfigureAwait(false);
         }
 
         [Command("Clap"), Summary("Clap between words")]

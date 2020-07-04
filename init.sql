@@ -46,17 +46,15 @@ create table if not exists guilds
     id              bigserial                                                   not null,
     guildid         bigint                                                      not null,
     guildname       varchar(100)                                                not null,
-    ownerid         bigint                                                      not null,
     active          boolean      default true                                   not null,
     region          varchar(25)                                                 not null,
     greeting        varchar(100) default '%user% has joined'::character varying not null,
     goodbye         varchar(100) default '%user% has left'::character varying   not null,
-    greetchl        bigint,
+    greetchl        bigint       default 0                                      not null,
     filterinvites   boolean      default false                                  not null,
     regex           text         default null,
     botchannel      bigint       default 0                                      not null,
     autoassignroles bigint[]     default '{}'                                   not null,
-    blacklisted     boolean      default false                                  not null,
     constraint guilds_pkey
         primary key (id)
 );
@@ -64,16 +62,28 @@ create table if not exists guilds
 create unique index if not exists guilds_guildid_idx
     on guilds (guildid);
 
-create table if not exists blacklist
+create table if not exists user_blacklist
 (
     id        serial                              not null,
     userid    bigint                              not null,
     reason    text,
     createdat timestamp default CURRENT_TIMESTAMP not null,
-    constraint blacklist_pk
+    constraint user_blacklist_pk
         primary key (id)
 );
 
-create unique index if not exists blacklist_userid_uindex
-    on blacklist (userid);
+create unique index if not exists user_blacklist_userid_idx
+    on user_blacklist (userid);
 
+create table if not exists guild_blacklist
+(
+    id        serial                              not null,
+    guildid   bigint                              not null,
+    reason    text,
+    createdat timestamp default CURRENT_TIMESTAMP not null,
+    constraint guild_blacklist_pk
+        primary key (id)
+);
+
+create unique index if not exists guild_blacklist_guildid_idx
+    on guild_blacklist (guildid);
