@@ -23,14 +23,14 @@ namespace mummybot.Services
         private readonly CommandService _commands;
         private readonly mummybotDbContext _context;
         private IServiceProvider _services;
-        protected readonly Logger _log = LogManager.GetLogger("logfile");
-        protected readonly Logger _blog = LogManager.GetLogger("blockfile");
+        private readonly Logger _log = LogManager.GetLogger("logfile");
+        private readonly Logger _blog = LogManager.GetLogger("blockfile");
         private IEnumerable<IEarlyBehavior> _earlyBehaviors;
         private IEnumerable<ILateBlocker> _lateBlockers;
         private IEnumerable<IInputTransformer> _inputTransformers;
         private IEnumerable<ILateExecutor> _lateExecutors;
 
-        public static string DefaultPrefix { get; set; }
+        public static string DefaultPrefix { get; private set; }
 
         public event Func<IUserMessage, CommandInfo, Task> CommandExecuted = delegate { return Task.CompletedTask; };
         public event Func<CommandInfo, ITextChannel, string, Task> CommandErrored = delegate { return Task.CompletedTask; };
@@ -38,15 +38,12 @@ namespace mummybot.Services
 
         //userid/msg count
         private ConcurrentDictionary<ulong, uint> UserMessagesSent { get; } = new ConcurrentDictionary<ulong, uint>();
-        public ConcurrentHashSet<ulong> UsersOnShortCooldown { get; } = new ConcurrentHashSet<ulong>();
-        private readonly Timer _clearUsersOnShortCooldown;
-        public const int GlobalCommandsCooldown = 750;
         private uint processedCommands = 0;
 
         public uint ProcessedCommands
         {
             get => processedCommands;
-            set => processedCommands = value;
+            private set => processedCommands = value;
         }
 
         public CommandHandlerService() { }
@@ -63,12 +60,6 @@ namespace mummybot.Services
 #else
             DefaultPrefix = Environment.GetEnvironmentVariable("PREFIX");
 #endif
-            _clearUsersOnShortCooldown = new Timer(_ =>
-            {
-                UsersOnShortCooldown.Clear();
-            }, null, GlobalCommandsCooldown, GlobalCommandsCooldown);
-
-
             _discord.MessageReceived += MessageReceivedHandler;
         }
 
@@ -213,7 +204,7 @@ namespace mummybot.Services
 	        var isMentionCommand = usrMsg.HasMentionPrefix(_discord.CurrentUser, ref argPos);
 	    
             if (isPrefixCommand ||isMentionCommand)
-	    {
+	        {
                 var (Success, Error, Info) = await ExecuteCommandAsync(new SocketCommandContext(_discord, usrMsg), messageContent, isMentionCommand ? argPos : DefaultPrefix.Length, _services, MultiMatchHandling.Best).ConfigureAwait(false);
                 execTime = Environment.TickCount - execTime;
 
@@ -326,12 +317,6 @@ namespace mummybot.Services
             }
 
             var cmd = successfulParses[0].Key.Command;
-
-            // Bot will ignore commands which are ran more often than what specified by
-            // GlobalCommandsCooldown constant (miliseconds)
-            if (!UsersOnShortCooldown.Add(context.Message.Author.Id))
-                return (false, null, cmd);
-            //return SearchResult.FromError(CommandError.Exception, "You are on a global cooldown.");
 
             var commandName = cmd.Aliases.First();
             foreach (var exec in _lateBlockers)
