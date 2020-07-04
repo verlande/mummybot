@@ -10,6 +10,9 @@ RUN set -ex; \
 
 FROM mcr.microsoft.com/dotnet/core/runtime:3.1 AS runtime
 WORKDIR /app
+
 COPY --from=build /app /app
 COPY src/_config.json /app
+COPY src/NLog.config /app
+
 ENTRYPOINT [ "dotnet", "mummybot.dll" ]
