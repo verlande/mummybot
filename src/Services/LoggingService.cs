@@ -9,7 +9,7 @@ namespace mummybot.Services
 {
     public class CommandLogging
     {
-        protected readonly Logger _log = LogManager.GetLogger("commandfile");
+        private readonly Logger _log = LogManager.GetLogger("commandfile");
 
         public CommandLogging(CommandService commands)
         {
@@ -24,7 +24,6 @@ namespace mummybot.Services
                 _log.Info($"Executed \"{command.Value.Name}\" for {context.User} ({context.User.Id}) in {context.Guild.Name} ({context.Guild.Id})/{context.Channel.Name}");
             if (!string.IsNullOrEmpty(result?.ErrorReason))
                 _log.Error(result.ErrorReason);
-                //await context.Channel.SendErrorAsync(string.Empty, result.ErrorReason).ConfigureAwait(false);
             return Task.CompletedTask;
         }
 
@@ -48,7 +47,7 @@ namespace mummybot.Services
                 case LogSeverity.Verbose:
                 case LogSeverity.Debug:
                     Console.ForegroundColor = ConsoleColor.DarkGray;
-                    //_log.Debug(msg.Message);
+                    _log.Debug(msg.Message);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -59,7 +58,7 @@ namespace mummybot.Services
 
     public class LoggingService
     {
-        protected readonly Logger _log = LogManager.GetLogger("logfile");
+        private readonly Logger _log = LogManager.GetLogger("logfile");
 
         // ReSharper disable once SuggestBaseTypeForParameter
         public LoggingService(DiscordSocketClient discord, CommandService commands) => discord.Log += OnLog;

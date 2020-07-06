@@ -61,7 +61,7 @@ namespace mummybot.Services
             {
                 try
                 {
-                    if (AllGuildConfigs.TryGetValue(guild.Id, out var conf) != null)
+                    if (AllGuildConfigs.ContainsKey(guild.Id))
                     {
                         var gc = await _context.Guilds.SingleAsync(x => x.GuildId.Equals(guild.Id))
                             .ConfigureAwait(false);

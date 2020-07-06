@@ -8,7 +8,7 @@ namespace mummybot.Modules.Tag.Controllers
 {
     public class TagController
     {
-        protected readonly Logger _log = LogManager.GetLogger("tagfile");
+        private readonly Logger _log = LogManager.GetLogger("tagfile");
         private readonly DiscordSocketClient _discord;
         private readonly mummybotDbContext _context;
         private readonly Tags _tag;
@@ -35,7 +35,7 @@ namespace mummybot.Modules.Tag.Controllers
             if (_tag != null && user.Id.Equals(_tag.Author) || user.GuildPermissions.Administrator)
             {
                 _context.Remove(_tag);
-                _log.Info($"Deleted \"{_tag.Name}\" for {user} ({user.Id}) in {user.Guild.Name} ({user.Guild.Id})");
+                _log.Info($"Deleted tag \"{_tag.Name}\" for {user} ({user.Id}) in {user.Guild.Name} ({user.Guild.Id})");
                 return $"Successfully deleted ``{_tag.Name}``";
             }
             if (_tag == null)

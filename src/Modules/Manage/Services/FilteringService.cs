@@ -16,7 +16,7 @@ namespace mummybot.Modules.Manage.Services
 {
     public class FilteringService : IEarlyBehavior, INService
     {
-        protected readonly Logger _log = LogManager.GetLogger("logfile");
+        private readonly Logger _log = LogManager.GetLogger("logfile");
         private readonly DiscordSocketClient _discord;
         public ConcurrentHashSet<ulong> InviteFiltering { get; }
         public ConcurrentDictionary<ulong, string> RegexFiltering { get; }

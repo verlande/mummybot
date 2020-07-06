@@ -17,7 +17,7 @@ namespace mummybot.Services
         private DiscordSocketClient _discord { get; }
         private readonly CommandService _commands;
         private readonly IServiceProvider _provider;
-        protected readonly Logger _log = LogManager.GetCurrentClassLogger();
+        private readonly Logger _log = LogManager.GetCurrentClassLogger();
         private string DefaultPrefix { get; }
 
         public StartupService(DiscordSocketClient discord, CommandService commands, GuildService guildService, IServiceProvider provider, mummybotDbContext context)

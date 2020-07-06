@@ -15,7 +15,7 @@ namespace mummybot.Modules.Manage.Services
     {
         private readonly DiscordSocketClient _discord;
         private readonly mummybotDbContext _context;
-        protected readonly Logger _log = LogManager.GetLogger("logfile");
+        private readonly Logger _log = LogManager.GetLogger("logfile");
 
         public ConcurrentDictionary<ulong, long[]> AutoAssignRoles { get; }
 
