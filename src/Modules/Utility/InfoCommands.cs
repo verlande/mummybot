@@ -44,7 +44,10 @@ namespace mummybot.Modules.Utility
         {
             var application = await Context.Client.GetApplicationInfoAsync();
 
-            await Context.Channel.SendConfirmAsync(string.Empty, $"{Format.Bold("Bot Info")}\n" +
+            await ReplyAsync(string.Empty, embed: new EmbedBuilder()
+                .WithColor(Utils.GetRandomColor())
+                .WithThumbnailUrl(_client.CurrentUser.GetAvatarUrl())
+                .WithDescription($"{Format.Bold("Bot Info")}\n" +
                               $"- Author: {application.Owner} ({application.Owner.Id})\n" +
                               $"- Library: Discord.Net ({DiscordConfig.Version})\n" +
                               $"- Kernel: {Environment.OSVersion}\n" +
@@ -59,7 +62,8 @@ namespace mummybot.Modules.Utility
                     $"- Guilds Served: {Context.Client.Guilds.Count}\n" +
                     $"- Channels: {Context.Client.Guilds.Sum(g => g.TextChannels.Count)}\n" +
                     $"- Commands Processed: {_commandHandlerService.ProcessedCommands}\n" +
-                    $"- Users: {Context.Client.Guilds.Sum(g => g.Users.Count)}\n", null, "Made with Discord.NET & PostgreSQL").ConfigureAwait(false);
+                    $"- Users: {Context.Client.Guilds.Sum(g => g.Users.Count)}\n").WithFooter("Made with Discord.NET")
+                        .Build()).ConfigureAwait(false);
         }
 
         [Command("Uptime")]

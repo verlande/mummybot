@@ -25,6 +25,7 @@ namespace mummybot.Services
         private IServiceProvider _services;
         private readonly Logger _log = LogManager.GetLogger("logfile");
         private readonly Logger _blog = LogManager.GetLogger("blockfile");
+        private readonly Logger _clog = LogManager.GetLogger("commandfile");
         private IEnumerable<IEarlyBehavior> _earlyBehaviors;
         private IEnumerable<ILateBlocker> _lateBlockers;
         private IEnumerable<IInputTransformer> _inputTransformers;
@@ -38,12 +39,12 @@ namespace mummybot.Services
 
         //userid/msg count
         private ConcurrentDictionary<ulong, uint> UserMessagesSent { get; } = new ConcurrentDictionary<ulong, uint>();
-        private uint processedCommands = 0;
+        private uint _processedCommands = 0;
 
         public uint ProcessedCommands
         {
-            get => processedCommands;
-            private set => processedCommands = value;
+            get => _processedCommands;
+            private set => _processedCommands = value;
         }
 
         public CommandHandlerService() { }
@@ -116,7 +117,8 @@ namespace mummybot.Services
 
         private async Task LogErroredExecution(string errorMessage, string erroredCmd, IMessage usrMsg, ITextChannel channel, params int[] execPoints)
         {
-            await channel.SendErrorAsync($"executing {erroredCmd}", errorMessage);
+            _clog.Error($"Error executing \"{erroredCmd}\" {errorMessage}");
+            await channel.SendErrorAsync($"executing {erroredCmd}", errorMessage).ConfigureAwait(false);
             /*_log.Error($"" +
                             "User: {0}\n\t" +
                             "Server: {1}\n\t" +

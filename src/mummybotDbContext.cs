@@ -172,7 +172,8 @@ namespace mummybot
 
                 entity.Property(e => e.Id).HasColumnName("id");
 
-                entity.Property(e => e.GuildId).HasColumnName("guildid");
+                entity.Property(e => e.GuildId).HasColumnName("guildid")
+                    .IsRequired();
                 
                 entity.Property(e => e.Reason).HasColumnName("reason");
                 

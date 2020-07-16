@@ -36,7 +36,7 @@ namespace mummybot.Modules.General
             {
                 Name = Utils.FullUserName(user ?? Context.User)
             },
-            ImageUrl = Extensions.UserExtensions.RealAvatarUrl(user ?? Context.User, 1024).AbsoluteUri,
+            ImageUrl = (user ?? Context.User).RealAvatarUrl(1024).AbsoluteUri,
             Color = Utils.GetRandomColor()
         }.Build()).ConfigureAwait(false);
 
@@ -95,7 +95,8 @@ namespace mummybot.Modules.General
             {
                 var dict = MessageService.SnipeDict[Context.Channel.Id];
                 // ReSharper disable once SpecifyACultureInStringConversionExplicitly
-                await Context.Channel.SendAuthorAsync(Context.Guild.GetUser(dict.AuthorId), dict.Content, $"Sent at {dict.CreatedAt}\n• Requested by {Context.User}").ConfigureAwait(false);
+                await Context.Channel.SendAuthorAsync(Context.Guild.GetUser(dict.AuthorId), dict.Content, $"Sent at {dict.CreatedAt}\n• Requested by {Context.User}")
+                    .ConfigureAwait(false);
                 return;
             }
             await Context.Channel.SendErrorAsync(string.Empty, "Nothing to snipe", $"• Requested by {Context.User}").ConfigureAwait(false);

@@ -6,13 +6,14 @@ using mummybot.Services;
 using NLog;
 using System.Threading.Tasks;
 using mummybot.Attributes;
+
 // ReSharper disable UnusedAutoPropertyAccessor.Local
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 // ReSharper disable InconsistentNaming
 
 namespace mummybot.Modules
 {
-    [RequireContext(ContextType.Guild)]
+    [RequireContext(ContextType.Guild), Cooldown(5)]
     public abstract class ModuleBase : Discord.Commands.ModuleBase<SocketCommandContext>
     {
         private string ModuleTypeName { get; }
