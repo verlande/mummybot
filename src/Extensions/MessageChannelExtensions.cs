@@ -5,11 +5,23 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using mummybot.Models;
 
 namespace mummybot.Extensions
 {
     public static class MessageChannelExtensions
     {
+        public static async Task<IUserMessage> ReplyAsync(this IMessageChannel channel, string message, Embed embed = null)
+        {
+            if (channel is null) return null;
+
+            await channel.TriggerTypingAsync().ConfigureAwait(false);
+
+            if (channel is IGuildChannel) Console.WriteLine($"{(channel as IGuildChannel).Guild} in {(channel as IGuildChannel).Name}");
+
+            return await channel.SendMessageAsync(message ?? string.Empty, false, embed ?? null).ConfigureAwait(false);
+        }
+
         public static Task<IUserMessage> EmbedAsync(this IMessageChannel ch, EmbedBuilder embed, string msg = "")
             => ch.SendMessageAsync(msg, embed: embed.Build(),
             options: new RequestOptions() { RetryMode = RetryMode.AlwaysRetry });
@@ -151,91 +163,7 @@ namespace mummybot.Extensions
 
         private static EmbedBuilder AddPaginatedFooter(this EmbedBuilder embed, int curPage, int? lastPage) 
             => lastPage != null ? embed.WithFooter(efb => efb.WithText($"Page {curPage + 1} / {lastPage + 1}")) : embed.WithFooter(efb => efb.WithText(curPage.ToString()));
-    }
 
-    public sealed class ReactionEventWrapper : IDisposable
-    {
-        private IUserMessage Message { get; }
-        public event Action<SocketReaction> OnReactionAdded = delegate { };
-        public event Action<SocketReaction> OnReactionRemoved = delegate { };
-        public event Action OnReactionsCleared = delegate { };
-
-        public ReactionEventWrapper(DiscordSocketClient client, IUserMessage msg)
-        {
-            Message = msg ?? throw new ArgumentNullException(nameof(msg));
-            _client = client;
-
-            _client.ReactionAdded += Discord_ReactionAdded;
-            _client.ReactionRemoved += Discord_ReactionRemoved;
-            _client.ReactionsCleared += Discord_ReactionsCleared;
-        }
-
-        private Task Discord_ReactionsCleared(Cacheable<IUserMessage, ulong> msg, ISocketMessageChannel channel)
-        {
-            Task.Run(() =>
-            {
-                try
-                {
-                    if (msg.Id == Message.Id)
-                        OnReactionsCleared?.Invoke();
-                }
-                catch
-                {
-                    // ignored
-                }
-            });
-
-            return Task.CompletedTask;
-        }
-
-        private Task Discord_ReactionRemoved(Cacheable<IUserMessage, ulong> msg, ISocketMessageChannel channel, SocketReaction reaction)
-        {
-            Task.Run(() =>
-            {
-                try
-                {
-                    if (msg.Id == Message.Id)
-                        OnReactionRemoved?.Invoke(reaction);
-                }
-                catch
-                {
-                    // ignored
-                }
-            });
-
-            return Task.CompletedTask;
-        }
-
-        private Task Discord_ReactionAdded(Cacheable<IUserMessage, ulong> msg, ISocketMessageChannel channel, SocketReaction reaction)
-        {
-            Task.Run(() =>
-            {
-                try
-                {
-                    if (msg.Id == Message.Id)
-                        OnReactionAdded?.Invoke(reaction);
-                }
-                catch
-                {
-                    // ignored
-                }
-            });
-
-            return Task.CompletedTask;
-        }
-
-        private void UnsubAll()
-        {
-            _client.ReactionAdded -= Discord_ReactionAdded;
-            _client.ReactionRemoved -= Discord_ReactionRemoved;
-            _client.ReactionsCleared -= Discord_ReactionsCleared;
-            OnReactionAdded = null;
-            OnReactionRemoved = null;
-            OnReactionsCleared = null;
-        }
-
-        private readonly DiscordSocketClient _client;
-
-        public void Dispose() => UnsubAll();
+        
     }
 }
